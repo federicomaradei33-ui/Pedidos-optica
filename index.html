@@ -33,19 +33,11 @@
             align-items: center;
         }
 
-        #pdf-template {
-            padding: 40px;
-            background: white;
-            color: black;
-            width: 800px;
-        }
-        
         .loading-overlay {
             background: rgba(255, 255, 255, 0.9);
             display: flex;
         }
 
-        /* Estilos para móviles */
         @media (max-width: 640px) {
             .prescription-grid {
                 grid-template-columns: 1fr 1fr;
@@ -63,11 +55,11 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Loader de Sincronización -->
+    <!-- Loader -->
     <div id="loader" class="fixed inset-0 z-[200] flex items-center justify-center loading-overlay">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 font-semibold text-blue-600 animate-pulse">Conectando con la nube...</p>
+            <p id="loader-text" class="mt-4 font-semibold text-blue-600 animate-pulse">Iniciando sesión segura...</p>
         </div>
     </div>
 
@@ -106,7 +98,7 @@
             </div>
 
             <form id="orderForm" class="space-y-6">
-                <!-- Paciente -->
+                <!-- Datos del Paciente -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700">
                         <i class="fas fa-id-card text-blue-500"></i> Datos del Paciente
@@ -127,12 +119,11 @@
                     </div>
                 </div>
 
-                <!-- Receta Técnica -->
+                <!-- Receta -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-6">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700">
                         <i class="fas fa-file-medical text-blue-500"></i> Graduación
                     </h2>
-                    
                     <div class="space-y-6">
                         <div class="hidden sm:grid prescription-grid text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
                             <div>Ojo</div>
@@ -141,27 +132,24 @@
                             <div>Eje</div>
                             <div>Adición</div>
                         </div>
-                        
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-600 sm:text-left text-sm">DERECHO (OD)</div>
+                            <div class="font-bold text-blue-600 text-sm">DERECHO (OD)</div>
                             <input type="number" step="0.25" id="od_esf" class="input-field" placeholder="ESF">
                             <input type="number" step="0.25" id="od_cil" class="input-field" placeholder="CIL">
                             <input type="number" step="1" id="od_eje" class="input-field" placeholder="EJE">
                             <input type="number" step="0.25" id="od_add" class="input-field" placeholder="ADD">
                         </div>
-
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-600 sm:text-left text-sm">IZQUIERDO (OI)</div>
+                            <div class="font-bold text-blue-600 text-sm">IZQUIERDO (OI)</div>
                             <input type="number" step="0.25" id="oi_esf" class="input-field" placeholder="ESF">
                             <input type="number" step="0.25" id="oi_cil" class="input-field" placeholder="CIL">
                             <input type="number" step="1" id="oi_eje" class="input-field" placeholder="EJE">
                             <input type="number" step="0.25" id="oi_add" class="input-field" placeholder="ADD">
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-dashed">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNP (Nasopupilar)</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNP</label>
                             <input type="text" id="dnp" class="input-field" placeholder="Ej: 32/34">
                         </div>
                         <div>
@@ -183,40 +171,29 @@
                             <option>Ocupacional</option>
                         </select>
                         <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer hover:bg-blue-50">
+                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer">
                                 <input type="checkbox" name="treat" value="Antireflex" class="w-4 h-4"> AR
                             </label>
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer hover:bg-blue-50">
+                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer">
                                 <input type="checkbox" name="treat" value="Blue Cut" class="w-4 h-4"> Blue Cut
-                            </label>
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer hover:bg-blue-50">
-                                <input type="checkbox" name="treat" value="Fotocromático" class="w-4 h-4"> Fotocr.
-                            </label>
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer hover:bg-blue-50">
-                                <input type="checkbox" name="treat" value="Polarizado" class="w-4 h-4"> Polarizado
                             </label>
                         </div>
                     </div>
-
                     <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 border-l-4 border-l-blue-500">
                         <h2 class="text-md font-bold text-gray-700">Armazón</h2>
                         <select id="frameSource" class="input-field">
-                            <option value="De la Óptica">De la Óptica (Stock)</option>
-                            <option value="Del Paciente">Trae el Paciente</option>
-                            <option value="Enviar a Taller">Enviar a Laboratorio</option>
+                            <option value="De la Óptica">De la Óptica</option>
+                            <option value="Del Paciente">Del Paciente</option>
                         </select>
-                        <input type="text" id="frameModel" class="input-field" placeholder="Marca / Modelo / Color">
+                        <input type="text" id="frameModel" class="input-field" placeholder="Marca / Modelo">
                     </div>
                 </div>
 
-                <!-- Notas y Botón -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="text-md font-bold text-gray-700">Observaciones Finales</h2>
-                    <textarea id="notes" class="input-field h-24" placeholder="Alguna indicación extra para el taller..."></textarea>
-                    
-                    <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3 text-lg">
-                        <span>CONFIRMAR Y GUARDAR</span>
-                        <i class="fas fa-check-circle"></i>
+                    <textarea id="notes" class="input-field h-24" placeholder="Observaciones extras..."></textarea>
+                    <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg flex items-center justify-center gap-3">
+                        <span>GUARDAR PEDIDO</span>
+                        <i class="fas fa-save"></i>
                     </button>
                 </div>
             </form>
@@ -225,163 +202,96 @@
         <!-- Tab: Historial -->
         <section id="tab-history" class="hidden space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Historial de Ventas</h1>
-                    <p class="text-gray-500 text-sm">Todos tus pedidos sincronizados en tiempo real.</p>
-                </div>
-                <div class="relative w-full sm:w-72">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="searchOrders" oninput="renderHistory()" placeholder="Buscar por paciente..." class="input-field pl-10">
-                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Historial</h1>
+                <input type="text" id="searchOrders" oninput="renderHistory()" placeholder="Buscar paciente..." class="input-field max-w-xs">
             </div>
-
             <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Orden</th>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Paciente</th>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Fecha</th>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyTableBody" class="divide-y divide-gray-100 bg-white">
-                            <!-- Se llena por JS -->
-                        </tbody>
-                    </table>
-                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Orden</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Paciente</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
+                </table>
             </div>
         </section>
     </main>
 
-    <!-- Modal Detalles del Pedido -->
+    <!-- Modal Detalles -->
     <div id="detailsModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-[150] p-4">
-        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
-            <div class="p-6 border-b flex justify-between items-center bg-gray-50/50">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Detalles de Orden <span id="det-id" class="text-blue-600"></span></h3>
-                    <p id="det-date" class="text-xs font-semibold text-gray-400 uppercase tracking-wider"></p>
-                </div>
-                <button onclick="closeDetails()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all text-xl">&times;</button>
+        <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Detalles Orden <span id="det-id" class="text-blue-600"></span></h3>
+                <button onclick="closeDetails()" class="text-2xl">&times;</button>
             </div>
-            
-            <div class="p-6 overflow-y-auto space-y-6">
-                <!-- Paciente Card -->
-                <div class="bg-blue-600 rounded-2xl p-4 text-white shadow-md">
-                    <p class="text-[10px] uppercase font-bold opacity-80 mb-1">Nombre del Cliente</p>
-                    <p id="det-name" class="text-xl font-bold"></p>
-                    <div class="flex gap-4 mt-2 text-xs opacity-90 border-t border-white/20 pt-2">
-                        <span id="det-dni-display"></span>
-                        <span id="det-tel-display"></span>
-                    </div>
-                </div>
-
-                <!-- Receta Grilla -->
-                <div class="space-y-3">
-                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fas fa-eye"></i> Graduación Técnica
-                    </h4>
-                    <div class="grid grid-cols-5 gap-2 text-center text-xs font-bold">
-                        <div class="bg-gray-100 py-1 rounded">OJO</div>
-                        <div class="bg-gray-100 py-1 rounded">ESF</div>
-                        <div class="bg-gray-100 py-1 rounded">CIL</div>
-                        <div class="bg-gray-100 py-1 rounded">EJE</div>
-                        <div class="bg-gray-100 py-1 rounded">ADD</div>
-                        
-                        <div class="font-bold text-blue-600 self-center">OD</div>
-                        <div id="det-od-esf" class="py-2 border rounded"></div>
-                        <div id="det-od-cil" class="py-2 border rounded"></div>
-                        <div id="det-od-eje" class="py-2 border rounded"></div>
-                        <div id="det-od-add" class="py-2 border rounded"></div>
-
-                        <div class="font-bold text-blue-600 self-center">OI</div>
-                        <div id="det-oi-esf" class="py-2 border rounded"></div>
-                        <div id="det-oi-cil" class="py-2 border rounded"></div>
-                        <div id="det-oi-eje" class="py-2 border rounded"></div>
-                        <div id="det-oi-add" class="py-2 border rounded"></div>
-                    </div>
-                    <div class="flex justify-between text-xs font-bold bg-gray-50 p-2 rounded-lg border border-dashed border-gray-200">
-                        <span>DNP: <span id="det-dnp" class="text-blue-600"></span></span>
-                        <span>ALTURA: <span id="det-altura" class="text-blue-600"></span></span>
-                    </div>
-                </div>
-
-                <!-- Detalles Extras -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cristales</p>
-                        <p id="det-lens" class="font-bold text-sm text-gray-800"></p>
-                        <p id="det-treat" class="text-[10px] text-blue-500 font-bold uppercase"></p>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Armazón</p>
-                        <p id="det-frame-src" class="font-bold text-sm text-gray-800"></p>
-                        <p id="det-frame-mod" class="text-xs text-gray-500"></p>
-                    </div>
-                </div>
-
-                <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100">
-                    <p class="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">Notas del pedido</p>
-                    <p id="det-notes" class="text-sm text-gray-700 italic"></p>
-                </div>
+            <div class="p-6 overflow-y-auto space-y-4" id="modal-content">
+                <!-- Se llena dinámicamente -->
             </div>
-
-            <div class="p-4 border-t bg-gray-50 flex gap-3">
-                <button id="det-download-btn" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-100">
-                    <i class="fas fa-file-pdf"></i> DESCARGAR PDF
-                </button>
+            <div class="p-4 border-t bg-gray-50">
+                <button id="det-download-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">DESCARGAR PDF</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase y Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase (Se inyecta automáticamente)
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         let user = null;
         let orders = [];
 
-        // 1. Autenticación
-        async function start() {
+        // REGLA 3: Autenticación ANTES que cualquier consulta
+        const initAuth = async () => {
             try {
-                await signInAnonymously(auth);
-            } catch (e) { console.error("Error Auth", e); }
-        }
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Error de Auth:", e);
+                document.getElementById('loader-text').innerText = "Error de conexión. Reintente.";
+            }
+        };
+
+        initAuth();
 
         onAuthStateChanged(auth, (u) => {
             if (u) {
                 user = u;
-                // 2. Escuchar cambios en tiempo real
+                document.getElementById('loader-text').innerText = "Sincronizando datos...";
+                
+                // REGLA 1: Ruta estricta obligatoria
                 const q = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+                
                 onSnapshot(q, (snap) => {
                     orders = snap.docs.map(d => ({ id_fs: d.id, ...d.data() }));
-                    orders.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    // Ordenar en memoria (REGLA 2: No usar orderBy en la consulta)
+                    orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     renderHistory();
                     document.getElementById('loader').style.display = 'none';
                 }, (err) => {
-                    console.error("Firestore Error", err);
-                    document.getElementById('loader').style.display = 'none';
+                    console.error("Firestore Error:", err);
+                    document.getElementById('loader-text').innerText = "Error de permisos. Contacte soporte.";
                 });
             }
         });
 
-        // Cambio de pestañas
         window.switchTab = (tab) => {
             document.getElementById('tab-new-order').classList.toggle('hidden', tab !== 'new-order');
             document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
         };
 
-        // Renderizar Historial
         window.renderHistory = () => {
             const search = document.getElementById('searchOrders').value.toLowerCase();
             const body = document.getElementById('historyTableBody');
@@ -391,64 +301,41 @@
             document.getElementById('badge-count').innerText = orders.length;
             document.getElementById('badge-count').classList.toggle('hidden', orders.length === 0);
 
-            if (filtered.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Sin pedidos registrados</td></tr>';
-                return;
-            }
-
             filtered.forEach(o => {
                 body.innerHTML += `
-                    <tr class="hover:bg-blue-50/30 transition-colors">
-                        <td class="px-6 py-4 font-mono font-bold text-blue-600 text-sm">#${o.id}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-gray-900">${o.patient}</div>
-                            <div class="text-[10px] text-gray-400 uppercase">${o.patientId || 'S/D'}</div>
-                        </td>
-                        <td class="px-6 py-4 text-xs text-gray-500">${o.date}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex justify-center gap-2">
-                                <button onclick="showOrderDetails('${o.id_fs}')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button onclick="deleteOrder('${o.id_fs}')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                    <tr>
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600">#${o.id}</td>
+                        <td class="px-6 py-4">${o.patient}</td>
+                        <td class="px-6 py-4 flex gap-2">
+                            <button onclick="showOrderDetails('${o.id_fs}')" class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-eye"></i></button>
+                            <button onclick="deleteOrder('${o.id_fs}')" class="p-2 bg-red-50 text-red-400 rounded-lg"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
         };
 
-        // Mostrar Detalle Completo
         window.showOrderDetails = (fsId) => {
             const data = orders.find(o => o.id_fs === fsId);
             if (!data) return;
 
-            document.getElementById('det-id').innerText = '#' + data.id;
-            document.getElementById('det-date').innerText = data.date;
-            document.getElementById('det-name').innerText = data.patient;
-            document.getElementById('det-dni-display').innerText = 'DNI: ' + (data.patientId || '-');
-            document.getElementById('det-tel-display').innerText = 'TEL: ' + (data.patientTel || '-');
-            
-            // Llenar tabla
-            document.getElementById('det-od-esf').innerText = data.od.esf || '0.00';
-            document.getElementById('det-od-cil').innerText = data.od.cil || '0.00';
-            document.getElementById('det-od-eje').innerText = (data.od.eje || '0') + '°';
-            document.getElementById('det-od-add').innerText = data.od.add || '0.00';
-            
-            document.getElementById('det-oi-esf').innerText = data.oi.esf || '0.00';
-            document.getElementById('det-oi-cil').innerText = data.oi.cil || '0.00';
-            document.getElementById('det-oi-eje').innerText = (data.oi.eje || '0') + '°';
-            document.getElementById('det-oi-add').innerText = data.oi.add || '0.00';
-
-            document.getElementById('det-dnp').innerText = data.dnp || '-';
-            document.getElementById('det-altura').innerText = data.altura || '-';
-            document.getElementById('det-lens').innerText = data.lensType;
-            document.getElementById('det-treat').innerText = data.treatments || 'Básico / Sin AR';
-            document.getElementById('det-frame-src').innerText = data.frameSource;
-            document.getElementById('det-frame-mod').innerText = data.frameModel || 'Sin especificar';
-            document.getElementById('det-notes').innerText = data.notes || 'Sin observaciones.';
+            document.getElementById('det-id').innerText = data.id;
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <div class="bg-blue-600 p-4 rounded-xl text-white">
+                    <p class="text-xs opacity-80">Paciente</p>
+                    <p class="text-lg font-bold">${data.patient}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="border p-2 rounded"><strong>OD:</strong> ${data.od.esf || '0'} / ${data.od.cil || '0'}</div>
+                    <div class="border p-2 rounded"><strong>OI:</strong> ${data.oi.esf || '0'} / ${data.oi.cil || '0'}</div>
+                </div>
+                <div class="text-sm space-y-1">
+                    <p><strong>Lente:</strong> ${data.lensType}</p>
+                    <p><strong>Armazón:</strong> ${data.frameSource} - ${data.frameModel}</p>
+                    <p><strong>Notas:</strong> ${data.notes || 'Ninguna'}</p>
+                </div>
+            `;
 
             document.getElementById('det-download-btn').onclick = () => generatePDF(data);
             document.getElementById('detailsModal').classList.remove('hidden');
@@ -457,25 +344,22 @@
         window.closeDetails = () => document.getElementById('detailsModal').classList.add('hidden');
 
         window.deleteOrder = async (id) => {
-            if(confirm('¿Seguro que deseas eliminar este pedido?')) {
+            if(!user) return;
+            if(confirm('¿Eliminar pedido?')) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', id));
             }
         };
 
-        // Guardar Pedido
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
             if (!user) return;
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "GUARDANDO...";
 
             const treats = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(el => el.value);
-            
-            const data = {
+            const orderData = {
                 id: document.getElementById('order-id-display').innerText,
-                date: new Date().toLocaleDateString('es-AR'),
                 timestamp: new Date().toISOString(),
                 patient: document.getElementById('patientName').value,
                 patientId: document.getElementById('patientId').value,
@@ -492,15 +376,15 @@
             };
 
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), data);
-                await generatePDF(data);
+                // REGLA 1: Guardar en la ruta estricta
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), orderData);
                 resetForm();
-                alert("¡Pedido guardado y PDF generado!");
+                alert("Pedido guardado con éxito.");
             } catch (err) {
-                alert("Error al guardar.");
+                console.error("Error guardando:", err);
+                alert("Error de permisos al guardar.");
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'CONFIRMAR Y GUARDAR <i class="fas fa-check-circle"></i>';
             }
         };
 
@@ -510,41 +394,11 @@
         }
 
         async function generatePDF(data) {
-            // Reutilizamos la lógica de PDF previa para generar el archivo...
-            // (La función de PDF se mantiene igual para consistencia)
-            const opt = {
-                margin: 0.5,
-                filename: `Orden_${data.id}_${data.patient}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            
-            // Construcción rápida de HTML para el PDF
-            const pdfHtml = `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h1 style="color: #2563eb;">ORDEN TÉCNICA #${data.id}</h1>
-                    <hr>
-                    <p><strong>Paciente:</strong> ${data.patient}</p>
-                    <p><strong>Fecha:</strong> ${data.date}</p>
-                    <table border="1" style="width:100%; border-collapse: collapse; margin: 20px 0; text-align: center;">
-                        <tr style="background: #f1f5f9;"><th>OJO</th><th>ESF</th><th>CIL</th><th>EJE</th><th>ADD</th></tr>
-                        <tr><td>OD</td><td>${data.od.esf || '0.00'}</td><td>${data.od.cil || '0.00'}</td><td>${data.od.eje || '0'}°</td><td>${data.od.add || '0.00'}</td></tr>
-                        <tr><td>OI</td><td>${data.oi.esf || '0.00'}</td><td>${data.oi.cil || '0.00'}</td><td>${data.oi.eje || '0'}°</td><td>${data.oi.add || '0.00'}</td></tr>
-                    </table>
-                    <p><strong>Lente:</strong> ${data.lensType} (${data.treatments || 'S/T'})</p>
-                    <p><strong>Armazón:</strong> ${data.frameSource} - ${data.frameModel || 'S/M'}</p>
-                    <p><strong>DNP/Alt:</strong> ${data.dnp || '-'} / ${data.altura || '-'}</p>
-                    <div style="background: #fffbeb; padding: 10px; border: 1px solid #fef3c7;">
-                        <strong>Notas:</strong><br>${data.notes || 'Sin notas.'}
-                    </div>
-                </div>
-            `;
-            const worker = html2pdf().set(opt).from(pdfHtml);
-            return worker.save();
+            const opt = { margin: 1, filename: `Orden_${data.id}.pdf`, image: { type: 'jpeg', quality: 0.98 } };
+            const html = `<div><h1>Orden #${data.id}</h1><p>Paciente: ${data.patient}</p></div>`;
+            html2pdf().set(opt).from(html).save();
         }
 
-        start();
         resetForm();
     </script>
 </body>
