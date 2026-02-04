@@ -16,14 +16,14 @@
         
         .prescription-header {
             display: grid;
-            grid-template-columns: 80px 1fr 1fr 1fr 1fr;
+            grid-template-columns: 100px 1fr 1fr 1fr 1fr;
             gap: 0.5rem;
             @apply mb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter;
         }
         
         .prescription-grid { 
             display: grid; 
-            grid-template-columns: 80px 1fr 1fr 1fr 1fr; 
+            grid-template-columns: 100px 1fr 1fr 1fr 1fr; 
             gap: 0.5rem; 
             align-items: center; 
         }
@@ -38,9 +38,17 @@
             @apply flex items-center gap-2 p-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors;
         }
 
-        .checkbox-item input { @apply w-4 h-4 text-blue-600 rounded focus:ring-blue-500; }
-
-        .loading-overlay { background: rgba(255, 255, 255, 0.95); display: flex; transition: opacity 0.3s ease; }
+        .loading-overlay { 
+            background: white; 
+            display: flex; 
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
         
         @media (max-width: 640px) { 
             .prescription-header { display: none; }
@@ -58,12 +66,10 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Cargador -->
-    <div id="loader" class="fixed inset-0 z-[200] flex items-center justify-center loading-overlay">
-        <div class="flex flex-col items-center p-8 text-center">
-            <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-blue-600 border-r-4 border-transparent"></div>
-            <p class="mt-6 font-bold text-blue-600 text-lg">Iniciando aplicación local...</p>
-        </div>
+    <!-- Cargador corregido -->
+    <div id="loader" class="loading-overlay">
+        <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-blue-600 border-r-4 border-transparent"></div>
+        <p class="mt-6 font-bold text-blue-600 text-lg">Iniciando aplicación...</p>
     </div>
 
     <!-- Navegación -->
@@ -119,19 +125,19 @@
                         </div>
 
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-700 sm:text-left">OD (Derecho)</div>
-                            <input type="number" step="0.25" id="od_esf" class="input-field" placeholder="ESF">
-                            <input type="number" step="0.25" id="od_cil" class="input-field" placeholder="CIL">
-                            <input type="number" step="1" id="od_eje" class="input-field" placeholder="EJE">
-                            <input type="number" step="0.25" id="od_add" class="input-field" placeholder="ADD">
+                            <div class="font-bold text-blue-700">OD (Derecho)</div>
+                            <input type="text" id="od_esf" class="input-field" placeholder="ESF">
+                            <input type="text" id="od_cil" class="input-field" placeholder="CIL">
+                            <input type="text" id="od_eje" class="input-field" placeholder="EJE">
+                            <input type="text" id="od_add" class="input-field" placeholder="ADD">
                         </div>
 
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-700 sm:text-left">OI (Izquierdo)</div>
-                            <input type="number" step="0.25" id="oi_esf" class="input-field" placeholder="ESF">
-                            <input type="number" step="0.25" id="oi_cil" class="input-field" placeholder="CIL">
-                            <input type="number" step="1" id="oi_eje" class="input-field" placeholder="EJE">
-                            <input type="number" step="0.25" id="oi_add" class="input-field" placeholder="ADD">
+                            <div class="font-bold text-blue-700">OI (Izquierdo)</div>
+                            <input type="text" id="oi_esf" class="input-field" placeholder="ESF">
+                            <input type="text" id="oi_cil" class="input-field" placeholder="CIL">
+                            <input type="text" id="oi_eje" class="input-field" placeholder="EJE">
+                            <input type="text" id="oi_add" class="input-field" placeholder="ADD">
                         </div>
                     </div>
 
@@ -157,27 +163,15 @@
                             <option value="Bifocal">Bifocal</option>
                             <option value="Multifocal / Progresivo">Multifocal / Progresivo</option>
                             <option value="Ocupacional">Ocupacional</option>
-                            <option value="Filtro Azul (Solo)">Filtro Azul (Solo)</option>
                         </select>
                         
                         <div class="pt-2">
-                            <p class="text-xs font-bold text-gray-400 uppercase mb-3">Tratamientos Adicionales</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase mb-3">Tratamientos</p>
                             <div class="checkbox-group">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="treatment" value="Antirreflex"> <span>Antirreflex</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="treatment" value="Filtro Azul"> <span>Filtro Azul</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="treatment" value="Fotocromático"> <span>Fotocromático</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="treatment" value="Polarizado"> <span>Polarizado</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="treatment" value="Blanco"> <span>Blanco</span>
-                                </label>
+                                <label class="checkbox-item"><input type="checkbox" name="treatment" value="Antirreflex"> <span>Antirreflex</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="treatment" value="Filtro Azul"> <span>Filtro Azul</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="treatment" value="Fotocromático"> <span>Fotocromático</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="treatment" value="Blanco"> <span>Blanco</span></label>
                             </div>
                         </div>
                     </div>
@@ -194,8 +188,8 @@
 
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
                     <h3 class="font-bold text-gray-700">Observaciones</h3>
-                    <textarea id="notes" class="input-field h-24" placeholder="Instrucciones especiales para el laboratorio..."></textarea>
-                    <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3">
+                    <textarea id="notes" class="input-field h-24" placeholder="Instrucciones adicionales..."></textarea>
+                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3">
                         <i class="fas fa-save"></i> GUARDAR PEDIDO
                     </button>
                 </div>
@@ -205,32 +199,46 @@
         <!-- Tab: Historial -->
         <section id="tab-history" class="hidden space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 class="text-2xl font-black">Historial Completo</h1>
-                <input type="text" id="searchInput" oninput="renderHistory()" placeholder="Buscar por paciente o DNI..." class="input-field max-w-sm">
+                <h1 class="text-2xl font-black text-gray-900">Historial</h1>
+                <input type="text" id="searchInput" oninput="renderHistory()" placeholder="Buscar paciente..." class="input-field max-w-sm">
             </div>
-            
             <div id="historyContainer" class="space-y-4"></div>
         </section>
     </main>
 
     <script>
-        let orders = JSON.parse(localStorage.getItem('optica_orders')) || [];
+        let orders = [];
 
-        window.onload = () => {
-            renderHistory();
+        // Inicialización segura
+        window.addEventListener('load', () => {
+            try {
+                const stored = localStorage.getItem('optica_orders');
+                orders = stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error("Error cargando datos", e);
+                orders = [];
+            }
+            
             generateId();
+            renderHistory();
+            
+            // Forzar ocultar el loader
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
             setTimeout(() => {
-                const loader = document.getElementById('loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 300);
+                loader.style.visibility = 'hidden';
+                loader.style.display = 'none';
             }, 500);
-        };
+        });
 
         window.switchTab = (tab) => {
             document.getElementById('tab-new-order').classList.toggle('hidden', tab !== 'new-order');
             document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
-            if(tab === 'history') renderHistory();
         };
+
+        function generateId() {
+            document.getElementById('order-id-display').innerText = Math.floor(1000 + Math.random() * 9000);
+        }
 
         window.renderHistory = () => {
             const container = document.getElementById('historyContainer');
@@ -247,61 +255,29 @@
             ).reverse();
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-medium">No hay pedidos registrados.</div>';
+                container.innerHTML = '<div class="text-center py-10 text-gray-400">No hay pedidos registrados.</div>';
                 return;
             }
 
-            filtered.forEach((o) => {
-                const originalIndex = orders.indexOf(o);
-                const treatsList = Array.isArray(o.treatments) ? o.treatments.join(', ') : (o.treatments || '-');
-                
+            filtered.forEach((o, index) => {
                 container.innerHTML += `
-                    <div class="glass-card rounded-2xl p-6 shadow-sm border-l-4 border-blue-600 relative group">
+                    <div class="glass-card rounded-2xl p-6 shadow-sm border-l-4 border-blue-600">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded">Orden #${o.orderNumber}</span>
+                                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">ORDEN #${o.orderNumber}</span>
                                 <h3 class="text-lg font-bold text-gray-900 mt-1">${o.patientName}</h3>
-                                <p class="text-xs text-gray-500">DNI: ${o.patientId || 'N/A'} | Tel: ${o.patientTel || 'N/A'}</p>
+                                <p class="text-xs text-gray-500">${o.createdAt}</p>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="deleteOrder(${originalIndex})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash"></i></button>
-                            </div>
+                            <button onclick="deleteOrder(${orders.indexOf(o)})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                         </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-4">
-                            <div class="bg-gray-50 p-3 rounded-xl">
-                                <p class="font-bold text-xs text-gray-400 uppercase mb-2">Ojo Derecho (OD)</p>
-                                <div class="grid grid-cols-4 gap-1 text-center">
-                                    <div><p class="text-[10px]">ESF</p><p class="font-bold">${o.od.esf || '0.00'}</p></div>
-                                    <div><p class="text-[10px]">CIL</p><p class="font-bold">${o.od.cil || '0.00'}</p></div>
-                                    <div><p class="text-[10px]">EJE</p><p class="font-bold">${o.od.eje || '0'}°</p></div>
-                                    <div><p class="text-[10px]">ADD</p><p class="font-bold">${o.od.add || '0.00'}</p></div>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-xl">
-                                <p class="font-bold text-xs text-gray-400 uppercase mb-2">Ojo Izquierdo (OI)</p>
-                                <div class="grid grid-cols-4 gap-1 text-center">
-                                    <div><p class="text-[10px]">ESF</p><p class="font-bold">${o.oi.esf || '0.00'}</p></div>
-                                    <div><p class="text-[10px]">CIL</p><p class="font-bold">${o.oi.cil || '0.00'}</p></div>
-                                    <div><p class="text-[10px]">EJE</p><p class="font-bold">${o.oi.eje || '0'}°</p></div>
-                                    <div><p class="text-[10px]">ADD</p><p class="font-bold">${o.oi.add || '0.00'}</p></div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                             <div><p class="text-gray-400 font-bold uppercase">Lente</p><p class="font-semibold">${o.lensType}</p></div>
-                            <div><p class="text-gray-400 font-bold uppercase">Tratamientos</p><p class="font-semibold text-blue-600">${treatsList}</p></div>
                             <div><p class="text-gray-400 font-bold uppercase">Armazón</p><p class="font-semibold">${o.frameModel} (${o.frameSource})</p></div>
-                            <div><p class="text-gray-400 font-bold uppercase">DNP/Alt</p><p class="font-semibold">${o.dnp || '-'} / ${o.altura || '-'}</p></div>
-                        </div>
-
-                        ${o.notes ? `<div class="mt-4 p-3 bg-yellow-50 rounded-lg text-xs italic text-gray-600"><strong>Notas:</strong> ${o.notes}</div>` : ''}
-                        
-                        <div class="mt-4 pt-4 border-t flex justify-end">
-                            <button onclick="downloadPDF(${originalIndex})" class="text-blue-600 font-bold text-xs flex items-center gap-1 hover:underline">
-                                <i class="fas fa-file-pdf"></i> DESCARGAR RECIBO PDF
-                            </button>
+                            <div class="col-span-2">
+                                <button onclick="downloadPDF(${orders.indexOf(o)})" class="mt-2 text-blue-600 font-bold hover:underline">
+                                    <i class="fas fa-file-pdf"></i> DESCARGAR RECIBO
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -309,7 +285,7 @@
         };
 
         window.deleteOrder = (index) => {
-            if (confirm('¿Desea borrar este registro?')) {
+            if (confirm('¿Borrar registro?')) {
                 orders.splice(index, 1);
                 localStorage.setItem('optica_orders', JSON.stringify(orders));
                 renderHistory();
@@ -318,23 +294,15 @@
 
         document.getElementById('orderForm').onsubmit = (e) => {
             e.preventDefault();
-
-            const checkedTreatments = Array.from(document.querySelectorAll('input[name="treatment"]:checked'))
-                .map(cb => cb.value);
+            const checkedTreatments = Array.from(document.querySelectorAll('input[name="treatment"]:checked')).map(cb => cb.value);
 
             const newOrder = {
                 orderNumber: document.getElementById('order-id-display').innerText,
                 patientName: document.getElementById('patientName').value,
                 patientId: document.getElementById('patientId').value,
                 patientTel: document.getElementById('patientTel').value,
-                od: { 
-                    esf: document.getElementById('od_esf').value, cil: document.getElementById('od_cil').value, 
-                    eje: document.getElementById('od_eje').value, add: document.getElementById('od_add').value 
-                },
-                oi: { 
-                    esf: document.getElementById('oi_esf').value, cil: document.getElementById('oi_cil').value, 
-                    eje: document.getElementById('oi_eje').value, add: document.getElementById('oi_add').value 
-                },
+                od: { esf: document.getElementById('od_esf').value, cil: document.getElementById('od_cil').value, eje: document.getElementById('od_eje').value, add: document.getElementById('od_add').value },
+                oi: { esf: document.getElementById('oi_esf').value, cil: document.getElementById('oi_cil').value, eje: document.getElementById('oi_eje').value, add: document.getElementById('oi_add').value },
                 dnp: document.getElementById('dnp').value,
                 altura: document.getElementById('altura').value,
                 lensType: document.getElementById('lensType').value,
@@ -342,51 +310,37 @@
                 frameModel: document.getElementById('frameModel').value,
                 frameSource: document.getElementById('frameSource').value,
                 notes: document.getElementById('notes').value,
-                createdAt: new Date().toLocaleString()
+                createdAt: new Date().toLocaleString('es-AR')
             };
 
             orders.push(newOrder);
             localStorage.setItem('optica_orders', JSON.stringify(orders));
-            
-            alert("¡Pedido guardado!");
             document.getElementById('orderForm').reset();
             generateId();
             switchTab('history');
+            renderHistory();
         };
-
-        function generateId() {
-            document.getElementById('order-id-display').innerText = Math.floor(10000 + Math.random() * 90000);
-        }
 
         window.downloadPDF = (index) => {
             const o = orders[index];
-            const treats = Array.isArray(o.treatments) ? o.treatments.join(', ') : (o.treatments || '-');
             const element = document.createElement('div');
+            element.style.padding = "40px";
             element.innerHTML = `
-                <div style="padding: 40px; font-family: sans-serif; color: #333;">
-                    <h1 style="color: #2563eb;">Óptica Connect - Orden de Trabajo #${o.orderNumber}</h1>
-                    <hr>
-                    <p><strong>Paciente:</strong> ${o.patientName}</p>
-                    <p><strong>DNI:</strong> ${o.patientId} | <strong>Fecha:</strong> ${o.createdAt}</p>
-                    <table border="1" cellpadding="10" style="width:100%; border-collapse: collapse; margin: 20px 0;">
-                        <tr style="background: #f1f5f9;">
-                            <th>OJO</th><th>ESF</th><th>CIL</th><th>EJE</th><th>ADD</th>
-                        </tr>
-                        <tr>
-                            <td>DERECHO</td><td>${o.od.esf || '0'}</td><td>${o.od.cil || '0'}</td><td>${o.od.eje || '0'}°</td><td>${o.od.add || '0'}</td>
-                        </tr>
-                        <tr>
-                            <td>IZQUIERDO</td><td>${o.oi.esf || '0'}</td><td>${o.oi.cil || '0'}</td><td>${o.oi.eje || '0'}°</td><td>${o.oi.add || '0'}</td>
-                        </tr>
-                    </table>
-                    <p><strong>Lente:</strong> ${o.lensType}</p>
-                    <p><strong>Tratamientos:</strong> ${treats}</p>
-                    <p><strong>Armazón:</strong> ${o.frameModel} (${o.frameSource})</p>
-                    <p><strong>DNP:</strong> ${o.dnp || '-'} | <strong>Altura:</strong> ${o.altura || '-'}</p>
-                    <p><strong>Observaciones:</strong> ${o.notes || '-'}</p>
-                </div>
+                <h1 style="color: #2563eb;">Óptica Connect - Orden #${o.orderNumber}</h1>
+                <p><strong>Paciente:</strong> ${o.patientName} (${o.patientId})</p>
+                <p><strong>Fecha:</strong> ${o.createdAt}</p>
+                <hr>
+                <h3>Graduación</h3>
+                <p>OD: ESF ${o.od.esf} | CIL ${o.od.cil} | EJE ${o.od.eje} | ADD ${o.od.add}</p>
+                <p>OI: ESF ${o.oi.esf} | CIL ${o.oi.cil} | EJE ${o.oi.eje} | ADD ${o.oi.add}</p>
+                <hr>
+                <p><strong>Tipo de Lente:</strong> ${o.lensType}</p>
+                <p><strong>Tratamientos:</strong> ${o.treatments.join(', ') || 'Ninguno'}</p>
+                <p><strong>Armazón:</strong> ${o.frameModel} (${o.frameSource})</p>
+                <p><strong>DNP/Alt:</strong> ${o.dnp} / ${o.altura}</p>
+                <p><strong>Observaciones:</strong> ${o.notes}</p>
             `;
-            html2pdf().from(element).save(`Pedido_${o.orderNumber}.pdf`);
+            html2pdf().from(element).save(`Orden_${o.orderNumber}.pdf`);
         };
     </script>
 </body>
