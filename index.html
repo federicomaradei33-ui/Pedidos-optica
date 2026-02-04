@@ -20,13 +20,11 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Cargador con Control de Estado -->
+    <!-- Cargador (Simulado para fluidez inicial) -->
     <div id="loader" class="fixed inset-0 z-[200] flex items-center justify-center loading-overlay">
         <div class="flex flex-col items-center p-8 text-center">
-            <div id="loader-spinner" class="animate-spin rounded-full h-14 w-14 border-t-4 border-blue-600 border-r-4 border-transparent"></div>
-            <div id="error-icon" class="hidden text-red-500 text-5xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
-            <p id="loader-text" class="mt-6 font-bold text-blue-600 text-lg">Iniciando conexión segura...</p>
-            <button id="retry-btn" onclick="location.reload()" class="hidden mt-4 px-6 py-2 bg-blue-600 text-white rounded-full font-bold shadow-md">Reintentar</button>
+            <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-blue-600 border-r-4 border-transparent"></div>
+            <p class="mt-6 font-bold text-blue-600 text-lg">Iniciando aplicación local...</p>
         </div>
     </div>
 
@@ -110,7 +108,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3">
-                    <i class="fas fa-cloud-upload-alt"></i> GUARDAR EN LA NUBE
+                    <i class="fas fa-save"></i> GUARDAR PEDIDO LOCALMENTE
                 </button>
             </form>
         </section>
@@ -133,147 +131,115 @@
         </section>
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // Lógica de Persistencia Local (LocalStorage)
+        let orders = JSON.parse(localStorage.getItem('optica_orders')) || [];
 
-        // Configuración y variables de entorno
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        let currentUser = null;
-        let orders = [];
-
-        // Función para mostrar errores en el loader
-        const showError = (msg) => {
-            document.getElementById('loader-spinner').classList.add('hidden');
-            document.getElementById('error-icon').classList.remove('hidden');
-            document.getElementById('loader-text').innerText = msg;
-            document.getElementById('loader-text').classList.add('text-red-600');
-            document.getElementById('retry-btn').classList.remove('hidden');
+        // Inicialización
+        window.onload = () => {
+            renderHistory();
+            generateId();
+            // Ocultar loader
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 300);
+            }, 500);
         };
 
-        // PASO 1: Autenticación Mandatoria
-        const startApp = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Auth Fail:", e);
-                showError("Error de autenticación: Verifica la conexión.");
-            }
-        };
-
-        startApp();
-
-        // PASO 2: Escuchar cambios de Auth y luego Firestore
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('loader-text').innerText = "Sincronizando con la nube...";
-                
-                // REGLA 1: Ruta de colección obligatoria
-                const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
-                
-                // Escuchar datos en tiempo real
-                onSnapshot(ordersRef, (snapshot) => {
-                    orders = snapshot.docs.map(d => ({ id_fs: d.id, ...d.data() }));
-                    // Ordenar localmente (Regla 2: Sin queries complejas)
-                    orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                    
-                    renderHistory();
-                    document.getElementById('loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader').style.display = 'none', 300);
-                }, (error) => {
-                    console.error("Firestore Error:", error);
-                    showError("Error de Firestore: Permisos insuficientes o base de datos no configurada.");
-                });
-            }
-        });
-
-        // UI Logic
+        // Cambio de pestañas
         window.switchTab = (tab) => {
             document.getElementById('tab-new-order').classList.toggle('hidden', tab !== 'new-order');
             document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
         };
 
+        // Renderizar historial
         window.renderHistory = () => {
             const body = document.getElementById('historyTableBody');
             body.innerHTML = '';
-            document.getElementById('badge-count').innerText = orders.length;
-            document.getElementById('badge-count').classList.toggle('hidden', orders.length === 0);
+            
+            const badge = document.getElementById('badge-count');
+            badge.innerText = orders.length;
+            badge.classList.toggle('hidden', orders.length === 0);
 
-            orders.forEach(o => {
+            // Mostrar órdenes más recientes primero
+            const sortedOrders = [...orders].reverse();
+
+            sortedOrders.forEach((o, index) => {
+                // El index real en el array original para borrar
+                const originalIndex = orders.indexOf(o);
+                
                 body.innerHTML += `
                     <tr class="hover:bg-blue-50 transition-colors">
                         <td class="px-6 py-4 font-mono font-bold text-blue-600">#${o.orderNumber}</td>
                         <td class="px-6 py-4 font-semibold">${o.patientName}</td>
                         <td class="px-6 py-4">
-                            <button onclick="deleteOrder('${o.id_fs}')" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash"></i></button>
+                            <button onclick="deleteOrder(${originalIndex})" class="text-red-400 hover:text-red-600 p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
             });
         };
 
-        window.deleteOrder = async (id) => {
-            if (!currentUser) return;
-            if (confirm('¿Desea borrar este registro permanentemente?')) {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', id));
-                } catch (e) { alert("Error al borrar: Sin permisos."); }
+        // Borrar orden
+        window.deleteOrder = (index) => {
+            if (confirm('¿Desea borrar este registro del dispositivo?')) {
+                orders.splice(index, 1);
+                saveToLocal();
+                renderHistory();
             }
         };
 
-        document.getElementById('orderForm').onsubmit = async (e) => {
-            e.preventDefault();
-            if (!currentUser) return;
+        // Guardar en LocalStorage
+        function saveToLocal() {
+            localStorage.setItem('optica_orders', JSON.stringify(orders));
+        }
 
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "GUARDANDO...";
+        // Manejo del Formulario
+        document.getElementById('orderForm').onsubmit = (e) => {
+            e.preventDefault();
 
             const newOrder = {
+                id: Date.now(),
                 orderNumber: document.getElementById('order-id-display').innerText,
                 patientName: document.getElementById('patientName').value,
                 patientId: document.getElementById('patientId').value,
                 patientTel: document.getElementById('patientTel').value,
-                od: { esf: document.getElementById('od_esf').value, cil: document.getElementById('od_cil').value, eje: document.getElementById('od_eje').value, add: document.getElementById('od_add').value },
-                oi: { esf: document.getElementById('oi_esf').value, cil: document.getElementById('oi_cil').value, eje: document.getElementById('oi_eje').value, add: document.getElementById('oi_add').value },
+                od: { 
+                    esf: document.getElementById('od_esf').value, 
+                    cil: document.getElementById('od_cil').value, 
+                    eje: document.getElementById('od_eje').value, 
+                    add: document.getElementById('od_add').value 
+                },
+                oi: { 
+                    esf: document.getElementById('oi_esf').value, 
+                    cil: document.getElementById('oi_cil').value, 
+                    eje: document.getElementById('oi_eje').value, 
+                    add: document.getElementById('oi_add').value 
+                },
                 lensType: document.getElementById('lensType').value,
                 treatments: document.getElementById('treatments').value,
                 frameModel: document.getElementById('frameModel').value,
                 frameSource: document.getElementById('frameSource').value,
-                createdAt: serverTimestamp()
+                createdAt: new Date().toISOString()
             };
 
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), newOrder);
-                document.getElementById('orderForm').reset();
-                generateId();
-                alert("¡Pedido guardado en la nube!");
-                switchTab('history');
-            } catch (err) {
-                console.error("Save Error:", err);
-                alert("Error al guardar. Verifique los permisos de Firestore.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> GUARDAR EN LA NUBE';
-            }
+            orders.push(newOrder);
+            saveToLocal();
+            renderHistory();
+            
+            document.getElementById('orderForm').reset();
+            generateId();
+            
+            alert("¡Pedido guardado en este dispositivo!");
+            switchTab('history');
         };
 
         function generateId() {
             document.getElementById('order-id-display').innerText = Math.floor(10000 + Math.random() * 90000);
         }
-
-        generateId();
     </script>
 </body>
 </html>
