@@ -10,208 +10,121 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-
-        .input-field {
-            @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none bg-white text-gray-900;
-        }
-
-        .prescription-grid {
-            display: grid;
-            grid-template-columns: 80px 1fr 1fr 1fr 1fr;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .loading-overlay {
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-        }
-
-        @media (max-width: 640px) {
-            .prescription-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-            .prescription-grid div:first-child {
-                grid-column: span 2;
-                background: #ebf2ff;
-                padding: 4px;
-                border-radius: 4px;
-                text-align: center;
-            }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .input-field { @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900; }
+        .prescription-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr 1fr; gap: 0.5rem; align-items: center; }
+        .loading-overlay { background: rgba(255, 255, 255, 0.95); display: flex; transition: opacity 0.3s ease; }
+        @media (max-width: 640px) { .prescription-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .prescription-grid div:first-child { grid-column: span 2; background: #ebf2ff; padding: 4px; border-radius: 4px; text-align: center; } }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- Loader -->
+    <!-- Cargador con Control de Estado -->
     <div id="loader" class="fixed inset-0 z-[200] flex items-center justify-center loading-overlay">
-        <div class="flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p id="loader-text" class="mt-4 font-semibold text-blue-600 animate-pulse">Iniciando sesión segura...</p>
+        <div class="flex flex-col items-center p-8 text-center">
+            <div id="loader-spinner" class="animate-spin rounded-full h-14 w-14 border-t-4 border-blue-600 border-r-4 border-transparent"></div>
+            <div id="error-icon" class="hidden text-red-500 text-5xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
+            <p id="loader-text" class="mt-6 font-bold text-blue-600 text-lg">Iniciando conexión segura...</p>
+            <button id="retry-btn" onclick="location.reload()" class="hidden mt-4 px-6 py-2 bg-blue-600 text-white rounded-full font-bold shadow-md">Reintentar</button>
         </div>
     </div>
 
     <!-- Navegación -->
     <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2">
-                    <div class="bg-blue-600 p-1.5 rounded-lg">
-                        <i class="fas fa-glasses text-white text-xl"></i>
-                    </div>
-                    <span class="font-bold text-xl tracking-tight hidden sm:inline">Óptica<span class="text-blue-600">Connect</span></span>
+                    <div class="bg-blue-600 p-1.5 rounded-lg text-white"><i class="fas fa-glasses text-xl"></i></div>
+                    <span class="font-bold text-xl tracking-tight">Óptica<span class="text-blue-600">Connect</span></span>
                 </div>
-                <div class="flex gap-2 sm:gap-4">
-                    <button onclick="switchTab('new-order')" class="text-gray-600 hover:text-blue-600 font-semibold px-3 py-2 text-sm sm:text-base">Nuevo Pedido</button>
-                    <button onclick="switchTab('history')" class="text-gray-600 hover:text-blue-600 font-semibold px-3 py-2 text-sm sm:text-base relative">
-                        Historial
-                        <span id="badge-count" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                <div class="flex gap-4">
+                    <button onclick="switchTab('new-order')" class="text-gray-600 hover:text-blue-600 font-bold px-3 py-2">Nuevo</button>
+                    <button onclick="switchTab('history')" class="text-gray-600 hover:text-blue-600 font-bold px-3 py-2 relative">
+                        Historial <span id="badge-count" class="hidden bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
                     </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
+    <main class="max-w-5xl mx-auto p-4 sm:p-8 pb-24">
         <!-- Tab: Nuevo Pedido -->
         <section id="tab-new-order" class="space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Formulario de Pedido</h1>
-                    <p class="text-gray-500 text-sm">Crea una orden técnica y sincronízala automáticamente.</p>
-                </div>
-                <div class="bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                    <span class="text-sm font-mono font-bold text-blue-600">ORDEN #<span id="order-id-display">--</span></span>
+            <div class="flex justify-between items-end">
+                <h1 class="text-2xl font-black text-gray-900">Nueva Orden Técnica</h1>
+                <div class="bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100 text-blue-600 font-mono font-bold text-sm">
+                    ORDEN #<span id="order-id-display">----</span>
                 </div>
             </div>
 
             <form id="orderForm" class="space-y-6">
-                <!-- Datos del Paciente -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700">
-                        <i class="fas fa-id-card text-blue-500"></i> Datos del Paciente
-                    </h2>
+                    <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700"><i class="fas fa-user-circle text-blue-500"></i> Paciente</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-1">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
-                            <input type="text" id="patientName" class="input-field" placeholder="Nombre del cliente" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNI / Documento</label>
-                            <input type="text" id="patientId" class="input-field" placeholder="Opcional">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp / Tel</label>
-                            <input type="tel" id="patientTel" class="input-field" placeholder="Ej: 11 1234 5678">
-                        </div>
+                        <input type="text" id="patientName" class="input-field" placeholder="Nombre completo" required>
+                        <input type="text" id="patientId" class="input-field" placeholder="DNI">
+                        <input type="tel" id="patientTel" class="input-field" placeholder="WhatsApp">
                     </div>
                 </div>
 
-                <!-- Receta -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm space-y-6">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700">
-                        <i class="fas fa-file-medical text-blue-500"></i> Graduación
-                    </h2>
-                    <div class="space-y-6">
-                        <div class="hidden sm:grid prescription-grid text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">
-                            <div>Ojo</div>
-                            <div>Esfera</div>
-                            <div>Cilindro</div>
-                            <div>Eje</div>
-                            <div>Adición</div>
-                        </div>
+                    <h2 class="text-lg font-bold flex items-center gap-2 text-gray-700"><i class="fas fa-file-medical text-blue-500"></i> Graduación</h2>
+                    <div class="space-y-4">
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-600 text-sm">DERECHO (OD)</div>
+                            <div class="font-bold text-blue-700">OD (Der)</div>
                             <input type="number" step="0.25" id="od_esf" class="input-field" placeholder="ESF">
                             <input type="number" step="0.25" id="od_cil" class="input-field" placeholder="CIL">
                             <input type="number" step="1" id="od_eje" class="input-field" placeholder="EJE">
                             <input type="number" step="0.25" id="od_add" class="input-field" placeholder="ADD">
                         </div>
                         <div class="prescription-grid">
-                            <div class="font-bold text-blue-600 text-sm">IZQUIERDO (OI)</div>
+                            <div class="font-bold text-blue-700">OI (Izq)</div>
                             <input type="number" step="0.25" id="oi_esf" class="input-field" placeholder="ESF">
                             <input type="number" step="0.25" id="oi_cil" class="input-field" placeholder="CIL">
                             <input type="number" step="1" id="oi_eje" class="input-field" placeholder="EJE">
                             <input type="number" step="0.25" id="oi_add" class="input-field" placeholder="ADD">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-dashed">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNP</label>
-                            <input type="text" id="dnp" class="input-field" placeholder="Ej: 32/34">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Altura</label>
-                            <input type="text" id="altura" class="input-field" placeholder="Ej: 18mm">
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Lente y Armazón -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 border-l-4 border-l-blue-500">
-                        <h2 class="text-md font-bold text-gray-700">Cristales</h2>
-                        <select id="lensType" class="input-field font-semibold">
-                            <option>Monofocal Stock</option>
-                            <option>Monofocal Laboratorio</option>
+                    <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 border-l-4 border-blue-500">
+                        <h3 class="font-bold text-gray-700">Lentes</h3>
+                        <select id="lensType" class="input-field">
+                            <option>Monofocal</option>
+                            <option>Multifocal / Progresivo</option>
                             <option>Bifocal</option>
-                            <option>Progresivo / Multifocal</option>
-                            <option>Ocupacional</option>
+                            <option>Solo Armazón</option>
                         </select>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer">
-                                <input type="checkbox" name="treat" value="Antireflex" class="w-4 h-4"> AR
-                            </label>
-                            <label class="flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer">
-                                <input type="checkbox" name="treat" value="Blue Cut" class="w-4 h-4"> Blue Cut
-                            </label>
-                        </div>
+                        <input type="text" id="treatments" class="input-field" placeholder="Tratamientos (AR, Blue, etc.)">
                     </div>
-                    <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 border-l-4 border-l-blue-500">
-                        <h2 class="text-md font-bold text-gray-700">Armazón</h2>
+                    <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 border-l-4 border-blue-500">
+                        <h3 class="font-bold text-gray-700">Armazón</h3>
+                        <input type="text" id="frameModel" class="input-field" placeholder="Marca / Modelo / Color">
                         <select id="frameSource" class="input-field">
-                            <option value="De la Óptica">De la Óptica</option>
-                            <option value="Del Paciente">Del Paciente</option>
+                            <option>De la Óptica</option>
+                            <option>Del Paciente</option>
                         </select>
-                        <input type="text" id="frameModel" class="input-field" placeholder="Marca / Modelo">
                     </div>
                 </div>
 
-                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
-                    <textarea id="notes" class="input-field h-24" placeholder="Observaciones extras..."></textarea>
-                    <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg flex items-center justify-center gap-3">
-                        <span>GUARDAR PEDIDO</span>
-                        <i class="fas fa-save"></i>
-                    </button>
-                </div>
+                <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fas fa-cloud-upload-alt"></i> GUARDAR EN LA NUBE
+                </button>
             </form>
         </section>
 
         <!-- Tab: Historial -->
         <section id="tab-history" class="hidden space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 class="text-2xl font-bold text-gray-900">Historial</h1>
-                <input type="text" id="searchOrders" oninput="renderHistory()" placeholder="Buscar paciente..." class="input-field max-w-xs">
-            </div>
+            <h1 class="text-2xl font-black">Registros Guardados</h1>
             <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 border-b">
                         <tr>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Orden</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Paciente</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Acciones</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
@@ -220,38 +133,32 @@
         </section>
     </main>
 
-    <!-- Modal Detalles -->
-    <div id="detailsModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-[150] p-4">
-        <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b flex justify-between items-center">
-                <h3 class="text-xl font-bold">Detalles Orden <span id="det-id" class="text-blue-600"></span></h3>
-                <button onclick="closeDetails()" class="text-2xl">&times;</button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-4" id="modal-content">
-                <!-- Se llena dinámicamente -->
-            </div>
-            <div class="p-4 border-t bg-gray-50">
-                <button id="det-download-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">DESCARGAR PDF</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuración y variables de entorno
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        let user = null;
+        let currentUser = null;
         let orders = [];
 
-        // REGLA 3: Autenticación ANTES que cualquier consulta
-        const initAuth = async () => {
+        // Función para mostrar errores en el loader
+        const showError = (msg) => {
+            document.getElementById('loader-spinner').classList.add('hidden');
+            document.getElementById('error-icon').classList.remove('hidden');
+            document.getElementById('loader-text').innerText = msg;
+            document.getElementById('loader-text').classList.add('text-red-600');
+            document.getElementById('retry-btn').classList.remove('hidden');
+        };
+
+        // PASO 1: Autenticación Mandatoria
+        const startApp = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -259,147 +166,114 @@
                     await signInAnonymously(auth);
                 }
             } catch (e) {
-                console.error("Error de Auth:", e);
-                document.getElementById('loader-text').innerText = "Error de conexión. Reintente.";
+                console.error("Auth Fail:", e);
+                showError("Error de autenticación: Verifica la conexión.");
             }
         };
 
-        initAuth();
+        startApp();
 
-        onAuthStateChanged(auth, (u) => {
-            if (u) {
-                user = u;
-                document.getElementById('loader-text').innerText = "Sincronizando datos...";
+        // PASO 2: Escuchar cambios de Auth y luego Firestore
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loader-text').innerText = "Sincronizando con la nube...";
                 
-                // REGLA 1: Ruta estricta obligatoria
-                const q = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+                // REGLA 1: Ruta de colección obligatoria
+                const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
                 
-                onSnapshot(q, (snap) => {
-                    orders = snap.docs.map(d => ({ id_fs: d.id, ...d.data() }));
-                    // Ordenar en memoria (REGLA 2: No usar orderBy en la consulta)
-                    orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                // Escuchar datos en tiempo real
+                onSnapshot(ordersRef, (snapshot) => {
+                    orders = snapshot.docs.map(d => ({ id_fs: d.id, ...d.data() }));
+                    // Ordenar localmente (Regla 2: Sin queries complejas)
+                    orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                    
                     renderHistory();
-                    document.getElementById('loader').style.display = 'none';
-                }, (err) => {
-                    console.error("Firestore Error:", err);
-                    document.getElementById('loader-text').innerText = "Error de permisos. Contacte soporte.";
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 300);
+                }, (error) => {
+                    console.error("Firestore Error:", error);
+                    showError("Error de Firestore: Permisos insuficientes o base de datos no configurada.");
                 });
             }
         });
 
+        // UI Logic
         window.switchTab = (tab) => {
             document.getElementById('tab-new-order').classList.toggle('hidden', tab !== 'new-order');
             document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
         };
 
         window.renderHistory = () => {
-            const search = document.getElementById('searchOrders').value.toLowerCase();
             const body = document.getElementById('historyTableBody');
             body.innerHTML = '';
-            
-            const filtered = orders.filter(o => o.patient.toLowerCase().includes(search));
             document.getElementById('badge-count').innerText = orders.length;
             document.getElementById('badge-count').classList.toggle('hidden', orders.length === 0);
 
-            filtered.forEach(o => {
+            orders.forEach(o => {
                 body.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-4 font-mono font-bold text-blue-600">#${o.id}</td>
-                        <td class="px-6 py-4">${o.patient}</td>
-                        <td class="px-6 py-4 flex gap-2">
-                            <button onclick="showOrderDetails('${o.id_fs}')" class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-eye"></i></button>
-                            <button onclick="deleteOrder('${o.id_fs}')" class="p-2 bg-red-50 text-red-400 rounded-lg"><i class="fas fa-trash"></i></button>
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600">#${o.orderNumber}</td>
+                        <td class="px-6 py-4 font-semibold">${o.patientName}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="deleteOrder('${o.id_fs}')" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
         };
 
-        window.showOrderDetails = (fsId) => {
-            const data = orders.find(o => o.id_fs === fsId);
-            if (!data) return;
-
-            document.getElementById('det-id').innerText = data.id;
-            const content = document.getElementById('modal-content');
-            content.innerHTML = `
-                <div class="bg-blue-600 p-4 rounded-xl text-white">
-                    <p class="text-xs opacity-80">Paciente</p>
-                    <p class="text-lg font-bold">${data.patient}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="border p-2 rounded"><strong>OD:</strong> ${data.od.esf || '0'} / ${data.od.cil || '0'}</div>
-                    <div class="border p-2 rounded"><strong>OI:</strong> ${data.oi.esf || '0'} / ${data.oi.cil || '0'}</div>
-                </div>
-                <div class="text-sm space-y-1">
-                    <p><strong>Lente:</strong> ${data.lensType}</p>
-                    <p><strong>Armazón:</strong> ${data.frameSource} - ${data.frameModel}</p>
-                    <p><strong>Notas:</strong> ${data.notes || 'Ninguna'}</p>
-                </div>
-            `;
-
-            document.getElementById('det-download-btn').onclick = () => generatePDF(data);
-            document.getElementById('detailsModal').classList.remove('hidden');
-        };
-
-        window.closeDetails = () => document.getElementById('detailsModal').classList.add('hidden');
-
         window.deleteOrder = async (id) => {
-            if(!user) return;
-            if(confirm('¿Eliminar pedido?')) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', id));
+            if (!currentUser) return;
+            if (confirm('¿Desea borrar este registro permanentemente?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', id));
+                } catch (e) { alert("Error al borrar: Sin permisos."); }
             }
         };
 
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
-            if (!user) return;
+            if (!currentUser) return;
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
+            btn.innerText = "GUARDANDO...";
 
-            const treats = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(el => el.value);
-            const orderData = {
-                id: document.getElementById('order-id-display').innerText,
-                timestamp: new Date().toISOString(),
-                patient: document.getElementById('patientName').value,
+            const newOrder = {
+                orderNumber: document.getElementById('order-id-display').innerText,
+                patientName: document.getElementById('patientName').value,
                 patientId: document.getElementById('patientId').value,
                 patientTel: document.getElementById('patientTel').value,
                 od: { esf: document.getElementById('od_esf').value, cil: document.getElementById('od_cil').value, eje: document.getElementById('od_eje').value, add: document.getElementById('od_add').value },
                 oi: { esf: document.getElementById('oi_esf').value, cil: document.getElementById('oi_cil').value, eje: document.getElementById('oi_eje').value, add: document.getElementById('oi_add').value },
                 lensType: document.getElementById('lensType').value,
-                treatments: treats.join(', '),
-                dnp: document.getElementById('dnp').value,
-                altura: document.getElementById('altura').value,
-                frameSource: document.getElementById('frameSource').value,
+                treatments: document.getElementById('treatments').value,
                 frameModel: document.getElementById('frameModel').value,
-                notes: document.getElementById('notes').value
+                frameSource: document.getElementById('frameSource').value,
+                createdAt: serverTimestamp()
             };
 
             try {
-                // REGLA 1: Guardar en la ruta estricta
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), orderData);
-                resetForm();
-                alert("Pedido guardado con éxito.");
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), newOrder);
+                document.getElementById('orderForm').reset();
+                generateId();
+                alert("¡Pedido guardado en la nube!");
+                switchTab('history');
             } catch (err) {
-                console.error("Error guardando:", err);
-                alert("Error de permisos al guardar.");
+                console.error("Save Error:", err);
+                alert("Error al guardar. Verifique los permisos de Firestore.");
             } finally {
                 btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> GUARDAR EN LA NUBE';
             }
         };
 
-        function resetForm() {
-            document.getElementById('orderForm').reset();
-            document.getElementById('order-id-display').innerText = Math.floor(1000 + Math.random() * 9000);
+        function generateId() {
+            document.getElementById('order-id-display').innerText = Math.floor(10000 + Math.random() * 90000);
         }
 
-        async function generatePDF(data) {
-            const opt = { margin: 1, filename: `Orden_${data.id}.pdf`, image: { type: 'jpeg', quality: 0.98 } };
-            const html = `<div><h1>Orden #${data.id}</h1><p>Paciente: ${data.patient}</p></div>`;
-            html2pdf().set(opt).from(html).save();
-        }
-
-        resetForm();
+        generateId();
     </script>
 </body>
 </html>
