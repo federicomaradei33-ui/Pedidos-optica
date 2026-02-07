@@ -120,26 +120,21 @@
     </main>
 
     <script type="text/javascript">
-        // ==========================================
-        // CONFIGURACIÓN FINAL CON TUS DATOS REALES
-        // ==========================================
+        // CONFIGURACIÓN ASIGNADA
         const CONFIG = {
             PUBLIC_KEY: "A5uX5qA-0N2vL4V71", 
             SERVICE_ID: "service_bo6kzuc",     
             TEMPLATE_ID: "template_4e00pyr"    
         };
 
+        // Inicializar inmediatamente
+        (function() {
+            emailjs.init(CONFIG.PUBLIC_KEY);
+        })();
+
         let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
 
         window.onload = function() {
-            try {
-                emailjs.init({
-                    publicKey: CONFIG.PUBLIC_KEY,
-                });
-                console.log("Sistema EmailJS inicializado correctamente.");
-            } catch (e) {
-                console.error("Error al iniciar el SDK:", e);
-            }
             updateOrderID();
             renderHistory();
             document.getElementById('loader').style.display = 'none';
@@ -160,12 +155,11 @@
             const btn = document.getElementById('submitBtn');
             
             btn.disabled = true;
-            btn.innerText = "ENVIANDO PEDIDO...";
+            btn.innerText = "PROCESANDO ENVÍO...";
 
             const getVal = (id) => document.getElementById(id).value || '0.00';
             const treatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
 
-            // Parámetros formateados exactamente para la plantilla
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
@@ -175,27 +169,29 @@
                 notes: document.getElementById('notes').value || 'Sin notas'
             };
 
-            console.log("Intentando enviar con:", templateParams);
-
             try {
+                // Llamada directa con manejo de promesa
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
+                console.log("Respuesta de EmailJS:", response);
+
                 if(response.status === 200) {
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
-                    alert("✅ ¡ÉXITO! El pedido ha sido enviado a tu correo.");
+                    alert("✅ ¡PEDIDO ENVIADO!\n\nLa orden #" + templateParams.order_id + " se envió correctamente a tu correo.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
                 }
             } catch (error) {
-                console.error("Error detallado:", error);
+                console.error("Error al enviar:", error);
                 
-                let errorMsg = "No se pudo enviar el correo.";
-                if (error.status === 404) errorMsg = "Error 404: No se encuentra el Servicio o Plantilla. Revisa que los IDs no tengan espacios.";
-                if (error.status === 403) errorMsg = "Error 403: La Public Key parece no ser válida para este servicio.";
+                let detail = error.text || error.message || "Error de red o IDs incorrectos";
                 
-                alert("❌ FALLO EN EL ENVÍO\n\n" + errorMsg + "\n\nDetalle técnico: " + (error.text || error.message || "Fallo de conexión"));
+                alert("❌ ERROR EN EL ENVÍO\n\n" + 
+                      "No se pudo conectar con EmailJS.\n\n" +
+                      "Causa probable: " + detail + "\n\n" +
+                      "Verifica que el Service ID (" + CONFIG.SERVICE_ID + ") y el Template ID sean los que configuraste en tu panel.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -204,7 +200,7 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados.</div>' : '';
+            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados en este dispositivo.</div>' : '';
             
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
