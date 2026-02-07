@@ -126,7 +126,7 @@
             TEMPLATE_ID: "template_4e00pyr"    
         };
 
-        // Inicialización
+        // Inicialización de EmailJS
         emailjs.init(CONFIG.PUBLIC_KEY);
 
         let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
@@ -156,15 +156,15 @@
 
             const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
             
-            // Graduación formateada para email
-            const od = `OD: ${document.getElementById('od_esf').value || '0.00'} ${document.getElementById('od_cil').value || '0.00'}x${document.getElementById('od_eje').value || '0'}° Add: ${document.getElementById('od_add').value || '0.00'}`;
-            const oi = `OI: ${document.getElementById('oi_esf').value || '0.00'} ${document.getElementById('oi_cil').value || '0.00'}x${document.getElementById('oi_eje').value || '0'}° Add: ${document.getElementById('oi_add').value || '0.00'}`;
+            // Graduación formateada para el cuerpo del mensaje
+            const od_txt = `OD: ${document.getElementById('od_esf').value || '0.00'} ${document.getElementById('od_cil').value || '0.00'}x${document.getElementById('od_eje').value || '0'}° Add: ${document.getElementById('od_add').value || '0.00'}`;
+            const oi_txt = `OI: ${document.getElementById('oi_esf').value || '0.00'} ${document.getElementById('oi_cil').value || '0.00'}x${document.getElementById('oi_eje').value || '0'}° Add: ${document.getElementById('oi_add').value || '0.00'}`;
 
-            // MAPEADO EXACTO A TU PLANTILLA DE EMAILJS
+            // MAPEADO DE PARÁMETROS PARA LA PLANTILLA (coincide con {{etiquetas}})
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
-                graduacion: `${od}\n${oi}`,
+                graduacion: `${od_txt}\n${oi_txt}`,
                 lens_detail: document.getElementById('lens_type').value,
                 treatments: treatmentsList,
                 armazon: `${document.getElementById('frame_details').value || 'Propio'} (${document.getElementById('frame_job').value})`,
@@ -173,19 +173,22 @@
             };
 
             try {
+                // Envío real a través de EmailJS
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
                 if(response.status === 200) {
+                    // Guardar en almacenamiento local para el historial
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
-                    alert("✅ Pedido enviado con éxito al laboratorio.");
+                    
+                    alert("✅ Pedido enviado correctamente.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
                 }
             } catch (error) {
-                console.error("Error EmailJS:", error);
-                alert("❌ ERROR: " + (error.text || "No se pudo enviar el pedido. Verifica tu conexión."));
+                console.error("Error al enviar con EmailJS:", error);
+                alert("❌ ERROR: No se pudo enviar el pedido. Verifique su conexión o la configuración.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -195,6 +198,8 @@
         function renderHistory() {
             const container = document.getElementById('history-container');
             container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados aún.</div>' : '';
+            
+            // Renderizar desde el más nuevo al más viejo
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
                     <div class="glass-card border-l-4 border-blue-500 mb-3 hover:shadow-md transition-shadow">
