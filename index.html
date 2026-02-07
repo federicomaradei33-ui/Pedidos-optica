@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Óptica Connect - Final</title>
+    <title>Portal Óptica Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- SDK de EmailJS v4 -->
@@ -39,7 +39,6 @@
     </nav>
 
     <main class="max-w-3xl mx-auto p-6">
-        
         <div id="tab-new" class="space-y-6">
             <div class="flex justify-between items-center">
                 <h1 class="text-2xl font-bold">Nueva Orden Técnica</h1>
@@ -127,10 +126,8 @@
             TEMPLATE_ID: "template_4e00pyr"    
         };
 
-        // Inicializar inmediatamente
-        (function() {
-            emailjs.init(CONFIG.PUBLIC_KEY);
-        })();
+        // Inicialización
+        emailjs.init(CONFIG.PUBLIC_KEY);
 
         let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
 
@@ -141,7 +138,8 @@
         };
 
         function updateOrderID() {
-            document.getElementById('order-id-display').innerText = Math.floor(1000 + Math.random() * 9000);
+            const id = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('order-id-display').innerText = id;
         }
 
         function switchTab(tab) {
@@ -153,45 +151,40 @@
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            
             btn.disabled = true;
-            btn.innerText = "PROCESANDO ENVÍO...";
+            btn.innerText = "ENVIANDO...";
 
-            const getVal = (id) => document.getElementById(id).value || '0.00';
-            const treatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
+            const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
+            
+            // Graduación formateada
+            const od = `OD: ${document.getElementById('od_esf').value || '0'} ${document.getElementById('od_cil').value || '0'}x${document.getElementById('od_eje').value || '0'} Add: ${document.getElementById('od_add').value || '0'}`;
+            const oi = `OI: ${document.getElementById('oi_esf').value || '0'} ${document.getElementById('oi_cil').value || '0'}x${document.getElementById('oi_eje').value || '0'} Add: ${document.getElementById('oi_add').value || '0'}`;
 
+            // MAPEADO EXACTO A TU PLANTILLA
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
-                date: new Date().toLocaleString('es-AR'),
-                lens_details: `Tipo: ${document.getElementById('lens_type').value} | Tratamientos: ${treatments} | Graduación: OD(${getVal('od_esf')} ${getVal('od_cil')}x${getVal('od_eje')} Add:${getVal('od_add')}) OI(${getVal('oi_esf')} ${getVal('oi_cil')}x${getVal('oi_eje')} Add:${getVal('oi_add')})`,
-                frame_details: `${document.getElementById('frame_details').value || 'Propio'} (${document.getElementById('frame_job').value})`,
-                notes: document.getElementById('notes').value || 'Sin notas'
+                graduacion: `${od} | ${oi}`,
+                lens_detail: document.getElementById('lens_type').value,
+                treatments: treatmentsList,
+                armazon: `${document.getElementById('frame_details').value || 'Propio'} (${document.getElementById('frame_job').value})`,
+                notes: document.getElementById('notes').value || 'Sin notas adicionales'
             };
 
             try {
-                // Llamada directa con manejo de promesa
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
-                console.log("Respuesta de EmailJS:", response);
-
                 if(response.status === 200) {
-                    orders.push(templateParams);
+                    orders.push({...templateParams, date: new Date().toLocaleString('es-AR')});
                     localStorage.setItem('optica_db', JSON.stringify(orders));
-                    alert("✅ ¡PEDIDO ENVIADO!\n\nLa orden #" + templateParams.order_id + " se envió correctamente a tu correo.");
+                    alert("✅ Pedido enviado con éxito.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
                 }
             } catch (error) {
-                console.error("Error al enviar:", error);
-                
-                let detail = error.text || error.message || "Error de red o IDs incorrectos";
-                
-                alert("❌ ERROR EN EL ENVÍO\n\n" + 
-                      "No se pudo conectar con EmailJS.\n\n" +
-                      "Causa probable: " + detail + "\n\n" +
-                      "Verifica que el Service ID (" + CONFIG.SERVICE_ID + ") y el Template ID sean los que configuraste en tu panel.");
+                console.error("Error EmailJS:", error);
+                alert("❌ ERROR: " + (error.text || "No se pudo enviar. Revisa la consola para más detalles."));
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -200,21 +193,20 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados en este dispositivo.</div>' : '';
-            
+            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">Sin historial.</div>' : '';
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
                     <div class="glass-card border-l-4 border-blue-500 mb-3">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="text-[9px] font-bold text-blue-600 uppercase">Orden #${o.order_id}</span>
+                                <span class="text-[9px] font-bold text-blue-600">ORDEN #${o.order_id}</span>
                                 <h3 class="font-bold text-gray-800">${o.patient_name}</h3>
                             </div>
                             <span class="text-[9px] text-gray-400 font-mono">${o.date}</span>
                         </div>
                         <div class="text-[11px] text-gray-600">
-                            <p><strong>Lente:</strong> ${o.lens_details}</p>
-                            <p><strong>Armazón:</strong> ${o.frame_details}</p>
+                            <p><strong>Graduación:</strong> ${o.graduacion}</p>
+                            <p><strong>Lente:</strong> ${o.lens_detail}</p>
                         </div>
                     </div>
                 `;
