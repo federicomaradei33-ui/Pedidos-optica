@@ -3,237 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Óptica Connect</title>
+    <title>Sistema de Gestión Óptica - Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- SDK de EmailJS v4 -->
+    <!-- SDK de EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.5rem; border: 1px solid #e2e8f0; }
-        .input-style { @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50 focus:bg-white text-sm; }
-        .btn-primary { @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg shadow-md transform active:scale-[0.98] transition-all disabled:opacity-50; }
-        .label-header { @apply text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 block; }
-        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .input-group { @apply flex flex-col gap-1; }
+        .label { @apply text-xs font-semibold text-slate-500 uppercase tracking-wider; }
+        .input { @apply w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all; }
+        .tab-btn { @apply px-4 py-2 font-medium text-sm transition-all border-b-2; }
+        .tab-active { @apply border-blue-600 text-blue-600; }
+        .tab-inactive { @apply border-transparent text-slate-400 hover:text-slate-600; }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600"></div>
-    </div>
-
-    <nav class="bg-white border-b sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-6 h-16 flex justify-between items-center">
+    <!-- Header -->
+    <header class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <div class="bg-blue-600 p-1.5 rounded text-white"><i class="fas fa-glasses"></i></div>
-                <span class="font-bold text-lg tracking-tight">Óptica<span class="text-blue-600">Connect</span></span>
+                <i class="fas fa-eye text-blue-600 text-2xl"></i>
+                <h1 class="font-bold text-xl tracking-tight">Óptica<span class="text-blue-600">Connect</span></h1>
             </div>
-            <div class="flex gap-4">
-                <button onclick="switchTab('new')" class="text-sm font-semibold text-gray-500 hover:text-blue-600">Nueva Orden</button>
-                <button onclick="switchTab('history')" class="text-sm font-semibold text-gray-500 hover:text-blue-600">Historial</button>
-            </div>
+            <nav class="flex gap-2">
+                <button onclick="switchTab('new')" id="btn-new" class="tab-btn tab-active">Nueva Orden</button>
+                <button onclick="switchTab('history')" id="btn-history" class="tab-btn tab-inactive">Historial</button>
+            </nav>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-3xl mx-auto p-6">
-        <div id="tab-new" class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold">Nueva Orden Técnica</h1>
-                <div class="text-right">
-                    <span class="label-header">Orden ID</span>
-                    <span id="order-id-display" class="font-mono font-bold text-blue-600">----</span>
+    <main class="max-w-4xl mx-auto p-4 md:p-8">
+        
+        <!-- Formulario de Nueva Orden -->
+        <div id="section-new" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <h2 class="text-2xl font-bold text-slate-800">Generar Orden Técnica</h2>
+                <div class="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                    <span class="label">ID de Orden:</span>
+                    <span id="display-id" class="font-mono font-bold text-blue-600 ml-2">---</span>
                 </div>
             </div>
 
-            <form id="orderForm" class="space-y-4">
-                <div class="glass-card">
-                    <span class="label-header"><i class="fas fa-user mr-1"></i> Datos del Paciente</span>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="patient_name" placeholder="Nombre completo" class="input-style" required>
-                        <input type="text" id="patient_id" placeholder="DNI / Documento" class="input-style">
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <span class="label-header"><i class="fas fa-eye mr-1"></i> Graduación</span>
-                    <div class="grid grid-cols-5 gap-2 mb-2 text-center text-[9px] font-bold text-gray-400">
-                        <div></div><div>ESF</div><div>CIL</div><div>EJE</div><div>ADD</div>
-                    </div>
-                    <!-- Fila Ojo Derecho -->
-                    <div class="grid grid-cols-5 gap-2 items-center mb-4">
-                        <span class="text-[10px] font-bold text-blue-600">O. DERECHO</span>
-                        <input type="text" id="od_esf" placeholder="0.00" class="input-style text-center">
-                        <input type="text" id="od_cil" placeholder="0.00" class="input-style text-center">
-                        <input type="text" id="od_eje" placeholder="0°" class="input-style text-center">
-                        <input type="text" id="od_add" placeholder="0.00" class="input-style text-center">
-                    </div>
-                    <!-- Fila Ojo Izquierdo -->
-                    <div class="grid grid-cols-5 gap-2 items-center">
-                        <span class="text-[10px] font-bold text-blue-600">O. IZQUIERDO</span>
-                        <input type="text" id="oi_esf" placeholder="0.00" class="input-style text-center">
-                        <input type="text" id="oi_cil" placeholder="0.00" class="input-style text-center">
-                        <input type="text" id="oi_eje" placeholder="0°" class="input-style text-center">
-                        <input type="text" id="oi_add" placeholder="0.00" class="input-style text-center">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="glass-card">
-                        <span class="label-header"><i class="fas fa-layer-group mr-1"></i> Cristales</span>
-                        <select id="lens_type" class="input-style mb-3">
-                            <option>Monofocal Stock</option>
-                            <option>Monofocal Lab</option>
-                            <option>Bifocal</option>
-                            <option>Multifocal</option>
-                        </select>
-                        <div class="grid grid-cols-1 gap-2">
-                            <label class="text-xs flex items-center gap-2"><input type="checkbox" class="t-check" value="Antirreflex"> Antirreflex</label>
-                            <label class="text-xs flex items-center gap-2"><input type="checkbox" class="t-check" value="Filtro Azul"> Filtro Azul</label>
-                            <label class="text-xs flex items-center gap-2"><input type="checkbox" class="t-check" value="Fotocromático"> Fotocromático</label>
+            <form id="orderForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Columna Izquierda: Paciente y Graduación -->
+                <div class="space-y-6">
+                    <div class="card p-6 space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 border-b pb-2"><i class="fas fa-user-circle text-blue-500"></i> Paciente</h3>
+                        <div class="input-group">
+                            <label class="label">Nombre y Apellido</label>
+                            <input type="text" id="p_name" required class="input" placeholder="Juan Pérez">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">DNI / Documento</label>
+                            <input type="text" id="p_id" class="input" placeholder="Opcional">
                         </div>
                     </div>
-                    <div class="glass-card">
-                        <span class="label-header"><i class="fas fa-frame mr-1"></i> Armazón</span>
-                        <input type="text" id="frame_details" placeholder="Modelo / Color / Marca" class="input-style mb-3">
-                        <select id="frame_job" class="input-style">
-                            <option>Calibrado Metal</option>
-                            <option>Calibrado Zilo</option>
-                            <option>Ranurado / Al aire</option>
-                        </select>
+
+                    <div class="card p-6 space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 border-b pb-2"><i class="fas fa-stethoscope text-blue-500"></i> Graduación</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- OD -->
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 block mb-2">OJO DERECHO (OD)</span>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <input type="text" id="od_esf" placeholder="ESF" class="input text-center">
+                                    <input type="text" id="od_cil" placeholder="CIL" class="input text-center">
+                                    <input type="text" id="od_eje" placeholder="EJE" class="input text-center">
+                                    <input type="text" id="od_add" placeholder="ADD" class="input text-center">
+                                </div>
+                            </div>
+                            <!-- OI -->
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 block mb-2">OJO IZQUIERDO (OI)</span>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <input type="text" id="oi_esf" placeholder="ESF" class="input text-center">
+                                    <input type="text" id="oi_cil" placeholder="CIL" class="input text-center">
+                                    <input type="text" id="oi_eje" placeholder="EJE" class="input text-center">
+                                    <input type="text" id="oi_add" placeholder="ADD" class="input text-center">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="glass-card">
-                    <span class="label-header">Observaciones</span>
-                    <textarea id="notes" class="input-style h-20 mb-4" placeholder="Detalles extra..."></textarea>
-                    <button type="submit" id="submitBtn" class="btn-primary">ENVIAR PEDIDO</button>
+                <!-- Columna Derecha: Lentes y Armazón -->
+                <div class="space-y-6">
+                    <div class="card p-6 space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 border-b pb-2"><i class="fas fa-layer-group text-blue-500"></i> Cristales</h3>
+                        <div class="input-group">
+                            <label class="label">Tipo de Lente</label>
+                            <select id="lens_type" class="input">
+                                <option>Monofocal Stock</option>
+                                <option>Monofocal Laboratorio</option>
+                                <option>Bifocal</option>
+                                <option>Multifocal / Progresivo</option>
+                                <option>Ocupacional</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Tratamientos adicionales</label>
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <label class="text-xs flex items-center gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="treat" value="Antirreflex"> Antirreflex
+                                </label>
+                                <label class="text-xs flex items-center gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="treat" value="Filtro Azul"> Filtro Azul
+                                </label>
+                                <label class="text-xs flex items-center gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="treat" value="Fotocromático"> Fotocromático
+                                </label>
+                                <label class="text-xs flex items-center gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="treat" value="Polarizado"> Polarizado
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-6 space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 border-b pb-2"><i class="fas fa-glasses text-blue-500"></i> Armazón</h3>
+                        <div class="input-group">
+                            <label class="label">Detalles del Armazón</label>
+                            <input type="text" id="frame_info" class="input" placeholder="Marca, Modelo, Color">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Observaciones para Laboratorio</label>
+                            <textarea id="obs" class="input h-20 resize-none" placeholder="Medidas DNP, Altura, o urgencia..."></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="main-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>ENVIAR ORDEN AL LABORATORIO</span>
+                    </button>
                 </div>
             </form>
         </div>
 
-        <div id="tab-history" class="hidden space-y-4">
-            <h2 class="text-xl font-bold">Historial de Pedidos</h2>
-            <div id="history-container" class="space-y-3"></div>
+        <!-- Historial -->
+        <div id="section-history" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800">Historial de Trabajos</h2>
+            <div id="history-list" class="space-y-4">
+                <!-- Se llena dinámicamente -->
+            </div>
         </div>
     </main>
 
-    <script type="text/javascript">
-        // CONFIGURACIÓN DE EMAILJS VERIFICADA
-        const CONFIG = {
-            PUBLIC_KEY: "A5uX5qA-0N2vL4V71", 
-            SERVICE_ID: "service_bo6kzuc",     
-            TEMPLATE_ID: "template_4e00pyr"    
-        };
+    <script>
+        // --- CREDENCIALES UNIFICADAS ---
+        const EMAILJS_KEY = "A5uX5qA-0N2vL4V71";
+        const SERVICE_ID = "service_bo6kzuc";
+        const TEMPLATE_ID = "template_4e00pyr";
 
-        // Inicialización obligatoria
-        emailjs.init(CONFIG.PUBLIC_KEY);
+        // Inicializar EmailJS
+        emailjs.init(EMAILJS_KEY);
 
-        let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
+        let database = JSON.parse(localStorage.getItem('optica_records')) || [];
 
-        window.onload = function() {
-            updateOrderID();
+        window.onload = () => {
+            generateNewID();
             renderHistory();
-            document.getElementById('loader').style.display = 'none';
         };
 
-        function updateOrderID() {
+        function generateNewID() {
             const id = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('order-id-display').innerText = id;
+            document.getElementById('display-id').innerText = id;
         }
 
         function switchTab(tab) {
-            document.getElementById('tab-new').classList.toggle('hidden', tab !== 'new');
-            document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
-            if(tab === 'history') renderHistory();
+            document.getElementById('section-new').classList.toggle('hidden', tab !== 'new');
+            document.getElementById('section-history').classList.toggle('hidden', tab !== 'history');
+            
+            document.getElementById('btn-new').className = `tab-btn ${tab === 'new' ? 'tab-active' : 'tab-inactive'}`;
+            document.getElementById('btn-history').className = `tab-btn ${tab === 'history' ? 'tab-active' : 'tab-inactive'}`;
         }
 
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('main-btn');
             
-            const btn = document.getElementById('submitBtn');
+            // UI Feedback
             btn.disabled = true;
-            btn.innerText = "PROCESANDO ENVÍO...";
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> ENVIANDO...';
 
-            // 1. Recolección de datos
-            const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
+            // Preparar datos
+            const treats = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(i => i.value).join(', ') || 'Sin tratamientos';
             const od = `OD: ESF ${document.getElementById('od_esf').value || '0.00'} CIL ${document.getElementById('od_cil').value || '0.00'} EJE ${document.getElementById('od_eje').value || '0'} ADD ${document.getElementById('od_add').value || '0.00'}`;
             const oi = `OI: ESF ${document.getElementById('oi_esf').value || '0.00'} CIL ${document.getElementById('oi_cil').value || '0.00'} EJE ${document.getElementById('oi_eje').value || '0'} ADD ${document.getElementById('oi_add').value || '0.00'}`;
 
-            // 2. Parámetros para la plantilla
-            const templateParams = {
-                order_id: document.getElementById('order-id-display').innerText,
-                patient_name: document.getElementById('patient_name').value.trim(),
+            const payload = {
+                order_id: document.getElementById('display-id').innerText,
+                patient_name: document.getElementById('p_name').value,
+                patient_id: document.getElementById('p_id').value || 'No informado',
                 graduacion: `${od}\n${oi}`,
                 lens_detail: document.getElementById('lens_type').value,
-                treatments: treatmentsList,
-                armazon: `${document.getElementById('frame_details').value.trim() || 'Propio'} - ${document.getElementById('frame_job').value}`,
-                notes: document.getElementById('notes').value.trim() || 'Sin notas adicionales',
+                treatments: treats,
+                armazon: document.getElementById('frame_info').value || 'Propio del paciente',
+                notes: document.getElementById('obs').value || 'Sin observaciones',
                 date: new Date().toLocaleString('es-AR')
             };
 
             try {
-                // 3. Intento de envío
-                const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
+                const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, payload);
                 
-                if(response.status === 200 || response.text === "OK") {
-                    orders.push(templateParams);
-                    localStorage.setItem('optica_db', JSON.stringify(orders));
+                if (res.status === 200) {
+                    alert("✅ Pedido enviado correctamente al laboratorio.");
+                    database.unshift(payload);
+                    localStorage.setItem('optica_records', JSON.stringify(database));
                     
-                    alert("✅ ¡Pedido enviado correctamente!");
                     document.getElementById('orderForm').reset();
-                    updateOrderID();
+                    generateNewID();
+                    renderHistory();
                     switchTab('history');
-                } else {
-                    throw new Error(`Error de respuesta: ${response.status} ${response.text}`);
                 }
-            } catch (error) {
-                console.error("Error en EmailJS:", error);
-                
-                // Análisis detallado del error para el usuario
-                let msg = error.text || error.message || "Error desconocido de red.";
-                
-                if (msg.includes("user_id")) {
-                    alert("❌ Error: La llave pública (Public Key) no es válida.");
-                } else if (msg.includes("service")) {
-                    alert("❌ Error: El Service ID es incorrecto.");
-                } else if (msg.includes("template")) {
-                    alert("❌ Error: El Template ID es incorrecto.");
-                } else {
-                    alert(`❌ ERROR DE ENVÍO:\n${msg}\n\nVerifica tus credenciales en el código.`);
-                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error al enviar:\n" + (err.text || "Verifica tu conexión a internet o los IDs de EmailJS."));
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ENVIAR PEDIDO";
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>ENVIAR ORDEN AL LABORATORIO</span>';
             }
         };
 
         function renderHistory() {
-            const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados.</div>' : '';
-            
-            [...orders].reverse().forEach((o) => {
-                container.innerHTML += `
-                    <div class="glass-card border-l-4 border-blue-500 mb-3">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="text-[9px] font-bold text-blue-600 uppercase">Orden #${o.order_id}</span>
-                                <h3 class="font-bold text-gray-800">${o.patient_name}</h3>
-                            </div>
-                            <span class="text-[9px] text-gray-400 font-mono">${o.date}</span>
+            const container = document.getElementById('history-list');
+            if (database.length === 0) {
+                container.innerHTML = '<p class="text-center py-10 text-slate-400">No hay órdenes registradas todavía.</p>';
+                return;
+            }
+
+            container.innerHTML = database.map(o => `
+                <div class="card p-5 hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">ORDEN #${o.order_id}</span>
+                            <h4 class="font-bold text-slate-800 mt-1">${o.patient_name}</h4>
                         </div>
-                        <div class="text-[11px] text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <p><strong>Receta:</strong><br><span class="whitespace-pre-line text-gray-500 font-mono">${o.graduacion}</span></p>
-                            <div>
-                                <p><strong>Lente:</strong> ${o.lens_detail}</p>
-                                <p><strong>Tratamientos:</strong> ${o.treatments}</p>
-                            </div>
+                        <span class="text-[10px] text-slate-400 font-mono">${o.date}</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs border-t pt-3">
+                        <div>
+                            <p class="text-slate-400 mb-1">Graduación:</p>
+                            <p class="font-mono whitespace-pre-line bg-slate-50 p-2 rounded text-slate-600">${o.graduacion}</p>
+                        </div>
+                        <div>
+                            <p><strong>Lente:</strong> ${o.lens_detail}</p>
+                            <p><strong>Tratamientos:</strong> ${o.treatments}</p>
+                            <p><strong>Armazón:</strong> ${o.armazon}</p>
                         </div>
                     </div>
-                `;
-            });
+                </div>
+            `).join('');
         }
     </script>
 </body>
