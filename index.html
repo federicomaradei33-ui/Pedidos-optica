@@ -62,6 +62,7 @@
                     <div class="grid grid-cols-5 gap-2 mb-2 text-center text-[9px] font-bold text-gray-400">
                         <div></div><div>ESF</div><div>CIL</div><div>EJE</div><div>ADD</div>
                     </div>
+                    <!-- Fila Ojo Derecho -->
                     <div class="grid grid-cols-5 gap-2 items-center mb-4">
                         <span class="text-[10px] font-bold text-blue-600">O. DERECHO</span>
                         <input type="text" id="od_esf" placeholder="0.00" class="input-style text-center">
@@ -69,6 +70,7 @@
                         <input type="text" id="od_eje" placeholder="0°" class="input-style text-center">
                         <input type="text" id="od_add" placeholder="0.00" class="input-style text-center">
                     </div>
+                    <!-- Fila Ojo Izquierdo -->
                     <div class="grid grid-cols-5 gap-2 items-center">
                         <span class="text-[10px] font-bold text-blue-600">O. IZQUIERDO</span>
                         <input type="text" id="oi_esf" placeholder="0.00" class="input-style text-center">
@@ -119,14 +121,14 @@
     </main>
 
     <script type="text/javascript">
-        // CONFIGURACIÓN ASIGNADA
+        // TUS DATOS CONFIGURADOS
         const CONFIG = {
             PUBLIC_KEY: "A5uX5qA-0N2vL4V71", 
             SERVICE_ID: "service_bo6kzuc",     
             TEMPLATE_ID: "template_4e00pyr"    
         };
 
-        // Inicialización de EmailJS
+        // Inicialización del SDK
         emailjs.init(CONFIG.PUBLIC_KEY);
 
         let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
@@ -151,59 +153,52 @@
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
             
-            // Verificación de configuración
-            if (!CONFIG.PUBLIC_KEY || CONFIG.PUBLIC_KEY.includes("tu_")) {
-                alert("Error: La configuración de EmailJS no es válida.");
-                return;
-            }
-
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "PROCESANDO...";
+            btn.innerText = "PROCESANDO ENVÍO...";
 
-            const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
+            // Obtener tratamientos seleccionados
+            const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Sin tratamientos adicionales';
             
-            // Graduación formateada
-            const od_txt = `OD: ${document.getElementById('od_esf').value || '0.00'} ${document.getElementById('od_cil').value || '0.00'}x${document.getElementById('od_eje').value || '0'}° Add: ${document.getElementById('od_add').value || '0.00'}`;
-            const oi_txt = `OI: ${document.getElementById('oi_esf').value || '0.00'} ${document.getElementById('oi_cil').value || '0.00'}x${document.getElementById('oi_eje').value || '0'}° Add: ${document.getElementById('oi_add').value || '0.00'}`;
+            // Construir cadenas de graduación
+            const od = `OD: ESF ${document.getElementById('od_esf').value || '0.00'} CIL ${document.getElementById('od_cil').value || '0.00'} EJE ${document.getElementById('od_eje').value || '0'} ADD ${document.getElementById('od_add').value || '0.00'}`;
+            const oi = `OI: ESF ${document.getElementById('oi_esf').value || '0.00'} CIL ${document.getElementById('oi_cil').value || '0.00'} EJE ${document.getElementById('oi_eje').value || '0'} ADD ${document.getElementById('oi_add').value || '0.00'}`;
 
+            // Objeto de parámetros EXACTOS para tu plantilla de EmailJS
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
-                patient_name: document.getElementById('patient_name').value,
-                graduacion: `${od_txt}\n${oi_txt}`,
+                patient_name: document.getElementById('patient_name').value.trim(),
+                graduacion: `${od}\n${oi}`,
                 lens_detail: document.getElementById('lens_type').value,
                 treatments: treatmentsList,
-                armazon: `${document.getElementById('frame_details').value || 'Propio'} (${document.getElementById('frame_job').value})`,
-                notes: document.getElementById('notes').value || 'Sin notas adicionales',
+                armazon: `${document.getElementById('frame_details').value.trim() || 'Propio'} - ${document.getElementById('frame_job').value}`,
+                notes: document.getElementById('notes').value.trim() || 'Sin observaciones adicionales',
                 date: new Date().toLocaleString('es-AR')
             };
 
             try {
-                // Intento de envío
+                // Envío mediante el SDK
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
                 if(response.status === 200) {
+                    // Guardar en local para el historial
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
                     
-                    alert("✅ ¡Éxito! El pedido ha sido enviado al laboratorio.");
+                    alert("✅ Pedido enviado con éxito.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
                 } else {
-                    throw new Error("Respuesta inesperada del servidor");
+                    throw new Error("Respuesta de servidor no exitosa.");
                 }
             } catch (error) {
-                console.error("Detalle del error:", error);
+                console.error("Error capturado:", error);
                 
-                let errorMsg = "No se pudo enviar el correo.";
-                if (error.status === 401 || error.status === 403) {
-                    errorMsg = "Error de autenticación (Public Key incorrecta).";
-                } else if (error.status === 404) {
-                    errorMsg = "ID de Servicio o Plantilla no encontrado.";
-                }
+                let detail = error.text || error.message || "Error de red o conexión.";
                 
-                alert(`❌ ERROR: ${errorMsg}\n\nDetalle técnico: ${error.text || error.message || "Desconocido"}`);
+                // Mensaje amigable para el usuario
+                alert(`❌ ERROR AL ENVIAR:\n\n${detail}\n\nRevisa que el ID de servicio y plantilla en EmailJS sean correctos.`);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -212,7 +207,7 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados aún.</div>' : '';
+            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">Aún no hay pedidos en el historial.</div>' : '';
             
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
@@ -225,8 +220,8 @@
                             <span class="text-[9px] text-gray-400 font-mono">${o.date}</span>
                         </div>
                         <div class="text-[11px] text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-x-4">
-                            <p><strong>Graduación:</strong><br><span class="whitespace-pre-line">${o.graduacion}</span></p>
-                            <p><strong>Lente:</strong> ${o.lens_detail}<br><strong>Trat.:</strong> ${o.treatments}</p>
+                            <p><strong>Receta:</strong><br><span class="whitespace-pre-line">${o.graduacion}</span></p>
+                            <p><strong>Tipo Lente:</strong> ${o.lens_detail}<br><strong>Tratamientos:</strong> ${o.treatments}</p>
                         </div>
                     </div>
                 `;
