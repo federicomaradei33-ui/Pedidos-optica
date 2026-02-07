@@ -121,12 +121,12 @@
 
     <script type="text/javascript">
         // ==========================================
-        // CONFIGURACIÓN ACTUALIZADA CON TU CLAVE
+        // CONFIGURACIÓN FINAL CON TUS DATOS REALES
         // ==========================================
         const CONFIG = {
             PUBLIC_KEY: "A5uX5qA-0N2vL4V71", 
-            SERVICE_ID: "service_bo6kzuc",        
-            TEMPLATE_ID: "template_apaxad4"       
+            SERVICE_ID: "service_bo6kzuc",     
+            TEMPLATE_ID: "template_4e00pyr"    
         };
 
         let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
@@ -136,9 +136,9 @@
                 emailjs.init({
                     publicKey: CONFIG.PUBLIC_KEY,
                 });
-                console.log("EmailJS inicializado con éxito");
+                console.log("Sistema EmailJS inicializado correctamente.");
             } catch (e) {
-                console.error("Error al iniciar EmailJS:", e);
+                console.error("Error al iniciar el SDK:", e);
             }
             updateOrderID();
             renderHistory();
@@ -160,22 +160,22 @@
             const btn = document.getElementById('submitBtn');
             
             btn.disabled = true;
-            btn.innerText = "ENVIANDO AL LABORATORIO...";
+            btn.innerText = "ENVIANDO PEDIDO...";
 
-            const getVal = (id) => document.getElementById(id).value || '0';
+            const getVal = (id) => document.getElementById(id).value || '0.00';
             const treatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
 
-            // Variables mapeadas para coincidir con la guía de la plantilla
+            // Parámetros formateados exactamente para la plantilla
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
-                patient_id: document.getElementById('patient_id').value || 'Sin DNI',
-                // lens_details agrupa graduación y tipo para el email
-                lens_details: `${document.getElementById('lens_type').value} (Tratamientos: ${treatments}) | Graduación -> OD: ${getVal('od_esf')} ${getVal('od_cil')}x${getVal('od_eje')} ADD:${getVal('od_add')} - OI: ${getVal('oi_esf')} ${getVal('oi_cil')}x${getVal('oi_eje')} ADD:${getVal('oi_add')}`,
-                frame_details: `${document.getElementById('frame_details').value || 'Stock'} (Tipo: ${document.getElementById('frame_job').value})`,
-                notes: document.getElementById('notes').value || 'Sin notas adicionales',
-                date: new Date().toLocaleString('es-AR')
+                date: new Date().toLocaleString('es-AR'),
+                lens_details: `Tipo: ${document.getElementById('lens_type').value} | Tratamientos: ${treatments} | Graduación: OD(${getVal('od_esf')} ${getVal('od_cil')}x${getVal('od_eje')} Add:${getVal('od_add')}) OI(${getVal('oi_esf')} ${getVal('oi_cil')}x${getVal('oi_eje')} Add:${getVal('oi_add')})`,
+                frame_details: `${document.getElementById('frame_details').value || 'Propio'} (${document.getElementById('frame_job').value})`,
+                notes: document.getElementById('notes').value || 'Sin notas'
             };
+
+            console.log("Intentando enviar con:", templateParams);
 
             try {
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
@@ -183,15 +183,19 @@
                 if(response.status === 200) {
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
-                    alert("¡PEDIDO ENVIADO CON ÉXITO!");
+                    alert("✅ ¡ÉXITO! El pedido ha sido enviado a tu correo.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
                 }
             } catch (error) {
-                console.error("Error EmailJS:", error);
-                const errorDetail = error.text || error.message || JSON.stringify(error);
-                alert("ERROR EN EL ENVÍO:\n" + errorDetail + "\n\nVerifica que el Service ID y Template ID sean correctos en tu panel.");
+                console.error("Error detallado:", error);
+                
+                let errorMsg = "No se pudo enviar el correo.";
+                if (error.status === 404) errorMsg = "Error 404: No se encuentra el Servicio o Plantilla. Revisa que los IDs no tengan espacios.";
+                if (error.status === 403) errorMsg = "Error 403: La Public Key parece no ser válida para este servicio.";
+                
+                alert("❌ FALLO EN EL ENVÍO\n\n" + errorMsg + "\n\nDetalle técnico: " + (error.text || error.message || "Fallo de conexión"));
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -200,20 +204,20 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">Aún no hay pedidos guardados.</div>' : '';
+            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados.</div>' : '';
             
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
-                    <div class="glass-card border-l-4 border-blue-500 mb-3 hover:shadow-md transition-shadow">
+                    <div class="glass-card border-l-4 border-blue-500 mb-3">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="text-[9px] font-bold text-blue-600">ORDEN #${o.order_id}</span>
+                                <span class="text-[9px] font-bold text-blue-600 uppercase">Orden #${o.order_id}</span>
                                 <h3 class="font-bold text-gray-800">${o.patient_name}</h3>
                             </div>
-                            <span class="text-[9px] text-gray-400">${o.date}</span>
+                            <span class="text-[9px] text-gray-400 font-mono">${o.date}</span>
                         </div>
-                        <div class="text-[11px] text-gray-600 space-y-1">
-                            <p><strong>Detalles:</strong> ${o.lens_details}</p>
+                        <div class="text-[11px] text-gray-600">
+                            <p><strong>Lente:</strong> ${o.lens_details}</p>
                             <p><strong>Armazón:</strong> ${o.frame_details}</p>
                         </div>
                     </div>
