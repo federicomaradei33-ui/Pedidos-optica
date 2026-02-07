@@ -150,17 +150,23 @@
 
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
+            
+            // Verificación de configuración
+            if (!CONFIG.PUBLIC_KEY || CONFIG.PUBLIC_KEY.includes("tu_")) {
+                alert("Error: La configuración de EmailJS no es válida.");
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "ENVIANDO...";
+            btn.innerText = "PROCESANDO...";
 
             const treatmentsList = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
             
-            // Graduación formateada para el cuerpo del mensaje
+            // Graduación formateada
             const od_txt = `OD: ${document.getElementById('od_esf').value || '0.00'} ${document.getElementById('od_cil').value || '0.00'}x${document.getElementById('od_eje').value || '0'}° Add: ${document.getElementById('od_add').value || '0.00'}`;
             const oi_txt = `OI: ${document.getElementById('oi_esf').value || '0.00'} ${document.getElementById('oi_cil').value || '0.00'}x${document.getElementById('oi_eje').value || '0'}° Add: ${document.getElementById('oi_add').value || '0.00'}`;
 
-            // MAPEADO DE PARÁMETROS PARA LA PLANTILLA (coincide con {{etiquetas}})
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
@@ -173,22 +179,31 @@
             };
 
             try {
-                // Envío real a través de EmailJS
+                // Intento de envío
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
                 if(response.status === 200) {
-                    // Guardar en almacenamiento local para el historial
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
                     
-                    alert("✅ Pedido enviado correctamente.");
+                    alert("✅ ¡Éxito! El pedido ha sido enviado al laboratorio.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     switchTab('history');
+                } else {
+                    throw new Error("Respuesta inesperada del servidor");
                 }
             } catch (error) {
-                console.error("Error al enviar con EmailJS:", error);
-                alert("❌ ERROR: No se pudo enviar el pedido. Verifique su conexión o la configuración.");
+                console.error("Detalle del error:", error);
+                
+                let errorMsg = "No se pudo enviar el correo.";
+                if (error.status === 401 || error.status === 403) {
+                    errorMsg = "Error de autenticación (Public Key incorrecta).";
+                } else if (error.status === 404) {
+                    errorMsg = "ID de Servicio o Plantilla no encontrado.";
+                }
+                
+                alert(`❌ ERROR: ${errorMsg}\n\nDetalle técnico: ${error.text || error.message || "Desconocido"}`);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -199,7 +214,6 @@
             const container = document.getElementById('history-container');
             container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400">No hay pedidos registrados aún.</div>' : '';
             
-            // Renderizar desde el más nuevo al más viejo
             [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
                     <div class="glass-card border-l-4 border-blue-500 mb-3 hover:shadow-md transition-shadow">
