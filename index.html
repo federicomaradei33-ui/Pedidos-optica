@@ -6,6 +6,7 @@
     <title>Portal Óptica Connect - Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SDK de EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <style>
@@ -13,9 +14,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .glass-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.5rem; border: 1px solid #e2e8f0; }
         .input-style { @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50 focus:bg-white text-sm; }
-        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-primary { @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg shadow-md transform active:scale-[0.98] transition-all disabled:opacity-50; }
         .label-header { @apply text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 block; }
+        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -49,7 +50,6 @@
             </div>
 
             <form id="orderForm" class="space-y-4">
-                <!-- Paciente -->
                 <div class="glass-card">
                     <span class="label-header"><i class="fas fa-user mr-1"></i> Datos del Paciente</span>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -58,13 +58,11 @@
                     </div>
                 </div>
 
-                <!-- Graduación -->
                 <div class="glass-card">
                     <span class="label-header"><i class="fas fa-eye mr-1"></i> Graduación</span>
                     <div class="grid grid-cols-5 gap-2 mb-2 text-center text-[9px] font-bold text-gray-400">
                         <div></div><div>ESF</div><div>CIL</div><div>EJE</div><div>ADD</div>
                     </div>
-                    <!-- Ojo Derecho -->
                     <div class="grid grid-cols-5 gap-2 items-center mb-4">
                         <span class="text-[10px] font-bold text-blue-600">O. DERECHO</span>
                         <input type="text" id="od_esf" placeholder="ESF" class="input-style text-center">
@@ -72,7 +70,6 @@
                         <input type="text" id="od_eje" placeholder="EJE" class="input-style text-center">
                         <input type="text" id="od_add" placeholder="ADD" class="input-style text-center">
                     </div>
-                    <!-- Ojo Izquierdo -->
                     <div class="grid grid-cols-5 gap-2 items-center">
                         <span class="text-[10px] font-bold text-blue-600">O. IZQUIERDO</span>
                         <input type="text" id="oi_esf" placeholder="ESF" class="input-style text-center">
@@ -82,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Lente y Armazón -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="glass-card">
                         <span class="label-header"><i class="fas fa-layer-group mr-1"></i> Cristales</span>
@@ -118,28 +114,23 @@
         </div>
 
         <div id="tab-history" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold">Historial de Pedidos</h2>
-                <button onclick="clearHistory()" class="text-xs text-red-500 hover:underline">Borrar todo</button>
-            </div>
+            <h2 class="text-xl font-bold">Historial Local</h2>
             <div id="history-container" class="space-y-3"></div>
         </div>
-
     </main>
 
     <script>
-        // CONFIGURACIÓN DE TUS IDS DE EMAILJS
+        // CONFIGURACIÓN BASADA EN TUS CAPTURAS
         const CONFIG = {
-            USER_ID: "user_fL4V714L5v6XoN9nK", // Tu Public Key
+            PUBLIC_KEY: "user_fL4V714L5v6XoN9nK", 
             SERVICE_ID: "service_bo6kzuc",
-            TEMPLATE_ID: "template_4e00pyr",
-            MY_EMAIL: "federicomaradei33@gmail.com"
+            TEMPLATE_ID: "template_apaxad4" // ID corregido según la URL de tu captura
         };
 
-        let orders = JSON.parse(localStorage.getItem('optica_connect_db')) || [];
+        let orders = JSON.parse(localStorage.getItem('optica_db')) || [];
 
         window.onload = () => {
-            emailjs.init(CONFIG.USER_ID);
+            emailjs.init(CONFIG.PUBLIC_KEY);
             updateOrderID();
             renderHistory();
             document.getElementById('loader').style.display = 'none';
@@ -158,42 +149,42 @@
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "PROCESANDO ENVÍO...";
+            btn.innerText = "ENVIANDO...";
 
-            // Captura de Graduación detallada
-            const od = `OD: [ESF ${document.getElementById('od_esf').value || '0'} | CIL ${document.getElementById('od_cil').value || '0'} | EJE ${document.getElementById('od_eje').value || '0'} | ADD ${document.getElementById('od_add').value || '0'}]`;
-            const oi = `OI: [ESF ${document.getElementById('oi_esf').value || '0'} | CIL ${document.getElementById('oi_cil').value || '0'} | EJE ${document.getElementById('oi_eje').value || '0'} | ADD ${document.getElementById('oi_add').value || '0'}]`;
+            // Formatear graduación para el mail
+            const od = `OD: ESF ${document.getElementById('od_esf').value || '0'} CIL ${document.getElementById('od_cil').value || '0'} EJE ${document.getElementById('od_eje').value || '0'} ADD ${document.getElementById('od_add').value || '0'}`;
+            const oi = `OI: ESF ${document.getElementById('oi_esf').value || '0'} CIL ${document.getElementById('oi_cil').value || '0'} EJE ${document.getElementById('oi_eje').value || '0'} ADD ${document.getElementById('oi_add').value || '0'}`;
             
-            const fullGraduation = `${od} --- ${oi}`;
-            const selectedTreatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Sin tratamientos';
-            const fullFrame = `${document.getElementById('frame_details').value || 'No especificado'} (${document.getElementById('frame_job').value})`;
+            const selectedTreatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Ninguno';
 
-            const orderData = {
+            // Estos nombres de campos deben coincidir con los de tu EmailJS Template {{campo}}
+            const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
-                patient_id: document.getElementById('patient_id').value || 'N/A',
-                graduacion: fullGraduation,
+                patient: document.getElementById('patient_name').value, // Duplicado por si usaste {{patient}}
+                graduacion: `${od} | ${oi}`,
                 lens_type: document.getElementById('lens_type').value,
                 treatments: selectedTreatments,
-                armazon: fullFrame,
+                armazon: `${document.getElementById('frame_details').value} (${document.getElementById('frame_job').value})`,
+                date: new Date().toLocaleString(),
                 notes: document.getElementById('notes').value || 'Sin notas',
-                date: new Date().toLocaleString('es-AR'),
-                email: CONFIG.MY_EMAIL
+                email: "federicomaradei33@gmail.com" // Asegúrate que en EmailJS el campo "To Email" sea {{email}} o cámbialo allá por tu dirección fija
             };
 
             try {
-                await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, orderData);
-                orders.push(orderData);
-                localStorage.setItem('optica_connect_db', JSON.stringify(orders));
+                await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
-                alert("Pedido enviado correctamente a " + CONFIG.MY_EMAIL);
+                orders.push(templateParams);
+                localStorage.setItem('optica_db', JSON.stringify(orders));
+                
+                alert("¡Pedido enviado con éxito!");
                 document.getElementById('orderForm').reset();
                 updateOrderID();
                 renderHistory();
                 switchTab('history');
-            } catch (err) {
-                console.error(err);
-                alert("Error al enviar el mail. Verifica que los IDs sean correctos.");
+            } catch (error) {
+                console.error("Error EmailJS:", error);
+                alert("Error al enviar. Revisa la consola o los IDs en EmailJS.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -202,44 +193,22 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<p class="text-center text-gray-400 py-10 text-sm">No hay órdenes registradas.</p>' : '';
-            
-            [...orders].reverse().forEach((o, i) => {
-                const originalIndex = orders.length - 1 - i;
+            container.innerHTML = orders.length === 0 ? '<p class="text-gray-400 text-center py-10">No hay pedidos.</p>' : '';
+            [...orders].reverse().forEach(o => {
                 container.innerHTML += `
-                    <div class="glass-card border-l-4 border-blue-500 relative">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-[10px] font-bold text-blue-600">ORDEN #${o.order_id}</span>
-                            <span class="text-[10px] text-gray-400">${o.date}</span>
+                    <div class="glass-card border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-[10px] font-bold text-blue-600 uppercase">Orden #${o.order_id}</p>
+                                <h3 class="font-bold text-sm">${o.patient_name}</h3>
+                            </div>
+                            <span class="text-[9px] text-gray-400">${o.date}</span>
                         </div>
-                        <h3 class="font-bold text-gray-800 text-sm">${o.patient_name}</h3>
-                        <div class="mt-2 space-y-1">
-                            <p class="text-[10px] text-gray-600"><strong>Lente:</strong> ${o.lens_type} (${o.treatments})</p>
-                            <p class="text-[10px] text-blue-700 bg-blue-50 p-1.5 rounded font-mono"><strong>RX:</strong> ${o.graduacion}</p>
-                            <p class="text-[10px] text-gray-600"><strong>Armazón:</strong> ${o.armazon}</p>
-                        </div>
-                        <button onclick="deleteOrder(${originalIndex})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
+                        <p class="text-[10px] text-gray-600"><strong>Cristal:</strong> ${o.lens_type}</p>
+                        <p class="text-[10px] text-gray-600"><strong>RX:</strong> ${o.graduacion}</p>
                     </div>
                 `;
             });
-        }
-
-        function deleteOrder(index) {
-            if(confirm('¿Deseas eliminar esta orden del historial local?')) {
-                orders.splice(index, 1);
-                localStorage.setItem('optica_connect_db', JSON.stringify(orders));
-                renderHistory();
-            }
-        }
-
-        function clearHistory() {
-            if(confirm('¿Borrar TODO el historial?')) {
-                orders = [];
-                localStorage.removeItem('optica_connect_db');
-                renderHistory();
-            }
         }
     </script>
 </body>
