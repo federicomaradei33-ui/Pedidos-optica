@@ -131,8 +131,12 @@
 
         window.onload = function() {
             try {
-                emailjs.init(CONFIG.PUBLIC_KEY);
-                console.log("EmailJS inicializado correctamente");
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.init(CONFIG.PUBLIC_KEY);
+                    console.log("EmailJS inicializado correctamente");
+                } else {
+                    alert("Error: No se pudo cargar la librería de EmailJS. Verifica tu conexión.");
+                }
             } catch (e) {
                 console.error("Error al inicializar EmailJS:", e);
             }
@@ -153,23 +157,31 @@
         document.getElementById('orderForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            
+            if (typeof emailjs === 'undefined') {
+                alert("La librería de envío no está disponible.");
+                return;
+            }
+
             btn.disabled = true;
-            btn.innerText = "VERIFICANDO...";
+            btn.innerText = "PROCESANDO ENVÍO...";
 
-            // Captura de datos de los campos
-            const od_esf = document.getElementById('od_esf').value || '0.00';
-            const od_cil = document.getElementById('od_cil').value || '0.00';
-            const od_eje = document.getElementById('od_eje').value || '0';
-            const od_add = document.getElementById('od_add').value || '0.00';
+            // Captura segura de datos
+            const getVal = (id) => document.getElementById(id).value || '0';
+            
+            const od_esf = getVal('od_esf');
+            const od_cil = getVal('od_cil');
+            const od_eje = getVal('od_eje');
+            const od_add = getVal('od_add');
 
-            const oi_esf = document.getElementById('oi_esf').value || '0.00';
-            const oi_cil = document.getElementById('oi_cil').value || '0.00';
-            const oi_eje = document.getElementById('oi_eje').value || '0';
-            const oi_add = document.getElementById('oi_add').value || '0.00';
+            const oi_esf = getVal('oi_esf');
+            const oi_cil = getVal('oi_cil');
+            const oi_eje = getVal('oi_eje');
+            const oi_add = getVal('oi_add');
 
             const selectedTreatments = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Sin tratamientos';
 
-            // Parámetros exactos para el template
+            // Parámetros del template
             const templateParams = {
                 order_id: document.getElementById('order-id-display').innerText,
                 patient_name: document.getElementById('patient_name').value,
@@ -183,25 +195,31 @@
                 to_email: "federicomaradei33@gmail.com"
             };
 
-            btn.innerText = "ENVIANDO A LABORATORIO...";
-
             try {
+                // Intento de envío directo
                 const response = await emailjs.send(CONFIG.SERVICE_ID, CONFIG.TEMPLATE_ID, templateParams);
                 
                 if(response.status === 200) {
                     orders.push(templateParams);
                     localStorage.setItem('optica_db', JSON.stringify(orders));
                     
-                    alert("¡ÉXITO! El pedido se envió correctamente.");
+                    alert("¡ÉXITO! El pedido ha sido enviado al laboratorio.");
                     document.getElementById('orderForm').reset();
                     updateOrderID();
                     renderHistory();
                     switchTab('history');
                 }
             } catch (error) {
-                console.error("Error detallado de EmailJS:", error);
-                // Alerta con información técnica para depurar
-                alert("ERROR AL ENVIAR:\n" + (error.text || error.message || "Error desconocido") + "\n\nRevisa que el Service ID y el Template ID sean los correctos en tu panel de EmailJS.");
+                console.error("Error detallado:", error);
+                
+                let errorMsg = "No se pudo conectar con el servidor de correo.";
+                if (error.status === 401 || error.status === 403) {
+                    errorMsg = "Error de autenticación: Verifica la Public Key en EmailJS.";
+                } else if (error.status === 404) {
+                    errorMsg = "ID de Servicio o Plantilla no encontrado.";
+                }
+
+                alert("FALLO EN EL ENVÍO:\n" + errorMsg + "\n\nDetalle técnico: " + (error.text || error.message || "Error de red"));
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -210,11 +228,11 @@
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400 text-sm">No hay pedidos en el historial local</div>' : '';
+            container.innerHTML = orders.length === 0 ? '<div class="text-center py-10 text-gray-400 text-sm">No hay pedidos registrados</div>' : '';
             
-            [...orders].reverse().forEach((o, index) => {
+            [...orders].reverse().forEach((o) => {
                 container.innerHTML += `
-                    <div class="glass-card border-l-4 border-blue-500">
+                    <div class="glass-card border-l-4 border-blue-500 mb-3">
                         <div class="flex justify-between items-start mb-2">
                             <div>
                                 <span class="text-[9px] font-bold text-blue-600 uppercase tracking-widest">ORDEN #${o.order_id}</span>
@@ -223,11 +241,10 @@
                             <span class="text-[9px] text-gray-400">${o.date}</span>
                         </div>
                         <div class="space-y-1 mt-2">
-                            <p class="text-[11px] text-gray-600 leading-tight"><strong>Cristal:</strong> ${o.lens_type} - ${o.treatments}</p>
+                            <p class="text-[11px] text-gray-600"><strong>Lente:</strong> ${o.lens_type} (${o.treatments})</p>
                             <div class="bg-gray-50 p-2 rounded text-[10px] font-mono text-blue-700 border border-gray-100">
                                 ${o.graduacion}
                             </div>
-                            <p class="text-[11px] text-gray-600"><strong>Armazón:</strong> ${o.armazon}</p>
                         </div>
                     </div>
                 `;
