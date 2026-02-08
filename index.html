@@ -189,9 +189,9 @@
                         <div>
                             <label class="block text-sm font-medium mb-1">Origen Armazón</label>
                             <select id="frameSource" class="input-field">
-                                <option value="De la Óptica">De la Óptica (Stock)</option>
+                                <option value="SILO">SILO</option>
+                                <option value="METAL">METAL</option>
                                 <option value="Del Paciente">Trae el Paciente</option>
-                                <option value="Enviar a Taller">Enviar a Laboratorio</option>
                             </select>
                         </div>
                         <div>
@@ -220,20 +220,21 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Historial de Pedidos</h1>
-                    <p class="text-gray-500">Consulte y rastree sus pedidos anteriores.</p>
+                    <p class="text-gray-500">Listado detallado con información de graduación.</p>
                 </div>
                 <div class="flex gap-2">
                     <input type="text" id="searchOrders" oninput="renderHistory()" placeholder="Buscar por paciente..." class="input-field w-64">
                 </div>
             </div>
 
-            <div class="glass-card rounded-xl overflow-hidden shadow-sm">
-                <table class="w-full text-left">
+            <div class="glass-card rounded-xl overflow-x-auto shadow-sm">
+                <table class="w-full text-left min-w-[900px]">
                     <thead class="bg-gray-50 border-b">
                         <tr>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Orden</th>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Fecha</th>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Paciente</th>
+                            <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Graduación (OD / OI)</th>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Lente</th>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Estado</th>
                             <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Acción</th>
@@ -260,13 +261,15 @@
             </div>
 
             <div style="margin-bottom: 30px;">
-                <h3 style="background: #f1f5f9; padding: 8px; border-radius: 4px;">DATOS DEL PACIENTE</h3>
-                <p><strong>Nombre:</strong> <span id="pdf-patient-name"></span></p>
-                <p><strong>Documento:</strong> <span id="pdf-patient-id"></span></p>
-                <p><strong>Teléfono:</strong> <span id="pdf-patient-tel"></span></p>
+                <h3 style="background: #f1f5f9; padding: 8px; border-radius: 4px; font-size: 14px;">DATOS DEL PACIENTE</h3>
+                <div style="padding: 10px;">
+                    <p style="margin: 4px 0;"><strong>Nombre:</strong> <span id="pdf-patient-name"></span></p>
+                    <p style="margin: 4px 0;"><strong>Documento:</strong> <span id="pdf-patient-id"></span></p>
+                    <p style="margin: 4px 0;"><strong>Teléfono:</strong> <span id="pdf-patient-tel"></span></p>
+                </div>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: center;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: center; font-size: 14px;">
                 <thead>
                     <tr style="background: #2563eb; color: white;">
                         <th style="padding: 10px; border: 1px solid #ddd;">OJO</th>
@@ -278,43 +281,48 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">OD</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-od-esf"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-od-cil"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-od-eje"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-od-add"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">DER (OD)</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-od-esf"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-od-cil"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-od-eje"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-od-add"></td>
                     </tr>
                     <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">OI</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-oi-esf"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-oi-cil"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-oi-eje"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;" id="pdf-oi-add"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">IZQ (OI)</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-oi-esf"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-oi-cil"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-oi-eje"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-oi-add"></td>
                     </tr>
                 </tbody>
             </table>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
                 <div>
-                    <h3 style="border-bottom: 1px solid #ddd;">DETALLES CRISTAL</h3>
-                    <p><strong>Tipo:</strong> <span id="pdf-lens-type"></span></p>
-                    <p><strong>Tratamientos:</strong> <span id="pdf-treatments"></span></p>
-                    <p><strong>DNP:</strong> <span id="pdf-dnp"></span> | <strong>Altura:</strong> <span id="pdf-altura"></span></p>
+                    <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 14px;">DETALLES TÉCNICOS LENTE</h3>
+                    <div style="padding: 10px; font-size: 13px; line-height: 1.6;">
+                        <p><strong>Tipo:</strong> <span id="pdf-lens-type"></span></p>
+                        <p><strong>Tratamientos:</strong> <span id="pdf-treatments"></span></p>
+                        <p><strong>DNP:</strong> <span id="pdf-dnp"></span></p>
+                        <p><strong>Altura:</strong> <span id="pdf-altura"></span></p>
+                    </div>
                 </div>
                 <div>
-                    <h3 style="border-bottom: 1px solid #ddd;">DETALLES ARMAZÓN</h3>
-                    <p><strong>Origen:</strong> <span id="pdf-frame-source"></span></p>
-                    <p><strong>Modelo:</strong> <span id="pdf-frame-model"></span></p>
+                    <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 14px;">DETALLES ARMAZÓN</h3>
+                    <div style="padding: 10px; font-size: 13px; line-height: 1.6;">
+                        <p><strong>Origen:</strong> <span id="pdf-frame-source"></span></p>
+                        <p><strong>Modelo:</strong> <span id="pdf-frame-model"></span></p>
+                    </div>
                 </div>
             </div>
 
-            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                <strong>Observaciones:</strong>
-                <p id="pdf-notes" style="font-style: italic; color: #444;"></p>
+            <div style="margin-top: 10px; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
+                <strong style="font-size: 14px; display: block; margin-bottom: 5px;">Observaciones:</strong>
+                <p id="pdf-notes" style="font-style: italic; color: #444; margin: 0; font-size: 13px;"></p>
             </div>
             
-            <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-size: 12px;">
-                Documento generado automáticamente por Óptica Connect
+            <div style="margin-top: 60px; text-align: center; color: #94a3b8; font-size: 11px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                Documento de validez interna generado por Óptica Connect
             </div>
         </div>
     </div>
@@ -326,14 +334,14 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <h3 class="text-xl font-bold">¡Pedido Enviado!</h3>
-            <p class="text-gray-500">Se ha guardado el pedido, descargado el PDF y enviado el email al laboratorio.</p>
-            <button onclick="closeModal()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Entendido</button>
+            <p class="text-gray-500 text-sm">Se ha guardado el registro, generado el PDF y enviado el email con toda la información técnica.</p>
+            <button onclick="closeModal()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Aceptar</button>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // CONFIGURACIÓN ACTUALIZADA
+        // CONFIGURACIÓN EMAILJS
         // ==========================================
         const EMAILJS_PUBLIC_KEY = "-NKT0dntx3JOPXYAA"; 
         const EMAILJS_SERVICE_ID = "service_bo6kzuc"; 
@@ -361,7 +369,7 @@
             const btnText = document.getElementById('btnText');
             
             btn.disabled = true;
-            btnText.innerText = "ENVIANDO...";
+            btnText.innerText = "PROCESANDO...";
 
             const id = document.getElementById('order-id-display').innerText;
             const treatments = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(el => el.value);
@@ -419,17 +427,17 @@
                 };
                 await html2pdf().set(opt).from(element).save();
 
-                // 2. Enviar por Email
-                const grad_email = `OD: ${orderData.od.esf}/${orderData.od.cil}x${orderData.od.eje} (ADD ${orderData.od.add}) | OI: ${orderData.oi.esf}/${orderData.oi.cil}x${orderData.oi.eje} (ADD ${orderData.oi.add}) | DNP: ${orderData.dnp} Alt: ${orderData.altura}`;
+                // 2. Enviar por Email con cuerpo técnico detallado
+                const grad_email = `OD: ESF ${orderData.od.esf} CIL ${orderData.od.cil} EJE ${orderData.od.eje}° ADD ${orderData.od.add} | OI: ESF ${orderData.oi.esf} CIL ${orderData.oi.cil} EJE ${orderData.oi.eje}° ADD ${orderData.oi.add} | DNP: ${orderData.dnp} | ALT: ${orderData.altura}`;
                 
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                     order_id: orderData.id,
                     patient_name: orderData.patient,
-                    patient_id: orderData.patientId + " / " + orderData.patientTel,
+                    patient_id: orderData.patientId + (orderData.patientTel ? " / Tel: " + orderData.patientTel : ""),
                     graduacion: grad_email,
                     lens_details: orderData.lensType,
                     treatments: orderData.treatments,
-                    frame_details: orderData.frameSource + ": " + orderData.frameModel,
+                    frame_details: `${orderData.frameSource} (${orderData.frameModel})`,
                     notes: orderData.notes,
                     date: orderData.date
                 });
@@ -442,7 +450,7 @@
                 resetForm();
             } catch (err) {
                 console.error("Error:", err);
-                alert("Hubo un problema al procesar el envío. Verifique su conexión.");
+                alert("Ocurrió un error. El sistema no pudo conectar con el servicio de email.");
             } finally {
                 btn.disabled = false;
                 btnText.innerText = "ENVIAR Y DESCARGAR PDF";
@@ -467,24 +475,50 @@
             const query = document.getElementById('searchOrders').value.toLowerCase();
             const container = document.getElementById('historyTableBody');
             container.innerHTML = '';
+            
             const filtered = orders.filter(o => o.patient.toLowerCase().includes(query));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-gray-400">No hay pedidos registrados todavía.</td></tr>`;
+                return;
+            }
+
             filtered.forEach(order => {
+                const od_resumen = `${order.od.esf}/${order.od.cil}x${order.od.eje}°`;
+                const oi_resumen = `${order.oi.esf}/${order.oi.cil}x${order.oi.eje}°`;
+
                 container.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100">
                         <td class="px-6 py-4 font-mono text-xs font-bold text-blue-600">#${order.id}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">${order.date}</td>
-                        <td class="px-6 py-4"><div class="text-sm font-bold text-gray-900">${order.patient}</div></td>
-                        <td class="px-6 py-4 text-sm text-gray-600">${order.lensType}</td>
+                        <td class="px-6 py-4 text-xs text-gray-600">${order.date}</td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-gray-900">${order.patient}</div>
+                            <div class="text-[10px] text-gray-400">ID: ${order.patientId || 'N/A'}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-[11px] leading-tight text-gray-700">
+                                <span class="font-bold text-blue-800">OD:</span> ${od_resumen} (Add ${order.od.add})<br>
+                                <span class="font-bold text-blue-800">OI:</span> ${oi_resumen} (Add ${order.oi.add})
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs">
+                            <div class="font-medium text-gray-800">${order.lensType}</div>
+                            <div class="text-[10px] text-gray-500 truncate max-w-[150px]">${order.treatments}</div>
+                        </td>
                         <td class="px-6 py-4"><span class="status-badge ${order.statusClass}">${order.status}</span></td>
                         <td class="px-6 py-4">
-                            <button onclick="deleteOrder('${order.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button>
+                            <div class="flex gap-3">
+                                <button onclick="deleteOrder('${order.id}')" class="text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>`;
             });
         }
 
         function deleteOrder(id) {
-            if(confirm('¿Seguro que desea eliminar este registro?')) {
+            if(confirm('¿Seguro que desea eliminar permanentemente este pedido del historial?')) {
                 orders = orders.filter(o => o.id !== id);
                 localStorage.setItem('optica_orders', JSON.stringify(orders));
                 renderHistory();
