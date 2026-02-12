@@ -13,7 +13,7 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; }
         .glass-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .input-field { @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all; }
         .prescription-grid { display: grid; grid-template-columns: 100px 1fr 1fr 1fr 1fr; gap: 1rem; align-items: center; }
@@ -43,13 +43,13 @@
 
         /* Pantalla de Login */
         #login-screen {
-            display: flex;
+            display: flex; /* Cambiado de hidden para asegurar visibilidad inicial */
             align-items: center;
             justify-content: center;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: #f3f4f6;
-            z-index: 2000;
+            z-index: 3000;
         }
     </style>
 </head>
@@ -59,38 +59,40 @@
     <div id="login-screen">
         <div class="glass-card p-8 w-full max-w-md space-y-6">
             <div class="text-center space-y-2">
-                <i class="fas fa-glasses text-blue-600 text-4xl"></i>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-2">
+                    <i class="fas fa-glasses text-3xl"></i>
+                </div>
                 <h2 class="text-2xl font-bold">Óptica Connect</h2>
-                <p class="text-gray-500 text-sm">Inicia sesión para continuar</p>
+                <p class="text-gray-500 text-sm">Portal de Pedidos Interno</p>
             </div>
             <form id="loginForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                    <input type="text" id="username" class="input-field" placeholder="admin" required>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 text-left">Usuario</label>
+                    <input type="text" id="username" class="input-field" placeholder="Nombre de usuario" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                    <input type="password" id="password" class="input-field" placeholder="••••" required>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 text-left">Contraseña</label>
+                    <input type="password" id="password" class="input-field" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">
-                    INGRESAR
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                    INICIAR SESIÓN
                 </button>
             </form>
-            <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Usuario o contraseña incorrectos</p>
+            <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Credenciales incorrectas. Intente con admin / 1234</p>
         </div>
     </div>
 
-    <!-- Contenido Principal (Oculto hasta el login) -->
+    <!-- Contenido Principal (Oculto hasta el login exitoso) -->
     <div id="main-content" class="hidden">
-        <nav class="bg-white border-b sticky top-0 z-50">
+        <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-glasses text-blue-600 text-2xl"></i>
                     <span class="font-bold text-xl">Óptica<span class="text-blue-600">Connect</span></span>
                 </div>
                 <div class="flex items-center gap-6">
-                    <button onclick="switchTab('new-order')" class="hover:text-blue-600 font-medium">Nueva Orden</button>
-                    <button onclick="switchTab('history')" class="hover:text-blue-600 font-medium">Historial</button>
+                    <button onclick="switchTab('new-order')" class="hover:text-blue-600 font-medium transition-colors">Nueva Orden</button>
+                    <button onclick="switchTab('history')" class="hover:text-blue-600 font-medium transition-colors">Historial</button>
                     <button onclick="logout()" class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1 border-l pl-4 ml-2">
                         <i class="fas fa-sign-out-alt"></i> Salir
                     </button>
@@ -178,7 +180,7 @@
 
                     <div class="flex justify-end gap-4">
                         <button type="button" onclick="resetForm()" class="px-6 py-2 bg-gray-200 rounded-lg font-medium">Limpiar</button>
-                        <button type="submit" id="submitBtn" class="px-8 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg">
+                        <button type="submit" id="submitBtn" class="px-8 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700">
                             <span id="btnText">ENVIAR Y DESCARGAR PDF</span> <i class="fas fa-file-pdf"></i>
                         </button>
                     </div>
@@ -191,7 +193,7 @@
                 <div class="glass-card overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 border-b">
-                            <tr class="text-xs uppercase text-gray-500">
+                            <tr class="text-xs uppercase text-gray-500 font-bold">
                                 <th class="px-6 py-3">ID</th>
                                 <th class="px-6 py-3">Paciente</th>
                                 <th class="px-6 py-3">Graduación (OD/OI)</th>
@@ -199,7 +201,7 @@
                                 <th class="px-6 py-3">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="historyTableBody" class="divide-y divide-gray-100"></tbody>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
                     </table>
                 </div>
             </section>
@@ -211,14 +213,14 @@
         <div class="modal-content">
             <div class="flex justify-between items-center border-b pb-4 mb-4">
                 <h2 class="text-xl font-bold text-blue-600">Detalles de Orden #<span id="view-id"></span></h2>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-2xl transition-colors">&times;</button>
             </div>
             <div id="view-content" class="space-y-4 text-sm">
                 <!-- Se llena con JS -->
             </div>
             <div class="mt-6 flex justify-end gap-3 border-t pt-4">
-                <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded-lg">Cerrar</button>
-                <button id="downloadPdfBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Cerrar</button>
+                <button id="downloadPdfBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors">
                     Descargar PDF <i class="fas fa-download"></i>
                 </button>
             </div>
@@ -250,30 +252,34 @@
         const mainContent = document.getElementById('main-content');
         const loginError = document.getElementById('login-error');
 
-        // Verificar si ya hay sesión al cargar
-        if (sessionStorage.getItem('isLoggedIn') === 'true') {
-            showApp();
+        // Función para ocultar login y mostrar app
+        function showApp() {
+            loginScreen.style.display = 'none';
+            mainContent.classList.remove('hidden');
+            document.getElementById('order-id-display').innerText = genId();
         }
+
+        // Verificar si ya hay sesión activa en sessionStorage
+        window.onload = function() {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                showApp();
+            }
+        };
 
         loginForm.onsubmit = (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
 
-            // Credencial por defecto
+            // Credenciales por defecto (Modifica aquí para tus usuarios)
             if (user === 'admin' && pass === '1234') {
                 sessionStorage.setItem('isLoggedIn', 'true');
                 showApp();
             } else {
                 loginError.classList.remove('hidden');
+                setTimeout(() => loginError.classList.add('hidden'), 3000);
             }
         };
-
-        function showApp() {
-            loginScreen.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            document.getElementById('order-id-display').innerText = genId();
-        }
 
         function logout() {
             sessionStorage.removeItem('isLoggedIn');
@@ -316,8 +322,10 @@
             };
 
             try {
+                // Primero el PDF para que el usuario sienta velocidad
                 await generatePDF(data);
 
+                // Luego el Email
                 const gradStr = `OD: ${data.od.esf}/${data.od.cil}x${data.od.eje} ADD ${data.od.add} | OI: ${data.oi.esf}/${data.oi.cil}x${data.oi.eje} ADD ${data.oi.add}`;
                 await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
                     order_id: data.id,
@@ -331,12 +339,12 @@
 
                 orders.unshift(data);
                 localStorage.setItem('opt_orders', JSON.stringify(orders));
-                alert("¡Pedido enviado y PDF generado!");
+                alert("¡Pedido enviado correctamente y PDF descargado!");
                 resetForm();
                 switchTab('history');
 
             } catch (err) {
-                alert("Error al enviar email. El PDF se generó de todas formas.");
+                alert("El PDF se generó, pero hubo un detalle con el envío del email.");
                 console.error(err);
                 orders.unshift(data);
                 localStorage.setItem('opt_orders', JSON.stringify(orders));
@@ -403,18 +411,22 @@
             document.getElementById('view-id').innerText = order.id;
             document.getElementById('view-content').innerHTML = `
                 <div class="grid grid-cols-2 gap-4">
-                    <div><p class="text-gray-400">Paciente</p><p class="font-bold">${order.patient}</p></div>
-                    <div><p class="text-gray-400">Fecha</p><p class="font-bold">${order.date}</p></div>
+                    <div><p class="text-gray-400">Paciente</p><p class="font-bold text-base text-gray-800">${order.patient}</p></div>
+                    <div><p class="text-gray-400">Fecha</p><p class="font-bold text-gray-800">${order.date}</p></div>
                 </div>
-                <div class="bg-blue-50 p-3 rounded-lg">
-                    <p class="font-bold mb-2">Graduación</p>
-                    <p>OD: ${order.od.esf} / ${order.od.cil} x ${order.od.eje}° (ADD ${order.od.add})</p>
-                    <p>OI: ${order.oi.esf} / ${order.oi.cil} x ${order.oi.eje}° (ADD ${order.oi.add})</p>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="font-bold text-blue-800 mb-2 uppercase text-xs">Graduación Prescripta</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <p><strong>OD:</strong> ${order.od.esf} / ${order.od.cil} x ${order.od.eje}° <span class="text-blue-600">(ADD ${order.od.add})</span></p>
+                        <p><strong>OI:</strong> ${order.oi.esf} / ${order.oi.cil} x ${order.oi.eje}° <span class="text-blue-600">(ADD ${order.oi.add})</span></p>
+                    </div>
                 </div>
-                <div><p class="text-gray-400">Cristal</p><p>${order.lens} (${order.treatments})</p></div>
-                <div><p class="text-gray-400">DNP / Altura</p><p>${order.dnp} / ${order.altura}</p></div>
-                <div><p class="text-gray-400">Armazón</p><p>${order.armazon}</p></div>
-                <div><p class="text-gray-400">Notas</p><p class="italic">${order.notes}</p></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><p class="text-gray-400">Cristal</p><p class="font-medium">${order.lens}</p><p class="text-xs text-blue-600">${order.treatments}</p></div>
+                    <div><p class="text-gray-400">DNP / Altura</p><p class="font-medium">${order.dnp} / ${order.altura}</p></div>
+                </div>
+                <div><p class="text-gray-400">Armazón</p><p class="font-medium">${order.armazon}</p></div>
+                <div><p class="text-gray-400">Notas</p><p class="italic bg-gray-50 p-2 rounded border">${order.notes}</p></div>
             `;
             
             document.getElementById('downloadPdfBtn').onclick = () => generatePDF(order);
@@ -426,21 +438,21 @@
         function renderHistory() {
             const body = document.getElementById('historyTableBody');
             body.innerHTML = orders.map(o => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 font-bold">#${o.id}</td>
-                    <td class="px-6 py-4">${o.patient}</td>
-                    <td class="px-6 py-4 text-xs font-mono">${o.od.esf}/${o.od.cil} | ${o.oi.esf}/${o.oi.cil}</td>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 font-bold text-blue-600">#${o.id}</td>
+                    <td class="px-6 py-4 font-medium">${o.patient}</td>
+                    <td class="px-6 py-4 text-xs font-mono text-gray-500">${o.od.esf}/${o.od.cil} | ${o.oi.esf}/${o.oi.cil}</td>
                     <td class="px-6 py-4">${o.lens}</td>
                     <td class="px-6 py-4 flex gap-3">
-                        <button onclick="viewDetails('${o.id}')" title="Ver Detalles" class="text-blue-500 hover:text-blue-700 text-lg"><i class="fas fa-eye"></i></button>
-                        <button onclick="deleteOrder('${o.id}')" title="Borrar" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        <button onclick="viewDetails('${o.id}')" title="Ver Detalles" class="text-blue-500 hover:text-blue-700 text-lg transition-transform hover:scale-110"><i class="fas fa-eye"></i></button>
+                        <button onclick="deleteOrder('${o.id}')" title="Borrar" class="text-gray-300 hover:text-red-500 transition-colors"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="5" class="p-10 text-center text-gray-400">No hay órdenes guardadas.</td></tr>';
+            `).join('') || '<tr><td colspan="5" class="p-10 text-center text-gray-400">Aún no hay registros en el historial local.</td></tr>';
         }
 
         function deleteOrder(id) {
-            if(confirm('¿Eliminar esta orden del historial?')) {
+            if(confirm('¿Seguro desea eliminar esta orden del registro histórico?')) {
                 orders = orders.filter(o => o.id != id);
                 localStorage.setItem('opt_orders', JSON.stringify(orders));
                 renderHistory();
