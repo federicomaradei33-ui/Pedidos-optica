@@ -14,10 +14,11 @@
         .input-field { @apply w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm; }
         .label-text { @apply block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider; }
         
-        /* Estilo específico para la tabla de graduación */
-        .grad-table th { @apply text-[10px] font-bold text-gray-400 uppercase p-2 border-b text-center; }
+        /* Ajuste de Tabla de Graduación para evitar scroll */
+        .grad-table { table-layout: fixed; width: 100%; }
+        .grad-table th { @apply text-[10px] font-bold text-gray-400 uppercase p-1 border-b text-center; }
         .grad-table td { @apply p-1 border-b; }
-        .grad-table input { @apply w-full text-center py-1 bg-gray-50 border-none rounded focus:ring-1 focus:ring-blue-400 text-sm; }
+        .grad-table input { @apply w-full text-center py-1 bg-gray-50 border-none rounded focus:ring-1 focus:ring-blue-400 text-xs; }
         
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -27,7 +28,7 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Pantalla de Login -->
+    <!-- Login -->
     <div id="login-overlay">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center">
             <div class="mb-6 flex justify-center">
@@ -36,103 +37,86 @@
                 </div>
             </div>
             <h1 class="text-2xl font-bold text-gray-800 mb-1">Óptica Connect</h1>
-            <p class="text-gray-400 text-sm mb-8">Portal de Pedidos Interno</p>
-            
+            <p class="text-gray-400 text-sm mb-8">Acceso Interno</p>
             <form id="loginForm" class="space-y-4 text-left">
                 <div>
                     <label class="label-text">Usuario</label>
-                    <input type="text" id="user" class="input-field" placeholder="Nombre de usuario" required>
+                    <input type="text" id="user" class="input-field" value="admin" required>
                 </div>
                 <div>
                     <label class="label-text">Contraseña</label>
-                    <input type="password" id="pass" class="input-field" placeholder="••••••••" required>
+                    <input type="password" id="pass" class="input-field" value="1234" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all mt-4 text-sm tracking-widest">
-                    INICIAR SESIÓN
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all mt-4 text-sm tracking-widest uppercase">
+                    Entrar
                 </button>
-                <p id="error-msg" class="text-red-500 text-xs text-center hidden mt-2">Credenciales no válidas</p>
-                <div class="text-[10px] text-center text-gray-400 mt-6 uppercase tracking-widest">Acceso Restringido</div>
             </form>
         </div>
     </div>
 
-    <!-- Contenido de la Aplicación -->
     <div id="app-content" class="hidden">
         <nav class="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-eye text-blue-600 text-2xl"></i>
-                <span class="font-bold text-xl text-gray-800 tracking-tight">Óptica Connect</span>
+            <div class="flex items-center gap-2">
+                <i class="fas fa-eye text-blue-600 text-xl"></i>
+                <span class="font-bold text-lg text-gray-800 tracking-tight">Óptica Connect</span>
             </div>
-            <div class="flex items-center gap-6">
-                <button onclick="showSection('new')" id="nav-new" class="font-bold text-sm text-blue-600 border-b-2 border-blue-600 pb-1">Nueva Orden</button>
-                <button onclick="showSection('history')" id="nav-history" class="font-bold text-sm text-gray-400 hover:text-gray-600 pb-1">Historial</button>
-                <button onclick="logout()" class="text-gray-400 hover:text-red-500 text-sm font-bold flex items-center gap-2">
-                    <i class="fas fa-sign-out-alt"></i> SALIR
-                </button>
+            <div class="flex items-center gap-4">
+                <button onclick="showSection('new')" id="nav-new" class="text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1">NUEVO</button>
+                <button onclick="showSection('history')" id="nav-history" class="text-xs font-bold text-gray-400 hover:text-gray-600 pb-1">HISTORIAL</button>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-500 ml-4"><i class="fas fa-power-off"></i></button>
             </div>
         </nav>
 
-        <main class="max-w-6xl mx-auto p-6">
-            
+        <main class="max-w-6xl mx-auto p-4 md:p-6">
             <section id="sec-new">
-                <div class="flex justify-between items-end mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800 tracking-tight">Nueva Orden de Trabajo</h2>
-                    <div class="bg-white px-4 py-2 rounded-lg border font-mono text-sm">
-                        <span class="text-gray-400">PEDIDO #</span>
-                        <span id="order-number" class="text-blue-600 font-bold tracking-widest">83298</span>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Nueva Orden</h2>
+                    <div class="bg-blue-50 px-3 py-1 rounded-full text-blue-600 font-mono text-xs font-bold">
+                        ID: #<span id="order-number">---</span>
                     </div>
                 </div>
 
-                <form id="orderForm" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Columna Izquierda -->
+                <form id="orderForm" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Paciente y Receta -->
                     <div class="space-y-6">
-                        <div class="card p-6">
-                            <h3 class="font-bold text-blue-600 mb-6 flex items-center gap-2">
-                                <i class="fas fa-user-circle"></i> Datos del Paciente
+                        <div class="card p-5">
+                            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                <i class="fas fa-user text-blue-500"></i> Paciente
                             </h3>
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label class="label-text">Nombre y Apellido</label>
-                                    <input type="text" id="p_name" class="input-field" placeholder="Nombre completo" required>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="label-text">DNI</label>
-                                        <input type="text" id="p_dni" class="input-field" placeholder="Documento">
-                                    </div>
-                                    <div>
-                                        <label class="label-text">Teléfono</label>
-                                        <input type="text" id="p_tel" class="input-field" placeholder="Número de contacto">
-                                    </div>
+                            <div class="space-y-3">
+                                <input type="text" id="p_name" class="input-field" placeholder="Nombre completo" required>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input type="text" id="p_dni" class="input-field" placeholder="DNI">
+                                    <input type="text" id="p_tel" class="input-field" placeholder="Teléfono">
                                 </div>
                             </div>
                         </div>
 
-                        <div class="card p-6">
-                            <h3 class="font-bold text-blue-600 mb-6 flex items-center gap-2">
-                                <i class="fas fa-file-medical"></i> Receta Técnica
+                        <div class="card p-5">
+                            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                <i class="fas fa-notes-medical text-blue-500"></i> Receta Técnica
                             </h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full grad-table">
+                            <div class="overflow-hidden">
+                                <table class="grad-table">
                                     <thead>
                                         <tr>
-                                            <th class="w-10">Ojo</th>
-                                            <th>Esf.</th>
-                                            <th>Cil.</th>
-                                            <th>Eje</th>
-                                            <th>Add</th>
+                                            <th style="width: 15%;">OJO</th>
+                                            <th>ESF</th>
+                                            <th>CIL</th>
+                                            <th>EJE</th>
+                                            <th>ADD</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="text-xs font-bold text-blue-500 text-center">OD</td>
+                                            <td class="text-xs font-bold text-blue-600 text-center">OD</td>
                                             <td><input type="text" id="od_esf" placeholder="0.00"></td>
                                             <td><input type="text" id="od_cil" placeholder="0.00"></td>
                                             <td><input type="text" id="od_eje" placeholder="0°"></td>
                                             <td><input type="text" id="od_add" placeholder="0.00"></td>
                                         </tr>
                                         <tr>
-                                            <td class="text-xs font-bold text-blue-500 text-center">OI</td>
+                                            <td class="text-xs font-bold text-blue-600 text-center">OI</td>
                                             <td><input type="text" id="oi_esf" placeholder="0.00"></td>
                                             <td><input type="text" id="oi_cil" placeholder="0.00"></td>
                                             <td><input type="text" id="oi_eje" placeholder="0°"></td>
@@ -141,300 +125,209 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div class="grid grid-cols-2 gap-3 mt-4">
                                 <div>
-                                    <label class="label-text">DNP (Nasopupilar)</label>
-                                    <input type="text" id="dnp" class="input-field text-center" placeholder="Ej: 32/34">
+                                    <label class="label-text">DNP</label>
+                                    <input type="text" id="dnp" class="input-field text-center" placeholder="32/33">
                                 </div>
                                 <div>
-                                    <label class="label-text">Altura / Calibre</label>
-                                    <input type="text" id="altura" class="input-field text-center" placeholder="Ej: 18mm">
+                                    <label class="label-text">Altura</label>
+                                    <input type="text" id="altura" class="input-field text-center" placeholder="18mm">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Columna Derecha -->
+                    <!-- Cristales y Armazón -->
                     <div class="space-y-6">
-                        <div class="card p-6">
-                            <h3 class="font-bold text-blue-600 mb-6 flex items-center gap-2">
-                                <i class="fas fa-layer-group"></i> Cristales y Tratamientos
+                        <div class="card p-5">
+                            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                <i class="fas fa-layer-group text-blue-500"></i> Cristales
                             </h3>
-                            <div class="mb-4">
-                                <label class="label-text">Tipo de Lente</label>
-                                <select id="lens_type" class="input-field">
-                                    <option>Monofocal Stock</option>
-                                    <option>Monofocal Laboratorio</option>
-                                    <option>Bifocal (Kriptok/Flap)</option>
-                                    <option>Multifocal / Progresivo</option>
-                                    <option>Ocupacional / Office</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3 mt-4">
-                                <label class="flex items-center gap-2 p-2 border rounded-lg hover:bg-blue-50 cursor-pointer text-[11px] font-medium text-gray-600">
-                                    <input type="checkbox" name="treat" value="Antirreflex"> Antirreflex
+                            <select id="lens_type" class="input-field mb-3">
+                                <option>Monofocal Stock</option>
+                                <option>Monofocal Laboratorio</option>
+                                <option>Bifocal</option>
+                                <option>Multifocal</option>
+                                <option>Ocupacional</option>
+                            </select>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center gap-2 p-2 border rounded-lg text-[10px] text-gray-600">
+                                    <input type="checkbox" name="treat" value="AR"> Antirreflex
                                 </label>
-                                <label class="flex items-center gap-2 p-2 border rounded-lg hover:bg-blue-50 cursor-pointer text-[11px] font-medium text-gray-600">
-                                    <input type="checkbox" name="treat" value="Sin Tratamiento"> Sin Tratamiento
+                                <label class="flex items-center gap-2 p-2 border rounded-lg text-[10px] text-gray-600">
+                                    <input type="checkbox" name="treat" value="Blue"> Filtro Azul
                                 </label>
-                                <label class="flex items-center gap-2 p-2 border rounded-lg hover:bg-blue-50 cursor-pointer text-[11px] font-medium text-gray-600">
-                                    <input type="checkbox" name="treat" value="Filtro Azul"> Filtro Azul
+                                <label class="flex items-center gap-2 p-2 border rounded-lg text-[10px] text-gray-600">
+                                    <input type="checkbox" name="treat" value="Foto"> Fotocromático
                                 </label>
-                                <label class="flex items-center gap-2 p-2 border rounded-lg hover:bg-blue-50 cursor-pointer text-[11px] font-medium text-gray-600">
-                                    <input type="checkbox" name="treat" value="Fotocromático"> Fotocromático
+                                <label class="flex items-center gap-2 p-2 border rounded-lg text-[10px] text-gray-600">
+                                    <input type="checkbox" name="treat" value="Sol"> Tinte Sol
                                 </label>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN ARMAZÓN (RESPECTO AL DISEÑO ORIGINAL) -->
-                        <div class="card p-6">
-                            <h3 class="font-bold text-blue-600 mb-6 flex items-center gap-2">
-                                <i class="fas fa-glasses"></i> Armazón
+                        <div class="card p-5">
+                            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                <i class="fas fa-glasses text-blue-500"></i> Armazón
                             </h3>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 gap-3 mb-4">
                                 <div>
-                                    <label class="label-text">Origen Armazón</label>
+                                    <label class="label-text">Material</label>
                                     <select id="frame_source" class="input-field">
-                                        <option>De la Óptica (Stock)</option>
-                                        <option>Trae el Paciente</option>
-                                        <option>Enviar a Laboratorio</option>
+                                        <option value="Metal">METAL</option>
+                                        <option value="Zilo">ZILO</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="label-text">Marca / Modelo</label>
-                                    <input type="text" id="frame_model" class="input-field" placeholder="Ej: Ray-Ban">
+                                    <label class="label-text">Modelo</label>
+                                    <input type="text" id="frame_model" class="input-field" placeholder="Marca/Ref">
                                 </div>
                             </div>
-                            <div class="mt-4">
-                                <label class="label-text">Observaciones de taller</label>
-                                <textarea id="obs" class="input-field h-24 resize-none" placeholder="Instrucciones especiales para el taller..."></textarea>
-                            </div>
+                            <textarea id="obs" class="input-field h-20 resize-none" placeholder="Observaciones adicionales..."></textarea>
                         </div>
 
-                        <div class="flex gap-4">
-                            <button type="button" onclick="resetForm()" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all text-sm uppercase tracking-widest">Limpiar</button>
-                            <button type="submit" class="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest">
-                                ENVIAR Y DESCARGAR PDF <i class="fas fa-file-pdf"></i>
-                            </button>
-                        </div>
+                        <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-3 text-xs uppercase tracking-widest">
+                            FINALIZAR Y DESCARGAR PDF <i class="fas fa-file-export"></i>
+                        </button>
                     </div>
                 </form>
             </section>
 
-            <!-- SECCIÓN: HISTORIAL -->
+            <!-- Historial -->
             <section id="sec-history" class="hidden">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Historial Detallado</h2>
-                    <button onclick="clearAll()" class="text-xs font-bold text-red-500 uppercase hover:underline">Limpiar base de datos</button>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Historial</h2>
+                    <button onclick="clearAll()" class="text-[10px] font-bold text-red-400 uppercase tracking-tighter">Limpiar Todo</button>
                 </div>
-                <div id="history-container" class="space-y-4">
-                    <!-- Dinámico -->
-                </div>
+                <div id="history-container" class="space-y-4"></div>
             </section>
         </main>
     </div>
 
-    <!-- Template invisible para PDF -->
-    <div id="pdf-template" class="hidden">
-        <div style="padding: 40px; font-family: sans-serif; color: #333; max-width: 800px; margin: auto;">
-            <div style="display: flex; justify-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px;">
-                <h1 style="color: #2563eb; margin: 0;">Óptica Connect</h1>
-                <p style="margin: 0; font-weight: bold; color: #666;">PEDIDO TÉCNICO #<span id="pdf-id"></span></p>
-            </div>
-            
-            <div style="margin: 30px 0;">
-                <p><strong>Paciente:</strong> <span id="pdf-name"></span></p>
-                <p><strong>DNI:</strong> <span id="pdf-dni-val"></span> | <strong>Tel:</strong> <span id="pdf-tel-val"></span></p>
-                <p><strong>Fecha:</strong> <span id="pdf-date"></span></p>
-            </div>
-
-            <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 20px;">
-                <tr style="background: #f1f5f9; font-size: 12px;">
-                    <th>OJO</th><th>ESFÉRA</th><th>CILINDRO</th><th>EJE</th><th>ADICIÓN</th>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold; color: #2563eb;">OD</td><td id="pdf-od-esf"></td><td id="pdf-od-cil"></td><td id="pdf-od-eje"></td><td id="pdf-od-add"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold; color: #2563eb;">OI</td><td id="pdf-oi-esf"></td><td id="pdf-oi-cil"></td><td id="pdf-oi-eje"></td><td id="pdf-oi-add"></td>
-                </tr>
-            </table>
-
-            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                <p style="margin: 5px 0;"><strong>DNP:</strong> <span id="pdf-dnp"></span> | <strong>Altura:</strong> <span id="pdf-altura"></span></p>
-                <p style="margin: 5px 0;"><strong>Cristal:</strong> <span id="pdf-lens"></span></p>
-                <p style="margin: 5px 0;"><strong>Tratamientos:</strong> <span id="pdf-treats"></span></p>
-                <p style="margin: 5px 0;"><strong>Armazón:</strong> <span id="pdf-frame"></span></p>
-                <p style="margin: 15px 0 0 0;"><strong>Observaciones:</strong></p>
-                <p id="pdf-obs" style="margin: 5px 0; font-style: italic; color: #666;"></p>
-            </div>
-            
-            <div style="margin-top: 50px; text-align: center; font-size: 10px; color: #999;">
-                Documento generado automáticamente por Sistema Óptica Connect
-            </div>
+    <!-- Template PDF (Invisible) -->
+    <div id="pdf-template" class="hidden" style="padding: 40px; font-family: sans-serif;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Óptica Connect</h1>
+            <p style="margin: 5px 0; color: #666; font-weight: bold;">ORDEN DE TRABAJO #<span id="pdf-id"></span></p>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <p><strong>Paciente:</strong> <span id="pdf-name"></span> | <strong>DNI:</strong> <span id="pdf-dni-val"></span></p>
+            <p><strong>Fecha:</strong> <span id="pdf-date"></span></p>
+        </div>
+        <table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 20px;">
+            <tr style="background: #f1f5f9;">
+                <th>OJO</th><th>ESF</th><th>CIL</th><th>EJE</th><th>ADD</th>
+            </tr>
+            <tr><td>OD</td><td id="pdf-od-esf"></td><td id="pdf-od-cil"></td><td id="pdf-od-eje"></td><td id="pdf-od-add"></td></tr>
+            <tr><td>OI</td><td id="pdf-oi-esf"></td><td id="pdf-oi-cil"></td><td id="pdf-oi-eje"></td><td id="pdf-oi-add"></td></tr>
+        </table>
+        <div style="background: #f9fafb; padding: 15px; border-radius: 8px;">
+            <p><strong>Medidas:</strong> DNP: <span id="pdf-dnp"></span> | Altura: <span id="pdf-altura"></span></p>
+            <p><strong>Cristales:</strong> <span id="pdf-lens"></span> (<span id="pdf-treats"></span>)</p>
+            <p><strong>Armazón:</strong> <span id="pdf-frame"></span></p>
+            <p><strong>Observaciones:</strong> <span id="pdf-obs"></span></p>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('optica_final_v1')) || [];
+        let db = JSON.parse(localStorage.getItem('optica_v2')) || [];
 
-        // Auth Mock
         document.getElementById('loginForm').onsubmit = (e) => {
             e.preventDefault();
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(u === 'admin' && p === '1234') {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('app-content').classList.remove('hidden');
-                init();
-            } else {
-                document.getElementById('error-msg').classList.remove('hidden');
-            }
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').classList.remove('hidden');
+            init();
         };
 
-        function logout() { window.location.reload(); }
-
         function init() {
-            document.getElementById('order-number').innerText = Math.floor(10000 + Math.random() * 89999);
+            document.getElementById('order-number').innerText = Math.floor(1000 + Math.random() * 9000);
             renderHistory();
         }
 
         function showSection(name) {
             document.getElementById('sec-new').classList.toggle('hidden', name !== 'new');
             document.getElementById('sec-history').classList.toggle('hidden', name !== 'history');
-            
-            document.getElementById('nav-new').className = name === 'new' ? 'font-bold text-sm text-blue-600 border-b-2 border-blue-600 pb-1' : 'font-bold text-sm text-gray-400 hover:text-gray-600 pb-1';
-            document.getElementById('nav-history').className = name === 'history' ? 'font-bold text-sm text-blue-600 border-b-2 border-blue-600 pb-1' : 'font-bold text-sm text-gray-400 hover:text-gray-600 pb-1';
-        }
-
-        function resetForm() {
-            document.getElementById('orderForm').reset();
+            document.getElementById('nav-new').className = name === 'new' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-gray-400 hover:text-gray-600 pb-1';
+            document.getElementById('nav-history').className = name === 'history' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-gray-400 hover:text-gray-600 pb-1';
         }
 
         document.getElementById('orderForm').onsubmit = async function(e) {
             e.preventDefault();
-            
             const treats = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(c => c.value);
-            
             const order = {
                 id: document.getElementById('order-number').innerText,
                 date: new Date().toLocaleString(),
-                p: { 
-                    name: document.getElementById('p_name').value, 
-                    dni: document.getElementById('p_dni').value, 
-                    tel: document.getElementById('p_tel').value 
-                },
+                p: { name: document.getElementById('p_name').value, dni: document.getElementById('p_dni').value, tel: document.getElementById('p_tel').value },
                 grad: {
                     od: { esf: document.getElementById('od_esf').value, cil: document.getElementById('od_cil').value, eje: document.getElementById('od_eje').value, add: document.getElementById('od_add').value },
                     oi: { esf: document.getElementById('oi_esf').value, cil: document.getElementById('oi_cil').value, eje: document.getElementById('oi_eje').value, add: document.getElementById('oi_add').value },
-                    dnp: document.getElementById('dnp').value,
-                    alt: document.getElementById('altura').value
+                    dnp: document.getElementById('dnp').value, alt: document.getElementById('altura').value
                 },
                 lenses: { type: document.getElementById('lens_type').value, treats: treats },
                 frame: { source: document.getElementById('frame_source').value, model: document.getElementById('frame_model').value, obs: document.getElementById('obs').value }
             };
 
             db.unshift(order);
-            localStorage.setItem('optica_final_v1', JSON.stringify(db));
-            
-            // Llenar PDF
+            localStorage.setItem('optica_v2', JSON.stringify(db));
+
+            // PDF Data mapping
             document.getElementById('pdf-name').innerText = order.p.name;
-            document.getElementById('pdf-dni-val').innerText = order.p.dni || '---';
-            document.getElementById('pdf-tel-val').innerText = order.p.tel || '---';
-            document.getElementById('pdf-date').innerText = order.date;
             document.getElementById('pdf-id').innerText = order.id;
+            document.getElementById('pdf-dni-val').innerText = order.p.dni || '---';
+            document.getElementById('pdf-date').innerText = order.date;
             document.getElementById('pdf-od-esf').innerText = order.grad.od.esf || '0.00';
             document.getElementById('pdf-od-cil').innerText = order.grad.od.cil || '0.00';
-            document.getElementById('pdf-od-eje').innerText = order.grad.od.eje || '---';
+            document.getElementById('pdf-od-eje').innerText = order.grad.od.eje || '0°';
             document.getElementById('pdf-od-add').innerText = order.grad.od.add || '---';
             document.getElementById('pdf-oi-esf').innerText = order.grad.oi.esf || '0.00';
             document.getElementById('pdf-oi-cil').innerText = order.grad.oi.cil || '0.00';
-            document.getElementById('pdf-oi-eje').innerText = order.grad.oi.eje || '---';
+            document.getElementById('pdf-oi-eje').innerText = order.grad.oi.eje || '0°';
             document.getElementById('pdf-oi-add').innerText = order.grad.oi.add || '---';
             document.getElementById('pdf-dnp').innerText = order.grad.dnp || '---';
             document.getElementById('pdf-altura').innerText = order.grad.alt || '---';
             document.getElementById('pdf-lens').innerText = order.lenses.type;
             document.getElementById('pdf-treats').innerText = order.lenses.treats.join(', ') || 'Sin tratamientos';
             document.getElementById('pdf-frame').innerText = `${order.frame.source} - ${order.frame.model}`;
-            document.getElementById('pdf-obs').innerText = order.frame.obs || 'Sin observaciones';
+            document.getElementById('pdf-obs').innerText = order.frame.obs || 'N/A';
 
             const element = document.getElementById('pdf-template');
             element.classList.remove('hidden');
-            
-            const opt = {
-                margin: 0.5,
-                filename: `Pedido_${order.id}_${order.p.name}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 3 },
+            await html2pdf().from(element).set({
+                margin: 1,
+                filename: `Pedido_${order.id}.pdf`,
+                html2canvas: { scale: 2 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            await html2pdf().set(opt).from(element).save();
+            }).save();
             element.classList.add('hidden');
 
             renderHistory();
-            resetForm();
+            this.reset();
             init();
             showSection('history');
         };
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            if(db.length === 0) {
-                container.innerHTML = '<div class="text-center py-20 text-gray-300 font-bold uppercase tracking-widest text-sm italic">No se encontraron pedidos registrados</div>';
-                return;
-            }
-
-            container.innerHTML = db.map(o => `
-                <div class="card p-6 border-l-4 border-l-blue-600 hover:shadow-lg transition-shadow bg-white">
-                    <div class="flex flex-col md:flex-row justify-between mb-4 border-b pb-4 items-start md:items-center">
+            container.innerHTML = db.length === 0 ? '<p class="text-center text-gray-400 py-10">Sin pedidos</p>' : 
+            db.map(o => `
+                <div class="card p-4 border-l-4 border-l-blue-600">
+                    <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Pedido #${o.id}</span>
-                            <h4 class="text-xl font-bold text-gray-800">${o.p.name}</h4>
-                            <p class="text-xs text-gray-400 font-medium">${o.date}</p>
+                            <p class="text-[10px] font-bold text-blue-500 tracking-widest">ORDEN #${o.id}</p>
+                            <h4 class="font-bold text-gray-800">${o.p.name}</h4>
+                            <p class="text-[10px] text-gray-400">${o.date}</p>
                         </div>
-                        <div class="text-right mt-2 md:mt-0 text-[11px] font-semibold text-gray-500">
-                            <p>DNI: ${o.p.dni || '---'}</p>
-                            <p>TEL: ${o.p.tel || '---'}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-5 rounded-xl border border-gray-100">
-                        <div>
-                            <div class="label-text text-blue-600 mb-2">Receta</div>
-                            <div class="text-[11px] space-y-1 text-gray-700">
-                                <p><strong>OD:</strong> ${o.grad.od.esf || '0.00'} / ${o.grad.od.cil || '0.00'} x ${o.grad.od.eje || '0'}° (Add ${o.grad.od.add || '0'})</p>
-                                <p><strong>OI:</strong> ${o.grad.oi.esf || '0.00'} / ${o.grad.oi.cil || '0.00'} x ${o.grad.oi.eje || '0'}° (Add ${o.grad.oi.add || '0'})</p>
-                                <p><strong>Medidas:</strong> DNP ${o.grad.dnp || '--'} | Alt ${o.grad.alt || '--'}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="label-text text-blue-600 mb-2">Cristales</div>
-                            <div class="text-[11px] space-y-1 text-gray-700">
-                                <p><strong>Tipo:</strong> ${o.lenses.type}</p>
-                                <p><strong>Extra:</strong> ${o.lenses.treats.join(', ') || 'Básico'}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="label-text text-blue-600 mb-2">Armazón</div>
-                            <div class="text-[11px] space-y-1 text-gray-700">
-                                <p><strong>Origen:</strong> ${o.frame.source}</p>
-                                <p><strong>Modelo:</strong> ${o.frame.model || 'Genérico'}</p>
-                                ${o.frame.obs ? `<p class="mt-2 text-gray-400 italic">"${o.frame.obs}"</p>` : ''}
-                            </div>
+                        <div class="text-[10px] text-right font-medium text-gray-500 uppercase">
+                            <p>${o.frame.source} | ${o.lenses.type}</p>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function clearAll() {
-            if(confirm("¿Seguro que deseas eliminar el historial? Esta acción no se puede deshacer.")) {
-                db = [];
-                localStorage.setItem('optica_final_v1', JSON.stringify(db));
-                renderHistory();
-            }
-        }
+        function clearAll() { if(confirm("¿Borrar todo?")) { db = []; localStorage.setItem('optica_v2', JSON.stringify(db)); renderHistory(); } }
+        function logout() { window.location.reload(); }
     </script>
 </body>
 </html>
