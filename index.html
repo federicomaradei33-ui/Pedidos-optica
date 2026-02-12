@@ -40,129 +40,171 @@
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
+
+        /* Pantalla de Login */
+        #login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #f3f4f6;
+            z-index: 2000;
+        }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <nav class="bg-white border-b sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 flex justify-between h-16 items-center">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-glasses text-blue-600 text-2xl"></i>
-                <span class="font-bold text-xl">Óptica<span class="text-blue-600">Connect</span></span>
+    <!-- Pantalla de Login -->
+    <div id="login-screen">
+        <div class="glass-card p-8 w-full max-w-md space-y-6">
+            <div class="text-center space-y-2">
+                <i class="fas fa-glasses text-blue-600 text-4xl"></i>
+                <h2 class="text-2xl font-bold">Óptica Connect</h2>
+                <p class="text-gray-500 text-sm">Inicia sesión para continuar</p>
             </div>
-            <div class="flex gap-6">
-                <button onclick="switchTab('new-order')" class="hover:text-blue-600 font-medium">Nueva Orden</button>
-                <button onclick="switchTab('history')" class="hover:text-blue-600 font-medium">Historial</button>
-            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <input type="text" id="username" class="input-field" placeholder="admin" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="password" class="input-field" placeholder="••••" required>
+                </div>
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">
+                    INGRESAR
+                </button>
+            </form>
+            <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Usuario o contraseña incorrectos</p>
         </div>
-    </nav>
+    </div>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8">
-        
-        <!-- Pestaña: Nueva Orden -->
-        <section id="tab-new-order" class="space-y-6">
-            <div class="flex justify-between items-end">
-                <h1 class="text-2xl font-bold">Nueva Orden de Trabajo</h1>
-                <span class="text-gray-400">Orden ID: <span id="order-id-display" class="font-mono font-bold text-blue-600">--</span></span>
-            </div>
-
-            <form id="orderForm" class="space-y-6">
-                <!-- Datos Paciente -->
-                <div class="glass-card p-6 space-y-4">
-                    <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-user text-blue-500"></i> Datos del Paciente</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" id="patientName" placeholder="Nombre y Apellido" class="input-field" required>
-                        <input type="text" id="patientId" placeholder="DNI / Documento" class="input-field">
-                        <input type="tel" id="patientTel" placeholder="Teléfono" class="input-field">
-                    </div>
+    <!-- Contenido Principal (Oculto hasta el login) -->
+    <div id="main-content" class="hidden">
+        <nav class="bg-white border-b sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-glasses text-blue-600 text-2xl"></i>
+                    <span class="font-bold text-xl">Óptica<span class="text-blue-600">Connect</span></span>
                 </div>
-
-                <!-- Graduación -->
-                <div class="glass-card p-6 space-y-6">
-                    <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-eye text-blue-500"></i> Graduación</h2>
-                    <div class="overflow-x-auto">
-                        <div class="min-w-[600px] space-y-4">
-                            <div class="prescription-grid text-xs font-bold text-gray-400 uppercase">
-                                <div>Ojo</div><div>Esfera</div><div>Cilindro</div><div>Eje</div><div>Adición</div>
-                            </div>
-                            <div class="prescription-grid">
-                                <div class="font-bold text-blue-700">O. DERECHO</div>
-                                <input type="text" id="od_esf" class="input-field" placeholder="0.00">
-                                <input type="text" id="od_cil" class="input-field" placeholder="0.00">
-                                <input type="text" id="od_eje" class="input-field" placeholder="0°">
-                                <input type="text" id="od_add" class="input-field" placeholder="0.00">
-                            </div>
-                            <div class="prescription-grid">
-                                <div class="font-bold text-blue-700">O. IZQUIERDO</div>
-                                <input type="text" id="oi_esf" class="input-field" placeholder="0.00">
-                                <input type="text" id="oi_cil" class="input-field" placeholder="0.00">
-                                <input type="text" id="oi_eje" class="input-field" placeholder="0°">
-                                <input type="text" id="oi_add" class="input-field" placeholder="0.00">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                        <input type="text" id="dnp" placeholder="DNP (Distancia Nasopupilar)" class="input-field">
-                        <input type="text" id="altura" placeholder="Altura de montaje" class="input-field">
-                    </div>
-                </div>
-
-                <!-- Cristales y Armazón -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass-card p-6 space-y-4">
-                        <h2 class="font-bold text-blue-600 uppercase text-sm">Cristales</h2>
-                        <select id="lensType" class="input-field">
-                            <option>Monofocal Stock</option>
-                            <option>Monofocal Laboratorio</option>
-                            <option>Bifocal</option>
-                            <option>Multifocal / Progresivo</option>
-                        </select>
-                        <div class="space-y-2">
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Sin Tratamiento"> Sin Tratamiento</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Antireflex"> Antireflex</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Filtro Azul"> Filtro Azul</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Fotocromático"> Fotocromático</label>
-                        </div>
-                    </div>
-                    <div class="glass-card p-6 space-y-4">
-                        <h2 class="font-bold text-blue-600 uppercase text-sm">Armazón</h2>
-                        <select id="frameSource" class="input-field">
-                            <option>ZILO</option>
-                            <option>METAL</option>
-                        </select>
-                        <input type="text" id="frameModel" placeholder="Marca / Modelo" class="input-field">
-                        <textarea id="notes" placeholder="Observaciones extras..." class="input-field h-20"></textarea>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-4">
-                    <button type="button" onclick="resetForm()" class="px-6 py-2 bg-gray-200 rounded-lg font-medium">Limpiar</button>
-                    <button type="submit" id="submitBtn" class="px-8 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg">
-                        <span id="btnText">ENVIAR Y DESCARGAR PDF</span> <i class="fas fa-file-pdf"></i>
+                <div class="flex items-center gap-6">
+                    <button onclick="switchTab('new-order')" class="hover:text-blue-600 font-medium">Nueva Orden</button>
+                    <button onclick="switchTab('history')" class="hover:text-blue-600 font-medium">Historial</button>
+                    <button onclick="logout()" class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1 border-l pl-4 ml-2">
+                        <i class="fas fa-sign-out-alt"></i> Salir
                     </button>
                 </div>
-            </form>
-        </section>
-
-        <!-- Pestaña: Historial -->
-        <section id="tab-history" class="hidden space-y-6">
-            <h1 class="text-2xl font-bold">Historial de Pedidos</h1>
-            <div class="glass-card overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b">
-                        <tr class="text-xs uppercase text-gray-500">
-                            <th class="px-6 py-3">ID</th>
-                            <th class="px-6 py-3">Paciente</th>
-                            <th class="px-6 py-3">Graduación (OD/OI)</th>
-                            <th class="px-6 py-3">Lente</th>
-                            <th class="px-6 py-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody" class="divide-y divide-gray-100"></tbody>
-                </table>
             </div>
-        </section>
-    </main>
+        </nav>
+
+        <main class="max-w-7xl mx-auto p-4 md:p-8">
+            
+            <!-- Pestaña: Nueva Orden -->
+            <section id="tab-new-order" class="space-y-6">
+                <div class="flex justify-between items-end">
+                    <h1 class="text-2xl font-bold">Nueva Orden de Trabajo</h1>
+                    <span class="text-gray-400">Orden ID: <span id="order-id-display" class="font-mono font-bold text-blue-600">--</span></span>
+                </div>
+
+                <form id="orderForm" class="space-y-6">
+                    <!-- Datos Paciente -->
+                    <div class="glass-card p-6 space-y-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-user text-blue-500"></i> Datos del Paciente</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" id="patientName" placeholder="Nombre y Apellido" class="input-field" required>
+                            <input type="text" id="patientId" placeholder="DNI / Documento" class="input-field">
+                            <input type="tel" id="patientTel" placeholder="Teléfono" class="input-field">
+                        </div>
+                    </div>
+
+                    <!-- Graduación -->
+                    <div class="glass-card p-6 space-y-6">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-eye text-blue-500"></i> Graduación</h2>
+                        <div class="overflow-x-auto">
+                            <div class="min-w-[600px] space-y-4">
+                                <div class="prescription-grid text-xs font-bold text-gray-400 uppercase">
+                                    <div>Ojo</div><div>Esfera</div><div>Cilindro</div><div>Eje</div><div>Adición</div>
+                                </div>
+                                <div class="prescription-grid">
+                                    <div class="font-bold text-blue-700">O. DERECHO</div>
+                                    <input type="text" id="od_esf" class="input-field" placeholder="0.00">
+                                    <input type="text" id="od_cil" class="input-field" placeholder="0.00">
+                                    <input type="text" id="od_eje" class="input-field" placeholder="0°">
+                                    <input type="text" id="od_add" class="input-field" placeholder="0.00">
+                                </div>
+                                <div class="prescription-grid">
+                                    <div class="font-bold text-blue-700">O. IZQUIERDO</div>
+                                    <input type="text" id="oi_esf" class="input-field" placeholder="0.00">
+                                    <input type="text" id="oi_cil" class="input-field" placeholder="0.00">
+                                    <input type="text" id="oi_eje" class="input-field" placeholder="0°">
+                                    <input type="text" id="oi_add" class="input-field" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                            <input type="text" id="dnp" placeholder="DNP (Distancia Nasopupilar)" class="input-field">
+                            <input type="text" id="altura" placeholder="Altura de montaje" class="input-field">
+                        </div>
+                    </div>
+
+                    <!-- Cristales y Armazón -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 space-y-4">
+                            <h2 class="font-bold text-blue-600 uppercase text-sm">Cristales</h2>
+                            <select id="lensType" class="input-field">
+                                <option>Monofocal Stock</option>
+                                <option>Monofocal Laboratorio</option>
+                                <option>Bifocal</option>
+                                <option>Multifocal / Progresivo</option>
+                            </select>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Sin Tratamiento"> Sin Tratamiento</label>
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Antireflex"> Antireflex</label>
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Filtro Azul"> Filtro Azul</label>
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Fotocromático"> Fotocromático</label>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 space-y-4">
+                            <h2 class="font-bold text-blue-600 uppercase text-sm">Armazón</h2>
+                            <select id="frameSource" class="input-field">
+                                <option>ZILO</option>
+                                <option>METAL</option>
+                            </select>
+                            <input type="text" id="frameModel" placeholder="Marca / Modelo" class="input-field">
+                            <textarea id="notes" placeholder="Observaciones extras..." class="input-field h-20"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-4">
+                        <button type="button" onclick="resetForm()" class="px-6 py-2 bg-gray-200 rounded-lg font-medium">Limpiar</button>
+                        <button type="submit" id="submitBtn" class="px-8 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg">
+                            <span id="btnText">ENVIAR Y DESCARGAR PDF</span> <i class="fas fa-file-pdf"></i>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Pestaña: Historial -->
+            <section id="tab-history" class="hidden space-y-6">
+                <h1 class="text-2xl font-bold">Historial de Pedidos</h1>
+                <div class="glass-card overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr class="text-xs uppercase text-gray-500">
+                                <th class="px-6 py-3">ID</th>
+                                <th class="px-6 py-3">Paciente</th>
+                                <th class="px-6 py-3">Graduación (OD/OI)</th>
+                                <th class="px-6 py-3">Lente</th>
+                                <th class="px-6 py-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <!-- Modal de Detalles -->
     <div id="detailModal" class="modal-overlay">
@@ -195,16 +237,52 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN EMAILJS - RECUERDA PONER TUS KEYS AQUÍ
+        // CONFIGURACIÓN EMAILJS
         const PUBLIC_KEY = "tu_public_key_aqui"; 
         const SERVICE_ID = "tu_service_id_aqui";
         const TEMPLATE_ID = "tu_template_id_aqui";
 
         emailjs.init(PUBLIC_KEY);
 
+        // --- LÓGICA DE LOGIN ---
+        const loginForm = document.getElementById('loginForm');
+        const loginScreen = document.getElementById('login-screen');
+        const mainContent = document.getElementById('main-content');
+        const loginError = document.getElementById('login-error');
+
+        // Verificar si ya hay sesión al cargar
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            showApp();
+        }
+
+        loginForm.onsubmit = (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            // Credencial por defecto
+            if (user === 'admin' && pass === '1234') {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                showApp();
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        };
+
+        function showApp() {
+            loginScreen.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            document.getElementById('order-id-display').innerText = genId();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            window.location.reload();
+        }
+
+        // --- LÓGICA DE LA APLICACIÓN ---
         let orders = JSON.parse(localStorage.getItem('opt_orders')) || [];
         function genId() { return Math.floor(1000 + Math.random() * 9000); }
-        document.getElementById('order-id-display').innerText = genId();
 
         function switchTab(t) {
             document.getElementById('tab-new-order').classList.toggle('hidden', t !== 'new-order');
@@ -238,10 +316,8 @@
             };
 
             try {
-                // Descarga automática al crear
                 await generatePDF(data);
 
-                // Envío de Email
                 const gradStr = `OD: ${data.od.esf}/${data.od.cil}x${data.od.eje} ADD ${data.od.add} | OI: ${data.oi.esf}/${data.oi.cil}x${data.oi.eje} ADD ${data.oi.add}`;
                 await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
                     order_id: data.id,
@@ -260,7 +336,12 @@
                 switchTab('history');
 
             } catch (err) {
-                alert("Error: " + (err.text || "No se pudo enviar el correo. Verifica las credenciales."));
+                alert("Error al enviar email. El PDF se generó de todas formas.");
+                console.error(err);
+                orders.unshift(data);
+                localStorage.setItem('opt_orders', JSON.stringify(orders));
+                resetForm();
+                switchTab('history');
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR Y DESCARGAR PDF";
