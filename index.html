@@ -118,6 +118,7 @@
                             <option>Multifocal / Progresivo</option>
                         </select>
                         <div class="space-y-2">
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Sin Tratamiento"> Sin Tratamiento</label>
                             <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Antireflex"> Antireflex</label>
                             <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Filtro Azul"> Filtro Azul</label>
                             <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="treat" value="Fotocromático"> Fotocromático</label>
@@ -126,7 +127,7 @@
                     <div class="glass-card p-6 space-y-4">
                         <h2 class="font-bold text-blue-600 uppercase text-sm">Armazón</h2>
                         <select id="frameSource" class="input-field">
-                            <option>SILO</option>
+                            <option>ZILO</option>
                             <option>METAL</option>
                         </select>
                         <input type="text" id="frameModel" placeholder="Marca / Modelo" class="input-field">
@@ -189,13 +190,12 @@
                 <h1 style="margin:0; color: #2563eb;">ORDEN DE TRABAJO #<span id="pdf-id"></span></h1>
                 <p>Óptica Connect - Fecha: <span id="pdf-date"></span></p>
             </div>
-            <!-- Estructura similar a la vista anteriormente -->
             <div id="pdf-body-content"></div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN EMAILJS
+        // CONFIGURACIÓN EMAILJS - RECUERDA PONER TUS KEYS AQUÍ
         const PUBLIC_KEY = "tu_public_key_aqui"; 
         const SERVICE_ID = "tu_service_id_aqui";
         const TEMPLATE_ID = "tu_template_id_aqui";
@@ -351,8 +351,8 @@
                     <td class="px-6 py-4 text-xs font-mono">${o.od.esf}/${o.od.cil} | ${o.oi.esf}/${o.oi.cil}</td>
                     <td class="px-6 py-4">${o.lens}</td>
                     <td class="px-6 py-4 flex gap-3">
-                        <button onclick="viewDetails('${o.id}')" class="text-blue-500 hover:text-blue-700 text-lg"><i class="fas fa-eye"></i></button>
-                        <button onclick="deleteOrder('${o.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        <button onclick="viewDetails('${o.id}')" title="Ver Detalles" class="text-blue-500 hover:text-blue-700 text-lg"><i class="fas fa-eye"></i></button>
+                        <button onclick="deleteOrder('${o.id}')" title="Borrar" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="5" class="p-10 text-center text-gray-400">No hay órdenes guardadas.</td></tr>';
