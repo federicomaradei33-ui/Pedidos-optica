@@ -3,203 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Pro - Acceso Directo</title>
+    <title>Gestión Óptica Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+        .card-anim { transition: transform 0.2s; }
+        .card-anim:hover { transform: translateY(-4px); }
+        #loading-overlay { background: rgba(255, 255, 255, 0.9); }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <!-- PANTALLA DE INGRESO (CAPA SUPERIOR) -->
-    <div id="login-screen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 fade-in">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
-                    <i class="fas fa-glasses fa-2xl"></i>
-                </div>
-                <h1 class="text-2xl font-extrabold text-slate-800">Óptica<span class="text-blue-600">Pro</span></h1>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Panel Administrativo</p>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <input type="text" id="user-input" class="w-full bg-slate-100 border-2 border-transparent focus:border-blue-500 p-4 rounded-xl outline-none transition-all" placeholder="Usuario (Admin)">
-                </div>
-                <div>
-                    <input type="password" id="pass-input" class="w-full bg-slate-100 border-2 border-transparent focus:border-blue-500 p-4 rounded-xl outline-none transition-all" placeholder="Contraseña (1234)">
-                </div>
-                <button id="btn-entrar" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-bold transition-all transform active:scale-95 shadow-lg shadow-blue-500/20">
-                    Entrar Ahora
-                </button>
-                <div id="login-error" class="hidden text-red-500 text-sm font-bold text-center bg-red-50 p-3 rounded-lg border border-red-100">
-                    Credenciales incorrectas
-                </div>
-            </div>
-        </div>
+    <!-- Pantalla de Carga Inicial -->
+    <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-600 font-medium">Sincronizando con la nube...</p>
     </div>
 
-    <!-- APP PRINCIPAL (OCULTA HASTA EL LOGIN) -->
-    <div id="app-content" class="hidden min-h-screen">
-        <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-            <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+    <div id="main-app">
+        <nav class="bg-blue-700 text-white shadow-lg p-4 sticky top-0 z-40">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-2">
-                    <i class="fas fa-eye text-blue-600 text-xl"></i>
-                    <span class="font-bold text-lg">ÓpticaPro</span>
+                    <i class="fas fa-glasses text-2xl"></i>
+                    <span class="font-bold text-xl tracking-tight">ÓPTICA CLOUD</span>
                 </div>
-                <button onclick="document.getElementById('modal-nueva').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700">
-                    + Nuevo Trabajo
-                </button>
+                <div class="flex items-center gap-4">
+                    <span id="status-cloud" class="text-xs bg-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
+                        <span class="h-2 w-2 bg-green-400 rounded-full animate-pulse"></span> Online
+                    </span>
+                    <button onclick="abrirModal()" class="bg-white text-blue-700 hover:bg-blue-50 px-5 py-2 rounded-lg font-bold transition-all shadow-md">
+                        + Nueva Orden
+                    </button>
+                </div>
             </div>
         </nav>
 
-        <main class="max-w-6xl mx-auto px-4 py-8">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-slate-800">Trabajos en curso</h2>
-                <p class="text-slate-500 text-sm">Visualización en tiempo real de órdenes</p>
-            </div>
-
-            <div id="lista-ordenes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Los trabajos aparecerán aquí -->
-                <div class="col-span-full py-12 text-center text-slate-400">
-                    <i class="fas fa-spinner animate-spin fa-2xl mb-4 text-blue-200"></i>
-                    <p>Sincronizando base de datos...</p>
-                </div>
+        <main class="max-w-6xl mx-auto p-4 md:p-6">
+            <div id="contenedor-ordenes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Las órdenes se cargarán aquí desde Firestore -->
             </div>
         </main>
     </div>
 
-    <!-- MODAL NUEVA ORDEN -->
-    <div id="modal-nueva" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="font-bold text-lg">Detalles de la Orden</h3>
-                <button onclick="document.getElementById('modal-nueva').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+    <!-- Modal para Nueva Orden -->
+    <div id="modal-orden" class="fixed inset-0 bg-slate-900/70 hidden flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div class="bg-blue-600 p-5 text-white flex justify-between items-center">
+                <h2 class="text-lg font-bold">Nuevo Registro de Trabajo</h2>
+                <button onclick="cerrarModal()" class="text-2xl hover:text-gray-200">&times;</button>
             </div>
             <form id="form-orden" class="p-6 space-y-4">
-                <input type="text" id="paciente" placeholder="Nombre del Paciente" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
-                <input type="text" id="armazon" placeholder="Modelo de Armazón" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
-                <input type="text" id="graduacion" placeholder="Graduación (Ej: +1.50 OD)" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
-                <input type="email" id="laboratorio" placeholder="Email del Laboratorio" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
-                <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg">
-                    Cargar Trabajo
-                </button>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre del Cliente</label>
+                    <input type="text" id="cliente" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Armazón</label>
+                        <input type="text" id="armazon" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Marca/Color">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Graduación</label>
+                        <input type="text" id="graduacion" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: +1.50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Laboratorio</label>
+                    <input type="text" id="lab" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="pt-2">
+                    <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> GUARDAR EN LA NUBE
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración manual para asegurar carga
-        const config = JSON.parse(__firebase_config);
-        const appID = typeof __app_id !== 'undefined' ? __app_id : 'optica-pro-local';
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-manager-v2';
 
-        const btnEntrar = document.getElementById('btn-entrar');
-        const loginError = document.getElementById('login-error');
+        let currentUser = null;
 
-        // FUNCIÓN DE INICIO DE SESIÓN LOCAL
-        btnEntrar.addEventListener('click', () => {
-            const user = document.getElementById('user-input').value;
-            const pass = document.getElementById('pass-input').value;
+        // Autenticación automática silenciosa
+        async function initApp() {
+            try {
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        startListening();
+                    }
+                });
+            } catch (error) {
+                console.error("Error de conexión:", error);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div class="text-center p-6">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                        <p class="font-bold text-gray-800">Error de conexión</p>
+                        <p class="text-gray-500">Verifica tu internet y recarga la página.</p>
+                    </div>
+                `;
+            }
+        }
 
-            if (user === "Admin" && pass === "1234") {
-                loginError.classList.add('hidden');
-                ejecutarApp();
-            } else {
-                loginError.classList.remove('hidden');
-                setTimeout(() => loginError.classList.add('hidden'), 3000);
+        // Escuchar cambios en tiempo real desde Firestore
+        function startListening() {
+            // Regla 1: Usamos la ruta pública para que todos los dispositivos vean lo mismo
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'ordenes');
+            
+            // Regla 2: Consulta simple (sin orderBy complejo para evitar errores de índice)
+            onSnapshot(colRef, (snapshot) => {
+                const ordenes = [];
+                snapshot.forEach(doc => {
+                    ordenes.push({ id: doc.id, ...doc.data() });
+                });
+                // Ordenamos localmente por fecha (descendente)
+                ordenes.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                renderizarOrdenes(ordenes);
+            }, (error) => {
+                console.error("Error cargando datos:", error);
+            });
+        }
+
+        function renderizarOrdenes(ordenes) {
+            const contenedor = document.getElementById('contenedor-ordenes');
+            if (ordenes.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="col-span-full text-center py-20">
+                        <i class="fas fa-folder-open text-gray-200 text-6xl mb-4"></i>
+                        <p class="text-gray-400">No hay trabajos registrados. Empieza creando uno nuevo.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            contenedor.innerHTML = ordenes.map(o => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-anim relative group">
+                    <button onclick="window.eliminarOrden('${o.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <div class="flex items-center gap-4 mb-5">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+                            ${o.cliente.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 leading-tight">${o.cliente}</h3>
+                            <p class="text-xs text-blue-500 font-medium uppercase tracking-wider">${o.lab}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Armazón</p>
+                            <p class="text-sm font-semibold text-gray-700 truncate">${o.armazon}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Graduación</p>
+                            <p class="text-sm font-bold text-blue-700">${o.graduacion}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Exponer funciones al window para el HTML
+        window.abrirModal = () => document.getElementById('modal-orden').classList.remove('hidden');
+        window.cerrarModal = () => document.getElementById('modal-orden').classList.add('hidden');
+
+        window.eliminarOrden = async (id) => {
+            if (!confirm('¿Eliminar este registro permanentemente?')) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'ordenes', id);
+                await deleteDoc(docRef);
+            } catch (e) {
+                console.error("Error al borrar:", e);
+            }
+        };
+
+        // Manejo del Formulario
+        document.getElementById('form-orden').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Guardando...';
+
+            const data = {
+                cliente: document.getElementById('cliente').value,
+                armazon: document.getElementById('armazon').value,
+                graduacion: document.getElementById('graduacion').value,
+                lab: document.getElementById('lab').value,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                if (!currentUser) throw new Error("No autenticado");
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'ordenes');
+                await addDoc(colRef, data);
+                
+                window.cerrarModal();
+                document.getElementById('form-orden').reset();
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("Error al conectar con la nube. Intenta de nuevo.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> GUARDAR EN LA NUBE';
             }
         });
 
-        // Solo se ejecuta esto si el login es exitoso
-        async function ejecutarApp() {
-            // 1. Mostrar interfaz principal
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-content').classList.remove('hidden');
-
-            try {
-                // 2. Inicializar Firebase solo ahora
-                const firebaseApp = initializeApp(config);
-                const auth = getAuth(firebaseApp);
-                const db = getFirestore(firebaseApp);
-
-                await signInAnonymously(auth);
-
-                // 3. Escuchar la base de datos
-                const colRef = collection(db, 'artifacts', appID, 'public', 'data', 'ordenes');
-                
-                onSnapshot(colRef, (snapshot) => {
-                    const lista = document.getElementById('lista-ordenes');
-                    let html = '';
-                    
-                    if (snapshot.empty) {
-                        lista.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold">Sin trabajos pendientes</div>';
-                        return;
-                    }
-
-                    snapshot.forEach(docSnap => {
-                        const d = docSnap.data();
-                        html += `
-                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h4 class="font-bold text-slate-800">${d.paciente}</h4>
-                                    <button onclick="window.eliminar('${docSnap.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-                                </div>
-                                <div class="bg-blue-50 p-2 rounded-lg text-blue-600 text-xs font-bold mb-3 inline-block">
-                                    ${d.armazon}
-                                </div>
-                                <div class="text-[11px] text-slate-500 space-y-1">
-                                    <p><i class="fas fa-file-prescription mr-1"></i> Grad: ${d.graduacion || 'Sin dato'}</p>
-                                    <p><i class="fas fa-flask mr-1"></i> Lab: ${d.laboratorio}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    lista.innerHTML = html;
-                });
-
-                // Funcionalidad de Envío
-                document.getElementById('form-orden').onsubmit = async (e) => {
-                    e.preventDefault();
-                    const b = e.target.querySelector('button');
-                    b.disabled = true;
-                    b.innerText = 'Procesando...';
-
-                    try {
-                        await addDoc(colRef, {
-                            paciente: document.getElementById('paciente').value,
-                            armazon: document.getElementById('armazon').value,
-                            graduacion: document.getElementById('graduacion').value,
-                            laboratorio: document.getElementById('laboratorio').value,
-                            createdAt: serverTimestamp()
-                        });
-                        document.getElementById('modal-nueva').classList.add('hidden');
-                        e.target.reset();
-                    } finally {
-                        b.disabled = false;
-                        b.innerText = 'Cargar Trabajo';
-                    }
-                };
-
-                // Función global para eliminar
-                window.eliminar = async (id) => {
-                    if(confirm("¿Seguro que quieres eliminar esta orden?")) {
-                        await deleteDoc(doc(db, 'artifacts', appID, 'public', 'data', 'ordenes', id));
-                    }
-                };
-
-            } catch (error) {
-                console.error("Error de inicialización:", error);
-                alert("Error conectando con la base de datos. Por favor reintenta.");
-            }
-        }
+        initApp();
     </script>
 </body>
-</html>
