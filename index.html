@@ -36,13 +36,13 @@
     <div id="loading" class="loading-overlay hidden">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-2"></i>
-            <p class="text-xs font-bold text-slate-500 uppercase">Sincronizando con la nube...</p>
+            <p id="loading-text" class="text-xs font-bold text-slate-500 uppercase">Sincronizando con la nube...</p>
         </div>
     </div>
 
     <!-- Pantalla de Login y Registro -->
     <div id="login-screen">
-        <div class="card p-8 w-full max-w-md">
+        <div class="card p-8 w-full max-w-md mx-4">
             <div class="text-center mb-6">
                 <i class="fas fa-glasses text-4xl text-blue-600 mb-2"></i>
                 <h2 class="text-2xl font-bold italic">Óptica Connect</h2>
@@ -55,11 +55,11 @@
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="label">Usuario</label>
-                    <input type="text" id="user" class="input" placeholder="Tu usuario" required>
+                    <input type="text" id="user" class="input" placeholder="Tu usuario" required autocomplete="username">
                 </div>
                 <div>
                     <label class="label">Contraseña</label>
-                    <input type="password" id="pass" class="input" placeholder="••••" required>
+                    <input type="password" id="pass" class="input" placeholder="••••" required autocomplete="current-password">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg uppercase tracking-widest text-xs">
                     Entrar al Portal
@@ -79,6 +79,7 @@
                     Crear Cuenta
                 </button>
             </form>
+            <p class="text-[10px] text-center text-slate-400 mt-6 uppercase tracking-tighter">Acceso Seguro • Sincronización en la nube</p>
         </div>
     </div>
 
@@ -229,23 +230,30 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase Config
+        // Firebase Config
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // State
-        let currentUser = null;
+        // App State
+        let currentUserAuth = null;
         let userData = null;
         let allOrders = [];
-        let globalUsers = {};
 
-        // 1. Auth Init
+        // Loading utility
+        const setLoading = (show, text = "Sincronizando...") => {
+            const el = document.getElementById('loading');
+            document.getElementById('loading-text').innerText = text;
+            el.classList.toggle('hidden', !show);
+        };
+
+        // Auth initialization
         async function initAuth() {
+            setLoading(true, "Iniciando Conexión...");
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -254,32 +262,22 @@
                 }
             } catch (error) {
                 console.error("Auth error:", error);
+            } finally {
+                setLoading(false);
             }
         }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                currentUser = user;
-                // Sincronizar Base de Usuarios Global
-                syncUsers();
-                // Sincronizar Pedidos
+                currentUserAuth = user;
+                // Una vez autenticado, escuchamos los pedidos
                 syncOrders();
             }
         });
 
-        // 2. Data Synchronization
-        async function syncUsers() {
-            if (!currentUser) return;
-            const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-            onSnapshot(usersRef, (snapshot) => {
-                snapshot.forEach(doc => {
-                    globalUsers[doc.id] = doc.data().password;
-                });
-            }, (err) => console.error("Users sync error:", err));
-        }
-
-        async function syncOrders() {
-            if (!currentUser) return;
+        // Orders Sync
+        function syncOrders() {
+            if (!currentUserAuth) return;
             const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
             onSnapshot(ordersRef, (snapshot) => {
                 allOrders = [];
@@ -290,7 +288,8 @@
             }, (err) => console.error("Orders sync error:", err));
         }
 
-        // 3. UI logic (attached to window for HTML accessibility)
+        // --- UI ACTIONS ---
+
         window.toggleAuthMode = (mode) => {
             const isLogin = mode === 'login';
             document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
@@ -299,6 +298,7 @@
             document.getElementById('tab-register').className = !isLogin ? "pb-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-600 uppercase" : "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
         };
 
+        // Registro Mejorado
         document.getElementById('registerForm').onsubmit = async (e) => {
             e.preventDefault();
             const u = document.getElementById('reg-user').value.trim().toLowerCase();
@@ -306,40 +306,52 @@
 
             if(u.length < 3 || p.length < 4) return alert("Mínimo 3 letras de usuario y 4 de clave");
             
-            document.getElementById('loading').classList.remove('hidden');
-            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
-            const check = await getDoc(userRef);
-            
-            if(check.exists()) {
-                document.getElementById('loading').classList.add('hidden');
-                return alert("Este usuario ya existe en la red.");
-            }
+            setLoading(true, "Creando Usuario...");
+            try {
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+                const check = await getDoc(userRef);
+                
+                if(check.exists()) {
+                    setLoading(false);
+                    return alert("Este usuario ya existe.");
+                }
 
-            await setDoc(userRef, { password: p });
-            document.getElementById('loading').classList.add('hidden');
-            alert("Cuenta creada globalmente. Ya puedes ingresar.");
-            window.toggleAuthMode('login');
+                await setDoc(userRef, { password: p, created: new Date().toISOString() });
+                alert("✅ Cuenta creada. Ya puedes ingresar.");
+                window.toggleAuthMode('login');
+            } catch (err) {
+                alert("Error al registrar: " + err.message);
+            } finally {
+                setLoading(false);
+            }
         };
 
+        // Login Mejorado (Consulta Directa a Cloud)
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const u = document.getElementById('user').value.toLowerCase().trim();
             const p = document.getElementById('pass').value;
 
-            document.getElementById('loading').classList.remove('hidden');
-            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
-            const check = await getDoc(userRef);
+            setLoading(true, "Verificando Credenciales...");
+            try {
+                // Consultamos directamente el documento del usuario en Firestore
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+                const userSnap = await getDoc(userRef);
 
-            if(check.exists() && check.data().password === p) {
-                userData = { username: u };
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('current-user-display').innerText = u;
-                document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
-                document.getElementById('loading').classList.add('hidden');
-            } else {
-                document.getElementById('loading').classList.add('hidden');
-                alert("Usuario o clave incorrectos (o no tienes internet)");
+                if(userSnap.exists() && userSnap.data().password === p) {
+                    userData = { username: u };
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('main-app').classList.remove('hidden');
+                    document.getElementById('current-user-display').innerText = u;
+                    document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
+                    renderHistory();
+                } else {
+                    alert("⚠️ Usuario o clave incorrectos.");
+                }
+            } catch (err) {
+                alert("Error de conexión: " + err.message);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -376,11 +388,10 @@
             };
 
             try {
-                // 1. Guardar en Firestore (Cloud)
                 const orderDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'orders', oid);
                 await setDoc(orderDocRef, params);
-
-                // 2. Enviar Mail (EmailJS)
+                
+                // Intento de envío de mail (EmailJS)
                 await emailjs.init({ publicKey: "-NKT0dntx3JOPXYAA" });
                 await emailjs.send("service_bo6kzuc", "template_4e00pyr", params);
                 
@@ -389,7 +400,8 @@
                 document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
                 window.showSec('hist');
             } catch (err) {
-                alert("❌ ERROR: " + err.message);
+                alert("⚠️ Se guardó en la nube pero el mail falló: " + err.message);
+                window.showSec('hist');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR A LABORATORIO';
@@ -405,7 +417,7 @@
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if(myOrders.length === 0) { 
-                cont.innerHTML = '<div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300"><p class="text-slate-400 text-sm">No hay pedidos en la nube para tu usuario.</p></div>'; 
+                cont.innerHTML = '<div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300"><p class="text-slate-400 text-sm">No hay pedidos registrados.</p></div>'; 
                 return; 
             }
             
@@ -436,13 +448,12 @@
         }
 
         window.deleteOrder = async (id) => {
-            if(confirm("¿Eliminar este pedido de la nube definitivamente?")) {
+            if(confirm("¿Eliminar este pedido permanentemente?")) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'orders', id);
                 await deleteDoc(docRef);
             }
         };
 
-        // Start
         initAuth();
 
     </script>
