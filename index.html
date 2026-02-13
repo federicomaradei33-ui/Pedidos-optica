@@ -25,9 +25,20 @@
             position: fixed; inset: 0; background: #f1f5f9; z-index: 1000;
             display: flex; align-items: center; justify-content: center;
         }
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.8);
+            display: flex; align-items: center; justify-content: center; z-index: 2000;
+        }
     </style>
 </head>
 <body>
+
+    <div id="loading" class="loading-overlay hidden">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-2"></i>
+            <p class="text-xs font-bold text-slate-500 uppercase">Sincronizando con la nube...</p>
+        </div>
+    </div>
 
     <!-- Pantalla de Login y Registro -->
     <div id="login-screen">
@@ -41,7 +52,6 @@
                 </div>
             </div>
 
-            <!-- Formulario Login -->
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="label">Usuario</label>
@@ -56,7 +66,6 @@
                 </button>
             </form>
 
-            <!-- Formulario Registro -->
             <form id="registerForm" class="hidden space-y-4">
                 <div>
                     <label class="label">Nuevo Usuario</label>
@@ -95,7 +104,6 @@
         </header>
 
         <main class="max-w-5xl mx-auto p-4 md:p-8">
-            <!-- Sección Nuevo Pedido -->
             <section id="sec-new" class="space-y-6">
                 <div class="flex justify-between items-end">
                     <h2 class="text-2xl font-bold">Generar Orden de Trabajo</h2>
@@ -104,7 +112,6 @@
 
                 <form id="orderForm" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="space-y-6">
-                        <!-- Paciente -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-user"></i> Datos del Paciente</h3>
                             <div class="space-y-4">
@@ -116,7 +123,6 @@
                             </div>
                         </div>
 
-                        <!-- Receta Técnica -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-file-medical"></i> Receta Técnica</h3>
                             <div class="receta-container">
@@ -162,7 +168,6 @@
                     </div>
 
                     <div class="space-y-6">
-                        <!-- Cristales -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-layer-group"></i> Cristales y Tratamientos</h3>
                             <div class="space-y-4">
@@ -182,7 +187,6 @@
                             </div>
                         </div>
 
-                        <!-- Armazón -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-glasses"></i> Armazón</h3>
                             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -209,101 +213,144 @@
                 </form>
             </section>
 
-            <!-- Historial Personalizado -->
             <section id="sec-hist" class="hidden space-y-6">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold">Mis Pedidos</h2>
-                        <p class="text-xs text-slate-400">Mostrando solo tus registros</p>
+                        <p class="text-xs text-slate-400">Datos sincronizados en la nube</p>
                     </div>
-                    <button onclick="clearMyHistory()" class="text-xs text-red-500 font-bold uppercase hover:underline">Limpiar Mis Registros</button>
                 </div>
                 <div id="history-container" class="space-y-4"></div>
             </section>
         </main>
     </div>
 
-    <script>
-        // CONFIGURACIÓN DE EMAILJS
-        const PUBLIC_KEY = "-NKT0dntx3JOPXYAA";
-        const SERVICE_ID = "service_bo6kzuc";
-        const TEMPLATE_ID = "template_4e00pyr";
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        emailjs.init({ publicKey: PUBLIC_KEY });
+        // Global Firebase Config
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // PERSISTENCIA DE USUARIOS Y DATOS
-        let usersDB = JSON.parse(localStorage.getItem('optica_users')) || { "admin": "1234" };
-        let ordersDB = JSON.parse(localStorage.getItem('optica_v5')) || [];
-        let currentActiveUser = "";
+        // State
+        let currentUser = null;
+        let userData = null;
+        let allOrders = [];
+        let globalUsers = {};
 
-        // Lógica de UI Auth
-        function toggleAuthMode(mode) {
+        // 1. Auth Init
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Sincronizar Base de Usuarios Global
+                syncUsers();
+                // Sincronizar Pedidos
+                syncOrders();
+            }
+        });
+
+        // 2. Data Synchronization
+        async function syncUsers() {
+            if (!currentUser) return;
+            const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+            onSnapshot(usersRef, (snapshot) => {
+                snapshot.forEach(doc => {
+                    globalUsers[doc.id] = doc.data().password;
+                });
+            }, (err) => console.error("Users sync error:", err));
+        }
+
+        async function syncOrders() {
+            if (!currentUser) return;
+            const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+            onSnapshot(ordersRef, (snapshot) => {
+                allOrders = [];
+                snapshot.forEach(doc => {
+                    allOrders.push({ id: doc.id, ...doc.data() });
+                });
+                renderHistory();
+            }, (err) => console.error("Orders sync error:", err));
+        }
+
+        // 3. UI logic (attached to window for HTML accessibility)
+        window.toggleAuthMode = (mode) => {
             const isLogin = mode === 'login';
             document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
             document.getElementById('registerForm').classList.toggle('hidden', isLogin);
-            
-            document.getElementById('tab-login').className = isLogin ? 
-                "pb-2 text-xs font-bold border-b-2 border-blue-600 text-blue-600 uppercase" : 
-                "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
-            
-            document.getElementById('tab-register').className = !isLogin ? 
-                "pb-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-600 uppercase" : 
-                "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
-        }
+            document.getElementById('tab-login').className = isLogin ? "pb-2 text-xs font-bold border-b-2 border-blue-600 text-blue-600 uppercase" : "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
+            document.getElementById('tab-register').className = !isLogin ? "pb-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-600 uppercase" : "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
+        };
 
-        // Registro de usuario
-        document.getElementById('registerForm').onsubmit = (e) => {
+        document.getElementById('registerForm').onsubmit = async (e) => {
             e.preventDefault();
             const u = document.getElementById('reg-user').value.trim().toLowerCase();
             const p = document.getElementById('reg-pass').value;
 
-            if(u.length < 3 || p.length < 4) {
-                alert("Usuario (mín. 3 letras) y Contraseña (mín. 4 caracteres)");
-                return;
+            if(u.length < 3 || p.length < 4) return alert("Mínimo 3 letras de usuario y 4 de clave");
+            
+            document.getElementById('loading').classList.remove('hidden');
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+            const check = await getDoc(userRef);
+            
+            if(check.exists()) {
+                document.getElementById('loading').classList.add('hidden');
+                return alert("Este usuario ya existe en la red.");
             }
 
-            if(usersDB[u]) {
-                alert("Este nombre de usuario ya existe.");
-                return;
-            }
-
-            usersDB[u] = p;
-            localStorage.setItem('optica_users', JSON.stringify(usersDB));
-            alert("¡Registro exitoso! Ya puedes iniciar sesión.");
-            toggleAuthMode('login');
+            await setDoc(userRef, { password: p });
+            document.getElementById('loading').classList.add('hidden');
+            alert("Cuenta creada globalmente. Ya puedes ingresar.");
+            window.toggleAuthMode('login');
         };
 
-        // Login
-        document.getElementById('loginForm').onsubmit = (e) => {
+        document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const u = document.getElementById('user').value.toLowerCase().trim();
             const p = document.getElementById('pass').value;
 
-            if(usersDB[u] && usersDB[u] === p) {
-                currentActiveUser = u;
+            document.getElementById('loading').classList.remove('hidden');
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+            const check = await getDoc(userRef);
+
+            if(check.exists() && check.data().password === p) {
+                userData = { username: u };
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').classList.remove('hidden');
                 document.getElementById('current-user-display').innerText = u;
-                init();
+                document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
+                document.getElementById('loading').classList.add('hidden');
             } else {
-                alert("Usuario o contraseña incorrectos");
+                document.getElementById('loading').classList.add('hidden');
+                alert("Usuario o clave incorrectos (o no tienes internet)");
             }
         };
 
-        function logout() { location.reload(); }
+        window.logout = () => location.reload();
 
-        function init() {
-            document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
-            renderHistory();
-        }
-
-        function showSec(name) {
+        window.showSec = (name) => {
             document.getElementById('sec-new').classList.toggle('hidden', name !== 'new');
             document.getElementById('sec-hist').classList.toggle('hidden', name !== 'hist');
             document.getElementById('nav-new').className = name === 'new' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-slate-400 pb-1';
             document.getElementById('nav-hist').className = name === 'hist' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-slate-400 pb-1';
-            if(name === 'hist') renderHistory();
-        }
+        };
 
         document.getElementById('orderForm').onsubmit = async function(e) {
             e.preventDefault();
@@ -325,19 +372,24 @@
                 frame_details: `${v('frame_mat')} - ${v('frame_mod')}`,
                 notes: v('obs'),
                 date: new Date().toLocaleString(),
-                created_by: currentActiveUser
+                created_by: userData.username
             };
 
             try {
-                await emailjs.send(SERVICE_ID, TEMPLATE_ID, params);
-                alert("✅ PEDIDO ENVIADO AL MAIL");
-                ordersDB.unshift(params);
-                localStorage.setItem('optica_v5', JSON.stringify(ordersDB));
+                // 1. Guardar en Firestore (Cloud)
+                const orderDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'orders', oid);
+                await setDoc(orderDocRef, params);
+
+                // 2. Enviar Mail (EmailJS)
+                await emailjs.init({ publicKey: "-NKT0dntx3JOPXYAA" });
+                await emailjs.send("service_bo6kzuc", "template_4e00pyr", params);
+                
+                alert("✅ PEDIDO GUARDADO Y ENVIADO");
                 this.reset();
-                init();
-                showSec('hist');
+                document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
+                window.showSec('hist');
             } catch (err) {
-                alert("❌ ERROR AL ENVIAR: " + err.text);
+                alert("❌ ERROR: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR A LABORATORIO';
@@ -346,11 +398,14 @@
 
         function renderHistory() {
             const cont = document.getElementById('history-container');
-            // FILTRAR: Solo pedidos del usuario actual
-            const myOrders = ordersDB.filter(o => o.created_by === currentActiveUser);
+            if(!userData) return;
+
+            const myOrders = allOrders
+                .filter(o => o.created_by === userData.username)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if(myOrders.length === 0) { 
-                cont.innerHTML = '<div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300"><p class="text-slate-400 text-sm">Aún no has cargado ningún pedido.</p></div>'; 
+                cont.innerHTML = '<div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300"><p class="text-slate-400 text-sm">No hay pedidos en la nube para tu usuario.</p></div>'; 
                 return; 
             }
             
@@ -362,7 +417,7 @@
                             <h4 class="text-lg font-bold mt-1">${o.patient_name}</h4>
                             <span class="text-xs text-slate-400"><i class="far fa-clock"></i> ${o.date}</span>
                         </div>
-                        <button onclick="del('${o.order_id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <button onclick="window.deleteOrder('${o.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div class="bg-slate-50 p-3 rounded">
@@ -380,21 +435,16 @@
             `).join('');
         }
 
-        function del(id) { 
-            if(confirm("¿Eliminar este pedido de tu historial?")) { 
-                ordersDB = ordersDB.filter(o => o.order_id !== id); 
-                localStorage.setItem('optica_v5', JSON.stringify(ordersDB)); 
-                renderHistory(); 
-            } 
-        }
+        window.deleteOrder = async (id) => {
+            if(confirm("¿Eliminar este pedido de la nube definitivamente?")) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'orders', id);
+                await deleteDoc(docRef);
+            }
+        };
 
-        function clearMyHistory() { 
-            if(confirm("¿Borrar todos TUS pedidos del historial?")) { 
-                ordersDB = ordersDB.filter(o => o.created_by !== currentActiveUser); 
-                localStorage.setItem('optica_v5', JSON.stringify(ordersDB)); 
-                renderHistory(); 
-            } 
-        }
+        // Start
+        initAuth();
+
     </script>
 </body>
 </html>
