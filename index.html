@@ -3,281 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpticaConnect - Gestión de Pedidos</title>
+    <title>OpticaConnect - Gestión</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f7fa; color: #1e293b; }
-        .form-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .input-field { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; outline: none; transition: all 0.2s; background: #f8fafc; }
-        .input-field:focus { border-color: #2563eb; ring: 2px; ring-color: #dbeafe; background: white; }
-        .btn-toggle { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700; transition: all 0.2s; text-transform: uppercase; border: 1px solid #e2e8f0; background: white; color: #64748b; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .form-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+        .input-field { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; transition: all 0.2s; font-size: 0.9rem; }
+        .input-field:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .btn-toggle { padding: 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #e2e8f0; background: white; color: #64748b; flex: 1; text-align: center; cursor: pointer; }
         .btn-toggle.active { background: #1e293b; color: white; border-color: #1e293b; }
-        .loading-overlay { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loading-overlay { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
         .hidden { display: none !important; }
+        th { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem !important; }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Carga -->
+    <!-- Cargador con Auto-Cierre de Seguridad -->
     <div id="loader" class="loading-overlay">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p class="font-bold text-slate-600">Conectando a OpticaConnect Cloud...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+        <p class="font-bold text-slate-500 text-sm">Sincronizando OpticaConnect...</p>
     </div>
 
-    <!-- Navegación Estilo Captura -->
+    <!-- Barra de Navegación -->
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 px-4 py-3">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fas fa-glasses text-blue-600 text-2xl"></i>
-                <h1 class="text-xl font-extrabold tracking-tighter text-slate-800">OPTICA<span class="text-blue-600">CONNECT</span></h1>
+                <i class="fas fa-glasses text-blue-600 text-xl"></i>
+                <h1 class="text-lg font-black tracking-tighter">OPTICA<span class="text-blue-600">CONNECT</span></h1>
             </div>
-            <div class="flex gap-3">
-                <button onclick="showView('form')" class="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-100 transition">
-                    <i class="fas fa-plus"></i> NUEVA
+            <div class="flex gap-2">
+                <button onclick="showView('form')" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition">
+                    <i class="fas fa-plus"></i> <span class="hidden sm:inline">NUEVA</span>
                 </button>
-                <button onclick="showView('list')" class="flex items-center gap-2 text-slate-500 px-4 py-2 rounded-lg font-bold hover:bg-gray-100 transition">
-                    <i class="fas fa-history"></i> HISTORIAL
+                <button onclick="showView('list')" class="flex items-center gap-2 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-100 transition">
+                    <i class="fas fa-history"></i> <span class="hidden sm:inline">HISTORIAL</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto p-4 md:p-8">
+    <main class="max-w-4xl mx-auto p-4 md:p-6">
         
-        <!-- VISTA FORMULARIO (Basada en tus capturas) -->
-        <div id="view-form" class="space-y-8 animate-in fade-in duration-500">
-            
+        <!-- VISTA FORMULARIO -->
+        <div id="view-form" class="animate-in fade-in duration-300">
             <!-- Datos del Paciente -->
-            <section class="form-card p-6">
-                <div class="flex items-center gap-2 mb-6 text-slate-800">
-                    <i class="far fa-address-card text-blue-600 text-xl"></i>
-                    <h2 class="font-bold text-lg uppercase tracking-wide">Datos del Paciente</h2>
+            <div class="form-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="far fa-user-circle text-blue-600"></i>
+                    <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-700">Datos del Paciente</h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Nombre Completo</label>
-                        <input type="text" id="p-nombre" class="input-field" placeholder="Ej: Juan Pérez">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nombre Completo</label>
+                        <input type="text" id="p-nombre" class="input-field" placeholder="Nombre del cliente">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">DNI</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">DNI</label>
                         <input type="text" id="p-dni" class="input-field" placeholder="Sin puntos">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Teléfono</label>
-                        <input type="text" id="p-tel" class="input-field" placeholder="+54...">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Teléfono</label>
+                        <input type="text" id="p-tel" class="input-field" placeholder="Ej: 11 2345-6789">
                     </div>
                 </div>
-            </section>
+            </div>
 
             <!-- Receta Técnica -->
-            <section class="form-card overflow-hidden">
-                <div class="p-6 border-b border-gray-100">
-                    <div class="flex items-center gap-2 text-slate-800">
-                        <i class="far fa-file-alt text-blue-600 text-xl"></i>
-                        <h2 class="font-bold text-lg uppercase tracking-wide">Receta Técnica (Con Adición)</h2>
-                    </div>
+            <div class="form-card overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex items-center gap-2">
+                    <i class="far fa-file-alt text-blue-600"></i>
+                    <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-700">Receta Técnica</h2>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-center">
+                    <table class="w-full text-center border-collapse">
                         <thead>
-                            <tr class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                                <th class="py-4 px-4 border-b">Ojo</th>
-                                <th class="py-4 px-4 border-b">Esféricos</th>
-                                <th class="py-4 px-4 border-b">Cilíndricos</th>
-                                <th class="py-4 px-4 border-b">Eje (°)</th>
-                                <th class="py-4 px-4 border-b text-blue-600">Adición</th>
+                            <tr class="bg-slate-50">
+                                <th class="border-b">OJO</th>
+                                <th class="border-b">ESFÉRICO</th>
+                                <th class="border-b">CILÍNDRICO</th>
+                                <th class="border-b">EJE</th>
+                                <th class="border-b bg-blue-50 text-blue-600">ADICIÓN</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm font-bold">
-                            <tr class="border-b border-gray-50">
-                                <td class="py-4 text-blue-700 font-black px-4">OD</td>
-                                <td class="px-2"><input type="text" id="od-esf" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0.00"></td>
-                                <td class="px-2"><input type="text" id="od-cil" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0.00"></td>
-                                <td class="px-2"><input type="text" id="od-eje" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0"></td>
-                                <td class="px-2 bg-blue-50/50"><input type="text" id="od-adi" class="w-20 text-center p-2 bg-transparent outline-none text-blue-600" value="+0.00"></td>
+                            <tr class="border-b border-slate-50">
+                                <td class="py-3 text-blue-600 font-black">OD</td>
+                                <td><input type="text" id="od-esf" class="w-full text-center bg-transparent outline-none" value="0.00"></td>
+                                <td><input type="text" id="od-cil" class="w-full text-center bg-transparent outline-none" value="0.00"></td>
+                                <td><input type="text" id="od-eje" class="w-full text-center bg-transparent outline-none" value="0"></td>
+                                <td class="bg-blue-50/30 text-blue-600"><input type="text" id="od-adi" class="w-full text-center bg-transparent outline-none" value="+0.00"></td>
                             </tr>
                             <tr>
-                                <td class="py-4 text-blue-700 font-black px-4">OI</td>
-                                <td class="px-2"><input type="text" id="oi-esf" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0.00"></td>
-                                <td class="px-2"><input type="text" id="oi-cil" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0.00"></td>
-                                <td class="px-2"><input type="text" id="oi-eje" class="w-20 text-center p-2 bg-transparent outline-none focus:text-blue-600" value="0"></td>
-                                <td class="px-2 bg-blue-50/50"><input type="text" id="oi-adi" class="w-20 text-center p-2 bg-transparent outline-none text-blue-600" value="+0.00"></td>
+                                <td class="py-3 text-blue-600 font-black">OI</td>
+                                <td><input type="text" id="oi-esf" class="w-full text-center bg-transparent outline-none" value="0.00"></td>
+                                <td><input type="text" id="oi-cil" class="w-full text-center bg-transparent outline-none" value="0.00"></td>
+                                <td><input type="text" id="oi-eje" class="w-full text-center bg-transparent outline-none" value="0"></td>
+                                <td class="bg-blue-50/30 text-blue-600"><input type="text" id="oi-adi" class="w-full text-center bg-transparent outline-none" value="+0.00"></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50/50">
+                <div class="p-4 bg-slate-50 grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">DNP (Nasopupilar)</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">DNP (Nasopupilar)</label>
                         <input type="text" id="rec-dnp" class="input-field" placeholder="Ej: 32/33">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Altura / Calibre</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Altura / Calibre</label>
                         <input type="text" id="rec-alt" class="input-field" placeholder="Ej: 18mm">
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- Armazón y Cristales -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <section class="form-card p-6">
-                    <h2 class="font-black text-lg mb-6 uppercase tracking-tight">Tipo de Cristales</h2>
-                    <select id="c-tipo" class="input-field mb-4 font-bold text-slate-700">
+            <!-- Cristales y Armazón -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="form-card p-5">
+                    <h3 class="font-black text-xs uppercase mb-4 text-slate-400">Tipo de Cristales</h3>
+                    <select id="c-tipo" class="input-field mb-3 font-bold">
                         <option>Monofocal Stock</option>
                         <option>Monofocal Laboratorio</option>
                         <option>Bifocal</option>
-                        <option>Multifocal / Progresivo</option>
+                        <option>Multifocal Progresivo</option>
                     </select>
                     <div class="grid grid-cols-2 gap-2" id="tratamientos">
-                        <button type="button" class="btn-toggle text-xs" onclick="this.classList.toggle('active')">Antirreflex</button>
-                        <button type="button" class="btn-toggle text-xs" onclick="this.classList.toggle('active')">Filtro Azul</button>
-                        <button type="button" class="btn-toggle text-xs" onclick="this.classList.toggle('active')">Fotocromático</button>
-                        <button type="button" class="btn-toggle text-xs" onclick="this.classList.toggle('active')">Sin Tratam.</button>
+                        <button class="btn-toggle" onclick="toggleActive(this)">Antirreflex</button>
+                        <button class="btn-toggle" onclick="toggleActive(this)">Filtro Azul</button>
+                        <button class="btn-toggle" onclick="toggleActive(this)">Fotocrom.</button>
+                        <button class="btn-toggle" onclick="toggleActive(this)">Sin Tratam.</button>
                     </div>
-                </section>
-
-                <section class="form-card p-6">
-                    <h2 class="font-black text-lg mb-6 uppercase tracking-tight">Armazón</h2>
-                    <div class="flex gap-2 mb-6">
-                        <button type="button" id="mat-zilo" class="btn-toggle flex-1 active" onclick="setMaterial('Zilo')">Zilo</button>
-                        <button type="button" id="mat-metal" class="btn-toggle flex-1" onclick="setMaterial('Metal')">Metal</button>
+                </div>
+                <div class="form-card p-5">
+                    <h3 class="font-black text-xs uppercase mb-4 text-slate-400">Armazón</h3>
+                    <div class="flex gap-2 mb-3">
+                        <button id="mat-zilo" class="btn-toggle active" onclick="setMaterial('Zilo')">ZILO</button>
+                        <button id="mat-metal" class="btn-toggle" onclick="setMaterial('METAL')">METAL</button>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Marca / Modelo / Color</label>
-                        <input type="text" id="a-detalle" class="input-field" placeholder="Ej: Ray-Ban 5228 Black">
-                    </div>
-                </section>
+                    <input type="text" id="a-detalle" class="input-field" placeholder="Marca, Modelo, Color">
+                </div>
             </div>
 
-            <!-- Botón Guardar -->
-            <div class="pb-10">
-                <button onclick="guardarPedido()" id="btn-save" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3 text-lg">
-                    <i class="fas fa-cloud-upload-alt"></i> REGISTRAR Y SINCRONIZAR
-                </button>
-            </div>
+            <button onclick="guardarPedido()" id="btn-save" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-3">
+                <i class="fas fa-save"></i> GUARDAR PEDIDO
+            </button>
         </div>
 
         <!-- VISTA HISTORIAL -->
-        <div id="view-list" class="hidden space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+        <div id="view-list" class="hidden animate-in slide-in-from-bottom-4">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-slate-800">Historial de Pedidos</h2>
-                <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase" id="contador">0 Pedidos</span>
+                <h2 class="text-xl font-black">Historial</h2>
+                <div id="status-cloud" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 uppercase">Local Mode</div>
             </div>
-            <div id="lista-pedidos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Tarjetas de pedidos -->
+            <div id="lista-pedidos" class="grid gap-3">
+                <!-- Pedidos aparecerán aquí -->
             </div>
         </div>
-
     </main>
-
-    <!-- Notificación Flotante -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full font-bold shadow-2xl transition-all opacity-0 translate-y-10 z-[100]">
-        Acción completada
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración inyectada por el entorno
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-pro';
-
+        let db = null;
+        let isCloud = false;
         let materialActual = "Zilo";
-        let userAuth = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
 
-        // Inicialización
-        async function start() {
+        // Intentar conectar a Firebase, si falla o no hay config, usar LocalStorage
+        async function init() {
             try {
-                // Autenticación anónima para que funcione sin contraseña pero sea persistente por dispositivo
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userAuth = user;
-                        document.getElementById('loader').classList.add('hidden');
-                        vincularDatos();
-                    }
-                });
+                if (typeof __firebase_config !== 'undefined') {
+                    const app = initializeApp(JSON.parse(__firebase_config));
+                    const auth = getAuth(app);
+                    db = getFirestore(app);
+                    
+                    await signInAnonymously(auth);
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            isCloud = true;
+                            document.getElementById('status-cloud').innerText = "Cloud Sync ON";
+                            document.getElementById('status-cloud').className = "text-[10px] font-bold px-2 py-1 rounded bg-green-100 text-green-600 uppercase";
+                            vincularNube();
+                            hideLoader();
+                        }
+                    });
+                } else {
+                    throw new Error("No config");
+                }
             } catch (e) {
-                console.error(e);
-                alert("Error de conexión. Verifica tu internet.");
+                console.warn("Iniciando en modo Local Storage...");
+                hideLoader();
+                renderLocal();
             }
+
+            // Fail-safe: Quitar loader si algo tarda más de 3 segundos
+            setTimeout(hideLoader, 3000);
         }
 
-        // Sincronización en tiempo real
-        function vincularDatos() {
-            const path = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-            onSnapshot(path, (snap) => {
-                const pedidos = [];
-                snap.forEach(d => pedidos.push({id: d.id, ...d.data()}));
-                // Ordenar por fecha localmente
-                pedidos.sort((a,b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
-                renderizarHistorial(pedidos);
-                document.getElementById('contador').innerText = `${pedidos.length} Pedidos`;
-            }, (err) => console.error("Error en Snapshot:", err));
+        function hideLoader() {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
         }
 
-        function renderizarHistorial(lista) {
+        // --- Lógica Nube ---
+        function vincularNube() {
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+            onSnapshot(q, (snap) => {
+                const data = [];
+                snap.forEach(d => data.push({id: d.id, ...d.data()}));
+                renderizar(data);
+            });
+        }
+
+        // --- Lógica Local ---
+        function renderLocal() {
+            const data = JSON.parse(localStorage.getItem('optica_pedidos') || '[]');
+            renderizar(data);
+        }
+
+        function renderizar(pedidos) {
             const container = document.getElementById('lista-pedidos');
-            if(lista.length === 0) {
-                container.innerHTML = `<div class="col-span-full p-20 text-center text-slate-400 font-bold">No hay pedidos registrados aún.</div>`;
+            if (!pedidos.length) {
+                container.innerHTML = `<div class="p-10 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">No hay pedidos registrados</div>`;
                 return;
             }
-
-            container.innerHTML = lista.map(p => `
-                <div class="form-card p-5 relative group">
-                    <button onclick="borrarPedido('${p.id}')" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black">
-                            ${p.paciente.nombre.charAt(0) || '?'}
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800">${p.paciente.nombre || 'S/N'}</h4>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">${p.armazon.detalle} | ${p.cristal.tipo}</p>
-                        </div>
+            container.innerHTML = pedidos.map(p => `
+                <div class="form-card p-4 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">${p.paciente?.nombre || 'S/N'}</h4>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">${p.armazon?.detalle || ''} - ${p.cristal?.tipo || ''}</p>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 border-t pt-3">
-                        <div class="text-[11px] font-bold text-slate-600">OD: ${p.receta.od_esf} / ${p.receta.od_cil}</div>
-                        <div class="text-[11px] font-bold text-slate-600">OI: ${p.receta.oi_esf} / ${p.receta.oi_cil}</div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                             <div class="text-[10px] font-black text-blue-600">OD: ${p.receta?.od_esf}</div>
+                             <div class="text-[10px] font-black text-blue-600">OI: ${p.receta?.oi_esf}</div>
+                        </div>
+                        <button onclick="eliminar('${p.id}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Lógica de Negocio
-        window.setMaterial = (m) => {
-            materialActual = m;
-            document.getElementById('mat-zilo').classList.toggle('active', m === 'Zilo');
-            document.getElementById('mat-metal').classList.toggle('active', m === 'Metal');
-        };
-
+        // --- Acciones Globales ---
         window.showView = (v) => {
             document.getElementById('view-form').classList.toggle('hidden', v !== 'form');
             document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
         };
 
-        window.borrarPedido = async (id) => {
-            if(!confirm("¿Deseas eliminar este pedido?")) return;
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id));
-            showToast("Pedido eliminado");
+        window.toggleActive = (btn) => btn.classList.toggle('active');
+
+        window.setMaterial = (m) => {
+            materialActual = m;
+            document.getElementById('mat-zilo').classList.toggle('active', m === 'Zilo');
+            document.getElementById('mat-metal').classList.toggle('active', m === 'METAL');
         };
 
         window.guardarPedido = async () => {
-            const btn = document.getElementById('btn-save');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> SINCRONIZANDO...';
-
-            const trats = Array.from(document.querySelectorAll('#tratamientos .active')).map(b => b.innerText);
-
-            const pedido = {
+            const p = {
+                id: Date.now().toString(),
                 paciente: {
                     nombre: document.getElementById('p-nombre').value,
                     dni: document.getElementById('p-dni').value,
@@ -285,65 +271,39 @@
                 },
                 receta: {
                     od_esf: document.getElementById('od-esf').value,
-                    od_cil: document.getElementById('od-cil').value,
-                    od_eje: document.getElementById('od-eje').value,
-                    od_adi: document.getElementById('od-adi').value,
-                    oi_esf: document.getElementById('oi-esf').value,
-                    oi_cil: document.getElementById('oi-cil').value,
-                    oi_eje: document.getElementById('oi-eje').value,
-                    oi_adi: document.getElementById('oi-adi').value,
-                    dnp: document.getElementById('rec-dnp').value,
-                    altura: document.getElementById('rec-alt').value
+                    oi_esf: document.getElementById('oi-esf').value
                 },
-                cristal: {
-                    tipo: document.getElementById('c-tipo').value,
-                    tratamientos: trats
-                },
-                armazon: {
-                    material: materialActual,
-                    detalle: document.getElementById('a-detalle').value
-                },
-                fecha: serverTimestamp()
+                cristal: { tipo: document.getElementById('c-tipo').value },
+                armazon: { material: materialActual, detalle: document.getElementById('a-detalle').value },
+                fecha: new Date().toISOString()
             };
 
-            try {
-                const col = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-                await addDoc(col, pedido);
-                
-                showToast("¡Pedido guardado en la nube!");
-                limpiarFormulario();
-                showView('list');
-            } catch (e) {
-                console.error(e);
-                alert("Error al guardar.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> REGISTRAR Y SINCRONIZAR';
+            if (isCloud) {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), p);
+            } else {
+                const local = JSON.parse(localStorage.getItem('optica_pedidos') || '[]');
+                local.unshift(p);
+                localStorage.setItem('optica_pedidos', JSON.stringify(local));
+                renderLocal();
+            }
+            
+            alert("¡Pedido guardado!");
+            showView('list');
+        };
+
+        window.eliminar = async (id) => {
+            if (!confirm("¿Borrar pedido?")) return;
+            if (isCloud) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id));
+            } else {
+                const local = JSON.parse(localStorage.getItem('optica_pedidos') || '[]');
+                const filtered = local.filter(x => x.id !== id);
+                localStorage.setItem('optica_pedidos', JSON.stringify(filtered));
+                renderLocal();
             }
         };
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.classList.replace('opacity-0', 'opacity-100');
-            t.classList.replace('translate-y-10', 'translate-y-0');
-            setTimeout(() => {
-                t.classList.replace('opacity-100', 'opacity-0');
-                t.classList.replace('translate-y-0', 'translate-y-10');
-            }, 3000);
-        }
-
-        function limpiarFormulario() {
-            document.querySelectorAll('input').forEach(i => {
-                if(i.id.includes('esf') || i.id.includes('cil')) i.value = "0.00";
-                else if(i.id.includes('eje')) i.value = "0";
-                else if(i.id.includes('adi')) i.value = "+0.00";
-                else i.value = "";
-            });
-            document.querySelectorAll('#tratamientos .active').forEach(b => b.classList.remove('active'));
-        }
-
-        start();
+        init();
     </script>
 </body>
 </html>
