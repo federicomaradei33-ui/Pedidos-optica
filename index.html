@@ -15,7 +15,6 @@
         .label { @apply text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block; }
         .input { @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm; }
         
-        /* Ajuste para que la tabla sea siempre visible */
         .receta-container { width: 100%; overflow: visible; }
         .grad-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .grad-table th { @apply text-[10px] font-bold text-slate-400 uppercase py-2 border-b text-center; }
@@ -30,25 +29,45 @@
 </head>
 <body>
 
-    <!-- Pantalla de Login -->
+    <!-- Pantalla de Login y Registro -->
     <div id="login-screen">
         <div class="card p-8 w-full max-w-md">
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <i class="fas fa-glasses text-4xl text-blue-600 mb-2"></i>
                 <h2 class="text-2xl font-bold italic">Óptica Connect</h2>
-                <p class="text-slate-400 text-sm">Acceso al sistema de pedidos</p>
+                <div class="flex justify-center gap-4 mt-4 border-b">
+                    <button onclick="toggleAuthMode('login')" id="tab-login" class="pb-2 text-xs font-bold border-b-2 border-blue-600 text-blue-600 uppercase">Ingresar</button>
+                    <button onclick="toggleAuthMode('register')" id="tab-register" class="pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase">Registrarse</button>
+                </div>
             </div>
+
+            <!-- Formulario Login -->
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="label">Usuario</label>
-                    <input type="text" id="user" class="input" placeholder="admin" required>
+                    <input type="text" id="user" class="input" placeholder="Tu usuario" required>
                 </div>
                 <div>
                     <label class="label">Contraseña</label>
                     <input type="password" id="pass" class="input" placeholder="••••" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest text-xs">
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg uppercase tracking-widest text-xs">
                     Entrar al Portal
+                </button>
+            </form>
+
+            <!-- Formulario Registro -->
+            <form id="registerForm" class="hidden space-y-4">
+                <div>
+                    <label class="label">Nuevo Usuario</label>
+                    <input type="text" id="reg-user" class="input" placeholder="Ej: Vendedor3" required>
+                </div>
+                <div>
+                    <label class="label">Nueva Contraseña</label>
+                    <input type="password" id="reg-pass" class="input" placeholder="Mínimo 4 caracteres" required>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg uppercase tracking-widest text-xs">
+                    Crear Cuenta
                 </button>
             </form>
         </div>
@@ -62,11 +81,16 @@
                     <i class="fas fa-eye text-blue-600 text-xl"></i>
                     <span class="font-bold text-lg tracking-tight">Óptica Connect</span>
                 </div>
-                <nav class="flex gap-4">
-                    <button onclick="showSec('new')" id="nav-new" class="text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1">NUEVO PEDIDO</button>
-                    <button onclick="showSec('hist')" id="nav-hist" class="text-xs font-bold text-slate-400 pb-1">HISTORIAL</button>
-                    <button onclick="location.reload()" class="text-slate-400 hover:text-red-500 ml-2"><i class="fas fa-sign-out-alt"></i></button>
-                </nav>
+                <div class="flex items-center gap-6">
+                    <nav class="flex gap-4">
+                        <button onclick="showSec('new')" id="nav-new" class="text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1">NUEVO PEDIDO</button>
+                        <button onclick="showSec('hist')" id="nav-hist" class="text-xs font-bold text-slate-400 pb-1">MI HISTORIAL</button>
+                    </nav>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200">
+                        <span id="current-user-display" class="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-2 py-1 rounded">---</span>
+                        <button onclick="logout()" class="text-slate-400 hover:text-red-500 text-sm" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -92,7 +116,7 @@
                             </div>
                         </div>
 
-                        <!-- Receta Totalmente Visible -->
+                        <!-- Receta Técnica -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-file-medical"></i> Receta Técnica</h3>
                             <div class="receta-container">
@@ -158,7 +182,7 @@
                             </div>
                         </div>
 
-                        <!-- Armazón Zilo/Metal -->
+                        <!-- Armazón -->
                         <div class="card p-6 border-l-4 border-blue-500">
                             <h3 class="font-bold text-sm mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-glasses"></i> Armazón</h3>
                             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -185,11 +209,14 @@
                 </form>
             </section>
 
-            <!-- Historial Detallado -->
+            <!-- Historial Personalizado -->
             <section id="sec-hist" class="hidden space-y-6">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">Historial de Pedidos</h2>
-                    <button onclick="clearAll()" class="text-xs text-red-500 font-bold uppercase hover:underline">Limpiar Todo</button>
+                    <div>
+                        <h2 class="text-2xl font-bold">Mis Pedidos</h2>
+                        <p class="text-xs text-slate-400">Mostrando solo tus registros</p>
+                    </div>
+                    <button onclick="clearMyHistory()" class="text-xs text-red-500 font-bold uppercase hover:underline">Limpiar Mis Registros</button>
                 </div>
                 <div id="history-container" class="space-y-4"></div>
             </section>
@@ -197,28 +224,73 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE EMAILJS (Tus datos verificados)
+        // CONFIGURACIÓN DE EMAILJS
         const PUBLIC_KEY = "-NKT0dntx3JOPXYAA";
         const SERVICE_ID = "service_bo6kzuc";
         const TEMPLATE_ID = "template_4e00pyr";
 
         emailjs.init({ publicKey: PUBLIC_KEY });
 
-        let db = JSON.parse(localStorage.getItem('optica_v5')) || [];
+        // PERSISTENCIA DE USUARIOS Y DATOS
+        let usersDB = JSON.parse(localStorage.getItem('optica_users')) || { "admin": "1234" };
+        let ordersDB = JSON.parse(localStorage.getItem('optica_v5')) || [];
+        let currentActiveUser = "";
 
-        // Lógica de Login
+        // Lógica de UI Auth
+        function toggleAuthMode(mode) {
+            const isLogin = mode === 'login';
+            document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+            document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+            
+            document.getElementById('tab-login').className = isLogin ? 
+                "pb-2 text-xs font-bold border-b-2 border-blue-600 text-blue-600 uppercase" : 
+                "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
+            
+            document.getElementById('tab-register').className = !isLogin ? 
+                "pb-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-600 uppercase" : 
+                "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 uppercase";
+        }
+
+        // Registro de usuario
+        document.getElementById('registerForm').onsubmit = (e) => {
+            e.preventDefault();
+            const u = document.getElementById('reg-user').value.trim().toLowerCase();
+            const p = document.getElementById('reg-pass').value;
+
+            if(u.length < 3 || p.length < 4) {
+                alert("Usuario (mín. 3 letras) y Contraseña (mín. 4 caracteres)");
+                return;
+            }
+
+            if(usersDB[u]) {
+                alert("Este nombre de usuario ya existe.");
+                return;
+            }
+
+            usersDB[u] = p;
+            localStorage.setItem('optica_users', JSON.stringify(usersDB));
+            alert("¡Registro exitoso! Ya puedes iniciar sesión.");
+            toggleAuthMode('login');
+        };
+
+        // Login
         document.getElementById('loginForm').onsubmit = (e) => {
             e.preventDefault();
-            const u = document.getElementById('user').value;
+            const u = document.getElementById('user').value.toLowerCase().trim();
             const p = document.getElementById('pass').value;
-            if(u === 'admin' && p === '1234') {
+
+            if(usersDB[u] && usersDB[u] === p) {
+                currentActiveUser = u;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('current-user-display').innerText = u;
                 init();
             } else {
                 alert("Usuario o contraseña incorrectos");
             }
         };
+
+        function logout() { location.reload(); }
 
         function init() {
             document.getElementById('order-id').innerText = Math.floor(1000 + Math.random() * 9000);
@@ -230,6 +302,7 @@
             document.getElementById('sec-hist').classList.toggle('hidden', name !== 'hist');
             document.getElementById('nav-new').className = name === 'new' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-slate-400 pb-1';
             document.getElementById('nav-hist').className = name === 'hist' ? 'text-xs font-bold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-xs font-bold text-slate-400 pb-1';
+            if(name === 'hist') renderHistory();
         }
 
         document.getElementById('orderForm').onsubmit = async function(e) {
@@ -242,7 +315,6 @@
             const ts = Array.from(document.querySelectorAll('input[name="treat"]:checked')).map(c => c.value).join(', ') || 'Sin tratamientos';
             const oid = document.getElementById('order-id').innerText;
 
-            // Datos estructurados para la plantilla de EmailJS
             const params = {
                 order_id: oid,
                 patient_name: v('p_name'),
@@ -252,14 +324,15 @@
                 treatments: ts,
                 frame_details: `${v('frame_mat')} - ${v('frame_mod')}`,
                 notes: v('obs'),
-                date: new Date().toLocaleString()
+                date: new Date().toLocaleString(),
+                created_by: currentActiveUser
             };
 
             try {
                 await emailjs.send(SERVICE_ID, TEMPLATE_ID, params);
                 alert("✅ PEDIDO ENVIADO AL MAIL");
-                db.unshift(params);
-                localStorage.setItem('optica_v5', JSON.stringify(db));
+                ordersDB.unshift(params);
+                localStorage.setItem('optica_v5', JSON.stringify(ordersDB));
                 this.reset();
                 init();
                 showSec('hist');
@@ -273,36 +346,55 @@
 
         function renderHistory() {
             const cont = document.getElementById('history-container');
-            if(db.length === 0) { cont.innerHTML = '<p class="text-center py-10 text-slate-400">Sin pedidos registrados.</p>'; return; }
+            // FILTRAR: Solo pedidos del usuario actual
+            const myOrders = ordersDB.filter(o => o.created_by === currentActiveUser);
+
+            if(myOrders.length === 0) { 
+                cont.innerHTML = '<div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300"><p class="text-slate-400 text-sm">Aún no has cargado ningún pedido.</p></div>'; 
+                return; 
+            }
             
-            cont.innerHTML = db.map(o => `
+            cont.innerHTML = myOrders.map(o => `
                 <div class="card p-6 border-l-4 border-blue-600 bg-white">
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">ORDEN #${o.order_id}</span>
                             <h4 class="text-lg font-bold mt-1">${o.patient_name}</h4>
-                            <p class="text-xs text-slate-400">${o.date}</p>
+                            <span class="text-xs text-slate-400"><i class="far fa-clock"></i> ${o.date}</span>
                         </div>
                         <button onclick="del('${o.order_id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div class="bg-slate-50 p-3 rounded">
-                            <p class="font-bold text-blue-600 mb-1 uppercase tracking-tighter">Graduación Completa:</p>
+                            <p class="font-bold text-blue-600 mb-1 uppercase tracking-tighter">Graduación Técnica:</p>
                             <pre class="font-sans whitespace-pre-wrap">${o.graduacion}</pre>
                         </div>
                         <div class="bg-slate-50 p-3 rounded space-y-2">
-                            <p><span class="font-bold">Lente:</span> ${o.lens_details}</p>
+                            <p><span class="font-bold">Cristal:</span> ${o.lens_details}</p>
                             <p><span class="font-bold">Tratamientos:</span> ${o.treatments}</p>
                             <p><span class="font-bold">Armazón:</span> ${o.frame_details}</p>
-                            <p class="italic text-slate-500">"${o.notes}"</p>
+                            <p class="italic text-slate-500">Obs: "${o.notes}"</p>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function del(id) { if(confirm("¿Borrar?")) { db = db.filter(o => o.order_id !== id); localStorage.setItem('optica_v5', JSON.stringify(db)); renderHistory(); } }
-        function clearAll() { if(confirm("¿Borrar historial completo?")) { db = []; localStorage.removeItem('optica_records_v3'); localStorage.removeItem('optica_v5'); renderHistory(); } }
+        function del(id) { 
+            if(confirm("¿Eliminar este pedido de tu historial?")) { 
+                ordersDB = ordersDB.filter(o => o.order_id !== id); 
+                localStorage.setItem('optica_v5', JSON.stringify(ordersDB)); 
+                renderHistory(); 
+            } 
+        }
+
+        function clearMyHistory() { 
+            if(confirm("¿Borrar todos TUS pedidos del historial?")) { 
+                ordersDB = ordersDB.filter(o => o.created_by !== currentActiveUser); 
+                localStorage.setItem('optica_v5', JSON.stringify(ordersDB)); 
+                renderHistory(); 
+            } 
+        }
     </script>
 </body>
 </html>
