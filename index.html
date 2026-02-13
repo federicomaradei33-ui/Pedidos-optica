@@ -3,178 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Connect - Gestión de Pedidos</title>
+    <title>Óptica Connect - Sistema de Órdenes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .glass-card { background: white; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.05); }
-        .input-field { width: 100%; padding: 0.85rem; border: 2px solid #f1f5f9; border-radius: 14px; background: #f8fafc; transition: all 0.2s; font-weight: 600; }
-        .input-field:focus { border-color: #2563eb; background: white; outline: none; }
-        .btn-toggle { 
-            padding: 0.85rem; border-radius: 12px; font-weight: 700; border: 2px solid #f1f5f9; 
-            background: #f8fafc; color: #64748b; flex: 1; transition: all 0.2s; cursor: pointer; 
-            text-align: center; user-select: none;
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        
+        .glass-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        
+        /* Botones de selección mejorados para evitar bloqueos */
+        .selectable-button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            border: 2px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-align: center;
+            display: block;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 10; /* Asegura que esté por encima de cualquier capa */
         }
-        .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .hidden { display: none !important; }
-        .section-title { font-size: 0.75rem; font-weight: 900; color: #2563eb; text-transform: uppercase; letter-spacing: 0.1em; display: flex; items-center; gap: 8px; margin-bottom: 1rem; }
+        
+        .selectable-button.active {
+            background: #2563eb !important;
+            color: white !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+        }
+
+        .input-field { 
+            width: 100%; 
+            padding: 0.75rem; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            background: #f1f5f9;
+        }
+
+        .loading-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255,255,255,0.8); 
+            z-index: 9999; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="loading-overlay hidden">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mb-4"></div>
-        <p class="font-black text-slate-800">Sincronizando con la nube...</p>
+    <div id="loader" class="loading-overlay">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 border-solid mx-auto"></div>
+            <p class="mt-4 font-bold text-blue-600 uppercase tracking-widest">Enviando Orden...</p>
+        </div>
     </div>
 
-    <nav class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 px-6 py-4">
+    <nav class="bg-white border-b px-6 py-4 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="window.showView('form')">
-                <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">
-                    <i class="fas fa-glasses text-white"></i>
-                </div>
-                <h1 class="text-xl font-extrabold tracking-tight">ÓPTICA<span class="text-blue-600">CONNECT</span></h1>
-            </div>
             <div class="flex items-center gap-2">
-                <div id="status-cloud" class="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black mr-4">
-                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div> EN LÍNEA
-                </div>
-                <button onclick="window.showView('form')" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 transition">NUEVA</button>
-                <button onclick="window.showView('list')" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100 transition">HISTORIAL</button>
+                <i class="fas fa-glasses text-blue-600 text-2xl"></i>
+                <span class="font-extrabold text-xl tracking-tighter">ÓPTICA<span class="text-blue-600">CONNECT</span></span>
+            </div>
+            <div class="flex gap-2">
+                <button id="nav-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm">NUEVA</button>
+                <button id="nav-list" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold text-sm">HISTORIAL</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8">
+    <main class="max-w-7xl mx-auto p-4">
         
         <!-- VISTA FORMULARIO -->
-        <div id="view-form" class="space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div id="section-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
+                <!-- Datos y Receta -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Paciente -->
-                    <div class="glass-card p-8">
-                        <div class="section-title"><i class="fas fa-user"></i> Información del Paciente</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nombre Completo</label>
-                                <input type="text" id="p-nombre" class="input-field" placeholder="Ej: Juan Pérez">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">ID / WhatsApp</label>
-                                <input type="text" id="p-tel" class="input-field" placeholder="Ej: +54 9 ...">
-                            </div>
+                    <div class="glass-card p-6">
+                        <h3 class="text-blue-600 font-black text-xs uppercase mb-4 tracking-widest">Paciente</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="p-nombre" class="input-field" placeholder="Nombre completo">
+                            <input type="text" id="p-tel" class="input-field" placeholder="Teléfono/WhatsApp">
                         </div>
                     </div>
 
-                    <!-- Receta -->
-                    <div class="glass-card overflow-hidden">
-                        <div class="p-8 pb-4">
-                            <div class="section-title"><i class="fas fa-file-prescription"></i> Receta Técnica</div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-center border-collapse">
-                                <thead class="bg-slate-50 border-y border-slate-100">
-                                    <tr class="text-[10px] font-black text-slate-400 uppercase">
-                                        <th class="py-4 px-6 text-left">Ojo</th>
-                                        <th class="py-4">Esfera</th>
-                                        <th class="py-4">Cilindro</th>
-                                        <th class="py-4">Eje</th>
-                                        <th class="py-4 text-blue-600">Adición</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="font-bold text-slate-700">
-                                    <tr class="border-b border-slate-50">
-                                        <td class="py-6 px-6 text-left text-blue-600 font-extrabold text-sm">Derecho (OD)</td>
-                                        <td><input type="text" id="od-esf" class="w-full text-center outline-none bg-transparent" value="0.00"></td>
-                                        <td><input type="text" id="od-cil" class="w-full text-center outline-none bg-transparent" value="0.00"></td>
-                                        <td><input type="text" id="od-eje" class="w-full text-center outline-none bg-transparent" value="0"></td>
-                                        <td><input type="text" id="od-adi" class="w-full text-center outline-none bg-transparent text-blue-600" value="+0.00"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-6 px-6 text-left text-blue-600 font-extrabold text-sm">Izquierdo (OI)</td>
-                                        <td><input type="text" id="oi-esf" class="w-full text-center outline-none bg-transparent" value="0.00"></td>
-                                        <td><input type="text" id="oi-cil" class="w-full text-center outline-none bg-transparent" value="0.00"></td>
-                                        <td><input type="text" id="oi-eje" class="w-full text-center outline-none bg-transparent" value="0"></td>
-                                        <td><input type="text" id="oi-adi" class="w-full text-center outline-none bg-transparent text-blue-600" value="+0.00"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="p-8 bg-slate-50 grid grid-cols-2 gap-6 border-t border-slate-100">
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">D.N.P. (Distancia)</label>
-                                <input type="text" id="rec-dnp" class="input-field" placeholder="Ej: 32/33">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Altura de Pupila</label>
-                                <input type="text" id="rec-alt" class="input-field" placeholder="Ej: 18mm">
-                            </div>
-                        </div>
+                    <div class="glass-card p-6 overflow-x-auto">
+                        <h3 class="text-blue-600 font-black text-xs uppercase mb-4 tracking-widest">Graduación</h3>
+                        <table class="w-full text-center">
+                            <tr class="text-[10px] text-slate-400 font-black uppercase">
+                                <th class="pb-2">Ojo</th>
+                                <th class="pb-2">Esf</th>
+                                <th class="pb-2">Cil</th>
+                                <th class="pb-2">Eje</th>
+                            </tr>
+                            <tr>
+                                <td class="font-black text-blue-600 py-2">OD</td>
+                                <td><input type="text" id="od-esf" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0.00"></td>
+                                <td><input type="text" id="od-cil" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0.00"></td>
+                                <td><input type="text" id="od-eje" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td class="font-black text-blue-600 py-2">OI</td>
+                                <td><input type="text" id="oi-esf" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0.00"></td>
+                                <td><input type="text" id="oi-cil" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0.00"></td>
+                                <td><input type="text" id="oi-eje" class="w-16 p-1 text-center bg-slate-50 border rounded" value="0"></td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
 
+                <!-- Opciones que no te funcionaban -->
                 <div class="space-y-6">
-                    <!-- Especificaciones -->
-                    <div class="glass-card p-8">
-                        <div class="section-title"><i class="fas fa-microscope"></i> Especificaciones</div>
-                        
-                        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Tipo de Cristal</label>
-                        <select id="c-tipo" class="input-field mb-6">
-                            <option>Monofocal</option>
-                            <option>Bifocal</option>
-                            <option>Multifocal</option>
-                            <option>Ocupacional</option>
-                        </select>
-
-                        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Tratamientos</label>
-                        <div class="flex flex-col gap-2">
-                            <button id="btn-sin" class="btn-toggle active" onclick="window.toggleTratamiento('Sin tratamiento')">Sin tratamiento</button>
-                            <button id="btn-ar" class="btn-toggle" onclick="window.toggleTratamiento('Antirreflex')">Antirreflex</button>
-                            <button id="btn-blue" class="btn-toggle" onclick="window.toggleTratamiento('Filtro Azul')">Filtro Azul</button>
-                            <button id="btn-photo" class="btn-toggle" onclick="window.toggleTratamiento('Fotocromático')">Fotocromático</button>
+                    <div class="glass-card p-6">
+                        <h3 class="text-blue-600 font-black text-xs uppercase mb-4 tracking-widest">Armazón (Material)</h3>
+                        <div class="space-y-2">
+                            <button type="button" class="selectable-button material-btn active" data-value="Zilo">ZILO</button>
+                            <button type="button" class="selectable-button material-btn" data-value="Metal">METAL</button>
+                            <button type="button" class="selectable-button material-btn" data-value="Ranura">RANURA</button>
                         </div>
                     </div>
 
-                    <!-- Armazón -->
-                    <div class="glass-card p-8">
-                        <div class="section-title"><i class="fas fa-eye-dropper"></i> Armazón</div>
-                        <div class="flex gap-2 mb-4">
-                            <button id="mat-zilo" class="btn-toggle active" onclick="window.setMaterial('Zilo')">ZILO</button>
-                            <button id="mat-metal" class="btn-toggle" onclick="window.setMaterial('Metal')">METAL</button>
-                            <button id="mat-ranura" class="btn-toggle" onclick="window.setMaterial('Ranura')">RANURA</button>
+                    <div class="glass-card p-6">
+                        <h3 class="text-blue-600 font-black text-xs uppercase mb-4 tracking-widest">Tratamientos</h3>
+                        <div class="space-y-2">
+                            <button type="button" class="selectable-button tratamiento-btn active" data-value="Sin tratamiento">SIN TRATAMIENTO</button>
+                            <button type="button" class="selectable-button tratamiento-btn" data-value="Antirreflex">ANTIRREFLEX</button>
+                            <button type="button" class="selectable-button tratamiento-btn" data-value="Filtro Azul">FILTRO AZUL</button>
                         </div>
-                        <input type="text" id="a-detalle" class="input-field" placeholder="Marca / Modelo / Color">
                     </div>
                 </div>
+
             </div>
 
-            <div class="glass-card p-8">
-                <div class="section-title"><i class="fas fa-sticky-note"></i> Notas Adicionales</div>
-                <textarea id="p-obs" class="input-field h-24 resize-none" placeholder="Instrucciones para laboratorio..."></textarea>
-            </div>
-
-            <button onclick="window.enviarPedido()" class="w-full bg-blue-600 text-white font-black py-6 rounded-3xl shadow-xl hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-4 text-lg">
-                <i class="fas fa-paper-plane"></i> ENVIAR ORDEN A LA NUBE
+            <button id="btn-enviar" class="w-full mt-8 bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3">
+                <i class="fas fa-save"></i> GUARDAR Y ENVIAR ORDEN
             </button>
         </div>
 
-        <!-- VISTA HISTORIAL -->
-        <div id="view-list" class="hidden">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-                <div>
-                    <h2 class="text-4xl font-black text-slate-800 tracking-tight">Historial de Órdenes</h2>
-                    <p class="text-slate-500 font-bold mt-1">Órdenes sincronizadas en tiempo real con la nube.</p>
-                </div>
-                <div class="bg-blue-600 text-white px-6 py-2 rounded-2xl font-black text-sm" id="counter">0 Pedidos</div>
-            </div>
-            <div id="lista-pedidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Se cargan aquí -->
+        <!-- VISTA LISTADO -->
+        <div id="section-list" class="hidden">
+            <h2 class="text-2xl font-black mb-6">Historial de Órdenes</h2>
+            <div id="container-pedidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Se llena dinámicamente -->
             </div>
         </div>
 
@@ -182,210 +161,144 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Configuración Firebase
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-cloud';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
 
-        // Credenciales EmailJS desde tu captura
-        const EMAILJS_PUBLIC_KEY = "-NKT0dntx3JOPXYAA";
-        const EMAILJS_SERVICE_ID = "service_bo6kzuc";
-        const EMAILJS_TEMPLATE_ID = "template_4e00pyr";
+        // Estado local
+        let materialSeleccionado = "Zilo";
+        let tratamientosSeleccionados = ["Sin tratamiento"];
 
-        emailjs.init(EMAILJS_PUBLIC_KEY);
+        // Esperar a que el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Lógica de Navegación
+            const navForm = document.getElementById('nav-form');
+            const navList = document.getElementById('nav-list');
+            const sectionForm = document.getElementById('section-form');
+            const sectionList = document.getElementById('section-list');
 
-        let materialActual = "Zilo";
-        let tratamientos = ["Sin tratamiento"];
-
-        // Autenticación según Regla 3
-        const initSession = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('status-cloud').classList.remove('hidden');
-                escucharCambios();
-            }
-        });
-
-        initSession();
-
-        // FUNCIONES GLOBALES PARA LOS BOTONES
-        window.showView = (v) => {
-            document.getElementById('view-form').classList.toggle('hidden', v !== 'form');
-            document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
-            window.scrollTo(0,0);
-        };
-
-        window.setMaterial = (m) => {
-            materialActual = m;
-            document.getElementById('mat-zilo').classList.toggle('active', m === 'Zilo');
-            document.getElementById('mat-metal').classList.toggle('active', m === 'Metal');
-            document.getElementById('mat-ranura').classList.toggle('active', m === 'Ranura');
-        };
-
-        window.toggleTratamiento = (t) => {
-            const btnSin = document.getElementById('btn-sin');
-            const btnAr = document.getElementById('btn-ar');
-            const btnBlue = document.getElementById('btn-blue');
-            const btnPhoto = document.getElementById('btn-photo');
-
-            if (t === 'Sin tratamiento') {
-                tratamientos = ['Sin tratamiento'];
-            } else {
-                // Si elijo uno real, quito "Sin tratamiento"
-                tratamientos = tratamientos.filter(x => x !== 'Sin tratamiento');
-                
-                if (tratamientos.includes(t)) {
-                    tratamientos = tratamientos.filter(x => x !== t);
-                } else {
-                    tratamientos.push(t);
-                }
-                
-                // Si desmarqué todo, vuelvo a "Sin tratamiento"
-                if (tratamientos.length === 0) tratamientos = ['Sin tratamiento'];
-            }
-
-            // Actualizar UI
-            btnSin.classList.toggle('active', tratamientos.includes('Sin tratamiento'));
-            btnAr.classList.toggle('active', tratamientos.includes('Antirreflex'));
-            btnBlue.classList.toggle('active', tratamientos.includes('Filtro Azul'));
-            btnPhoto.classList.toggle('active', tratamientos.includes('Fotocromático'));
-        };
-
-        window.enviarPedido = async () => {
-            const nombre = document.getElementById('p-nombre').value;
-            if (!nombre) {
-                alert("Por favor, ingresa el nombre del paciente.");
-                return;
-            }
-
-            document.getElementById('loader').classList.remove('hidden');
-
-            const orderData = {
-                paciente: {
-                    nombre,
-                    tel: document.getElementById('p-tel').value
-                },
-                receta: {
-                    od: { esf: document.getElementById('od-esf').value, cil: document.getElementById('od-cil').value, eje: document.getElementById('od-eje').value, adi: document.getElementById('od-adi').value },
-                    oi: { esf: document.getElementById('oi-esf').value, cil: document.getElementById('oi-cil').value, eje: document.getElementById('oi-eje').value, adi: document.getElementById('oi-adi').value },
-                    dnp: document.getElementById('rec-dnp').value,
-                    alt: document.getElementById('rec-alt').value
-                },
-                cristal: {
-                    tipo: document.getElementById('c-tipo').value,
-                    tratamientos: tratamientos
-                },
-                armazon: {
-                    material: materialActual,
-                    detalle: document.getElementById('a-detalle').value
-                },
-                obs: document.getElementById('p-obs').value,
-                timestamp: serverTimestamp()
+            navForm.onclick = () => {
+                sectionForm.classList.remove('hidden');
+                sectionList.classList.add('hidden');
+                navForm.className = "bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm";
+                navList.className = "bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold text-sm";
             };
 
-            try {
-                // 1. Guardar en Firestore (Regla 1: Path correcto)
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), orderData);
-                
-                // 2. Enviar por EmailJS
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                    to_name: "Laboratorio / Admin",
-                    from_name: "Óptica Connect Cloud",
-                    paciente_nombre: nombre,
-                    paciente_tel: orderData.paciente.tel,
-                    detalles_pedido: `Tipo: ${orderData.cristal.tipo} - Tratamientos: ${tratamientos.join(', ')} - Armazón: ${materialActual}`,
-                    observaciones: orderData.obs
+            navList.onclick = () => {
+                sectionForm.classList.add('hidden');
+                sectionList.classList.remove('hidden');
+                navList.className = "bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm";
+                navForm.className = "bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold text-sm";
+            };
+
+            // 2. Lógica de Materiales (CORRECCIÓN CRUCIAL)
+            const materialButtons = document.querySelectorAll('.material-btn');
+            materialButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    materialButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    materialSeleccionado = this.getAttribute('data-value');
+                    console.log("Material cambiado a:", materialSeleccionado);
                 });
+            });
 
-                limpiarFormulario();
-                window.showView('list');
-            } catch (error) {
-                console.error(error);
-                alert("Hubo un error al procesar el pedido.");
-            } finally {
-                document.getElementById('loader').classList.add('hidden');
-            }
-        };
+            // 3. Lógica de Tratamientos (CORRECCIÓN CRUCIAL)
+            const tratamientoButtons = document.querySelectorAll('.tratamiento-btn');
+            tratamientoButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const value = this.getAttribute('data-value');
 
-        function limpiarFormulario() {
-            document.querySelectorAll('input, textarea').forEach(i => i.value = i.defaultValue || "");
-            window.setMaterial('Zilo');
-            window.toggleTratamiento('Sin tratamiento');
-        }
-
-        function escucharCambios() {
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-            onSnapshot(q, (snapshot) => {
-                const pedidos = [];
-                snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
-                
-                // Regla 2: Ordenar en memoria
-                pedidos.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                
-                renderLista(pedidos);
-            }, (err) => console.error("Error en tiempo real:", err));
-        }
-
-        function renderLista(pedidos) {
-            const container = document.getElementById('lista-pedidos');
-            document.getElementById('counter').innerText = `${pedidos.length} Pedidos`;
-
-            if (pedidos.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-20 text-center font-bold text-slate-400">No hay órdenes registradas aún.</div>`;
-                return;
-            }
-
-            container.innerHTML = pedidos.map(p => `
-                <div class="glass-card p-6 border-l-4 border-l-blue-600 animate-in fade-in duration-300">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-black text-slate-800 text-lg uppercase">${p.paciente.nombre}</h3>
-                            <p class="text-xs font-bold text-slate-400 italic">${p.paciente.tel || 'Sin contacto'}</p>
-                        </div>
-                        <button onclick="window.eliminar('${p.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <div class="bg-slate-50 p-3 rounded-xl text-[11px] grid grid-cols-2 gap-2 border border-slate-100">
-                            <div>
-                                <p class="font-black text-blue-600 mb-1">OD</p>
-                                <p>${p.receta.od.esf} / ${p.receta.od.cil} x ${p.receta.od.eje}°</p>
-                                <p class="text-[9px] text-blue-400">Adi: ${p.receta.od.adi}</p>
-                            </div>
-                            <div>
-                                <p class="font-black text-blue-600 mb-1">OI</p>
-                                <p>${p.receta.oi.esf} / ${p.receta.oi.cil} x ${p.receta.oi.eje}°</p>
-                                <p class="text-[9px] text-blue-400">Adi: ${p.receta.oi.adi}</p>
-                            </div>
-                        </div>
+                    if (value === "Sin tratamiento") {
+                        tratamientosSeleccionados = ["Sin tratamiento"];
+                    } else {
+                        // Quitar "Sin tratamiento" si seleccionas uno específico
+                        tratamientosSeleccionados = tratamientosSeleccionados.filter(t => t !== "Sin tratamiento");
                         
-                        <div class="text-[12px] font-bold text-slate-600 leading-relaxed">
-                            <p><span class="text-slate-400 font-black mr-2 uppercase text-[10px]">Cristal:</span> ${p.cristal.tipo}</p>
-                            <p><span class="text-slate-400 font-black mr-2 uppercase text-[10px]">Tratamiento:</span> ${p.cristal.tratamientos.join(', ')}</p>
-                            <p><span class="text-slate-400 font-black mr-2 uppercase text-[10px]">Armazón:</span> ${p.armazon.material} - ${p.armazon.detalle}</p>
-                        </div>
+                        if (tratamientosSeleccionados.includes(value)) {
+                            tratamientosSeleccionados = tratamientosSeleccionados.filter(t => t !== value);
+                        } else {
+                            tratamientosSeleccionados.push(value);
+                        }
+
+                        // Si desmarcas todo, vuelve a "Sin tratamiento"
+                        if (tratamientosSeleccionados.length === 0) {
+                            tratamientosSeleccionados = ["Sin tratamiento"];
+                        }
+                    }
+
+                    // Actualizar UI visualmente
+                    tratamientoButtons.forEach(b => {
+                        const bVal = b.getAttribute('data-value');
+                        if (tratamientosSeleccionados.includes(bVal)) {
+                            b.classList.add('active');
+                        } else {
+                            b.classList.remove('active');
+                        }
+                    });
+                    console.log("Tratamientos:", tratamientosSeleccionados);
+                });
+            });
+
+            // 4. Enviar Orden
+            document.getElementById('btn-enviar').onclick = async () => {
+                const nombre = document.getElementById('p-nombre').value;
+                if (!nombre) return alert("Ingresa el nombre del paciente");
+
+                document.getElementById('loader').style.display = 'flex';
+
+                try {
+                    await signInAnonymously(auth);
+                    const pedido = {
+                        paciente: nombre,
+                        tel: document.getElementById('p-tel').value,
+                        material: materialSeleccionado,
+                        tratamientos: tratamientosSeleccionados,
+                        graduacion: {
+                            od: `${document.getElementById('od-esf').value} / ${document.getElementById('od-cil').value} x ${document.getElementById('od-eje').value}`,
+                            oi: `${document.getElementById('oi-esf').value} / ${document.getElementById('oi-cil').value} x ${document.getElementById('oi-eje').value}`
+                        },
+                        timestamp: serverTimestamp()
+                    };
+
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), pedido);
+                    alert("¡Orden enviada con éxito!");
+                    location.reload(); // Recarga para limpiar todo
+                } catch (err) {
+                    console.error(err);
+                    alert("Error de conexión");
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            };
+        });
+
+        // 5. Escuchar pedidos en tiempo real para el historial
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), (snap) => {
+            const container = document.getElementById('container-pedidos');
+            const list = [];
+            snap.forEach(doc => list.push(doc.data()));
+            
+            container.innerHTML = list.map(p => `
+                <div class="glass-card p-4 border-l-4 border-blue-600">
+                    <p class="font-black uppercase text-sm">${p.paciente}</p>
+                    <div class="mt-2 text-[11px] text-slate-500 font-bold space-y-1">
+                        <p>MATERIAL: ${p.material}</p>
+                        <p>TRATAMIENTOS: ${p.tratamientos.join(', ')}</p>
+                        <p>OD: ${p.graduacion.od}</p>
+                        <p>OI: ${p.graduacion.oi}</p>
                     </div>
                 </div>
             `).join('');
-        }
-
-        window.eliminar = async (id) => {
-            if (confirm("¿Seguro que quieres eliminar este pedido?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id));
-            }
-        };
+        });
 
     </script>
 </body>
