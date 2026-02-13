@@ -3,444 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Connect - Sistema Integral</title>
+    <title>Óptica Connect - Sistema de Emergencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .input-field { @apply w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all; }
-        .btn-primary { @apply w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg uppercase tracking-wider text-sm; }
-        
-        /* Spinner suave */
-        .loader {
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .login-card { background: white; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .input-group input { @apply w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all; }
+        .loader-spin {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
+            display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Carga Global -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[3000] flex flex-col items-center justify-center hidden">
-        <div class="loader mb-4"></div>
-        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest" id="loader-text">Conectando con la nube...</p>
-    </div>
-
-    <!-- PANTALLA DE ACCESO -->
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="card p-8 w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl mb-4">
-                    <i class="fas fa-glasses text-3xl"></i>
+    <!-- Pantalla de Login -->
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 to-blue-50">
+        <div class="login-card p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-xl mb-3 shadow-lg">
+                    <i class="fas fa-glasses text-2xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">Óptica Connect</h1>
-                <p class="text-slate-500 text-sm">Gestión de Laboratorio Óptico</p>
+                <p class="text-slate-500 text-sm">Acceso al Laboratorio</p>
             </div>
 
-            <div class="flex gap-2 p-1 bg-slate-100 rounded-lg mb-6">
-                <button onclick="switchAuth('login')" id="btn-tab-login" class="flex-1 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-blue-600">INGRESAR</button>
-                <button onclick="switchAuth('register')" id="btn-tab-reg" class="flex-1 py-2 text-xs font-bold rounded-md text-slate-500">REGISTRARSE</button>
+            <!-- Tabs -->
+            <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+                <button id="tab-login" onclick="setTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600">INGRESAR</button>
+                <button id="tab-reg" onclick="setTab('reg')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500">CREAR CUENTA</button>
             </div>
 
-            <!-- Formulario Login -->
-            <form id="form-login" class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Usuario</label>
-                    <input type="text" id="login-user" class="input-field" placeholder="Tu usuario" required>
+            <!-- Formularios -->
+            <div id="login-form" class="space-y-4">
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Usuario</label>
+                    <input type="text" id="l-user" placeholder="Ej: sucursal1" autocomplete="off">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Contraseña</label>
-                    <input type="password" id="login-pass" class="input-field" placeholder="••••" required>
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Contraseña</label>
+                    <input type="password" id="l-pass" placeholder="••••">
                 </div>
-                <button type="submit" class="btn-primary">Entrar al Sistema</button>
-            </form>
-
-            <!-- Formulario Registro -->
-            <form id="form-register" class="hidden space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nuevo Usuario</label>
-                    <input type="text" id="reg-user" class="input-field" placeholder="Ej: SucursalCentro" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Clave de Acceso</label>
-                    <input type="password" id="reg-pass" class="input-field" placeholder="Mínimo 4 caracteres" required>
-                </div>
-                <button type="submit" class="btn-primary !bg-emerald-600 hover:!bg-emerald-700">Crear mi Cuenta</button>
-            </form>
-
-            <div class="mt-8 pt-6 border-t border-slate-100 text-center">
-                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Conexión Segura vía Firebase Cloud Firestore</p>
+                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg flex justify-center items-center gap-2">
+                    <span>ENTRAR</span>
+                    <div id="l-loader" class="loader-spin"></div>
+                </button>
             </div>
+
+            <div id="reg-form" class="hidden space-y-4">
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Nuevo Usuario</label>
+                    <input type="text" id="r-user" placeholder="Nombre de tu óptica">
+                </div>
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Nueva Contraseña</label>
+                    <input type="password" id="r-pass" placeholder="Mínimo 4 caracteres">
+                </div>
+                <button onclick="handleRegister()" id="btn-reg" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg flex justify-center items-center gap-2">
+                    <span>REGISTRARSE</span>
+                    <div id="r-loader" class="loader-spin"></div>
+                </button>
+            </div>
+
+            <div id="error-msg" class="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-lg hidden text-center font-medium border border-red-100"></div>
         </div>
     </div>
 
-    <!-- APLICACIÓN PRINCIPAL -->
-    <div id="app-content" class="hidden min-h-screen pb-20">
-        <header class="bg-white border-b sticky top-0 z-50">
-            <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-circle text-blue-500 text-[10px] animate-pulse"></i>
-                    <span class="font-bold tracking-tight">ÓPTICA CONNECT</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span id="user-tag" class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-600 uppercase">---</span>
-                    <button onclick="handleLogout()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-power-off"></i></button>
-                </div>
-            </div>
-        </header>
-
-        <nav class="bg-white border-b px-4 overflow-x-auto">
-            <div class="max-w-6xl mx-auto flex">
-                <button onclick="showPage('new')" id="nav-new" class="py-4 px-6 text-xs font-bold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">NUEVO PEDIDO</button>
-                <button onclick="showPage('list')" id="nav-list" class="py-4 px-6 text-xs font-bold border-b-2 border-transparent text-slate-400 whitespace-nowrap">MIS ÓRDENES</button>
-            </div>
-        </nav>
-
-        <main class="max-w-4xl mx-auto p-4 md:p-8">
-            <!-- Pagina: Nuevo Pedido -->
-            <section id="page-new" class="space-y-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-slate-800">Orden de Laboratorio</h2>
-                    <div class="bg-blue-600 text-white px-3 py-1 rounded-lg font-mono text-sm font-bold shadow-md">#<span id="order-num">---</span></div>
-                </div>
-
-                <form id="main-order-form" class="space-y-6">
-                    <!-- Datos Paciente -->
-                    <div class="card p-6">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><i class="fas fa-id-card"></i> Paciente</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="f_name" class="input-field" placeholder="Nombre y Apellido" required>
-                            <input type="text" id="f_tel" class="input-field" placeholder="Teléfono de contacto">
-                        </div>
-                    </div>
-
-                    <!-- Graduación -->
-                    <div class="card p-6 overflow-x-auto">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><i class="fas fa-file-prescription"></i> Receta Técnica</h3>
-                        <table class="w-full min-w-[400px]">
-                            <thead>
-                                <tr class="text-[10px] text-slate-400 font-bold uppercase">
-                                    <th class="p-2 text-left w-12">Ojo</th>
-                                    <th class="p-2">Esférico</th>
-                                    <th class="p-2">Cilíndrico</th>
-                                    <th class="p-2">Eje</th>
-                                    <th class="p-2">Adición</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm">
-                                <tr>
-                                    <td class="font-bold text-blue-600">OD</td>
-                                    <td class="p-1"><input type="text" id="od_esf" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                    <td class="p-1"><input type="text" id="od_cil" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                    <td class="p-1"><input type="text" id="od_eje" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0°"></td>
-                                    <td class="p-1"><input type="text" id="od_add" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                </tr>
-                                <tr>
-                                    <td class="font-bold text-blue-600">OI</td>
-                                    <td class="p-1"><input type="text" id="oi_esf" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                    <td class="p-1"><input type="text" id="oi_cil" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                    <td class="p-1"><input type="text" id="oi_eje" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0°"></td>
-                                    <td class="p-1"><input type="text" id="oi_add" class="w-full bg-slate-50 p-2 rounded border-none text-center" placeholder="0.00"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <input type="text" id="f_dnp" class="input-field" placeholder="DNP (Distancia)">
-                            <input type="text" id="f_alt" class="input-field" placeholder="Altura Pupilar">
-                        </div>
-                    </div>
-
-                    <!-- Lentes y Armazón -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="card p-6">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Detalles del Cristal</h3>
-                            <select id="f_lens" class="input-field mb-4">
-                                <option>Monofocal Stock</option>
-                                <option>Monofocal Laboratorio</option>
-                                <option>Bifocal</option>
-                                <option>Multifocal</option>
-                                <option>Ocupacional</option>
-                            </select>
-                            <div class="grid grid-cols-2 gap-2 text-[11px]">
-                                <label class="flex items-center gap-2 p-2 border rounded"><input type="checkbox" class="t-check" value="AR"> Antirreflex</label>
-                                <label class="flex items-center gap-2 p-2 border rounded"><input type="checkbox" class="t-check" value="Blue"> Filtro Azul</label>
-                                <label class="flex items-center gap-2 p-2 border rounded"><input type="checkbox" class="t-check" value="Photo"> Fotocrom.</label>
-                                <label class="flex items-center gap-2 p-2 border rounded"><input type="checkbox" class="t-check" value="Color"> Teñido</label>
-                            </div>
-                        </div>
-                        <div class="card p-6">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Armazón</h3>
-                            <div class="space-y-4">
-                                <input type="text" id="f_frame" class="input-field" placeholder="Marca / Modelo / Material">
-                                <textarea id="f_obs" class="input-field h-20 resize-none" placeholder="Observaciones adicionales..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-primary flex items-center justify-center gap-3 h-14">
-                        <i class="fas fa-paper-plane"></i> ENVIAR AL LABORATORIO
-                    </button>
-                </form>
-            </section>
-
-            <!-- Pagina: Lista -->
-            <section id="page-list" class="hidden space-y-4">
-                <div id="orders-list" class="space-y-4">
-                    <!-- Dinámico -->
-                </div>
-            </section>
-        </main>
+    <!-- Contenido App (Solo visible al loguear) -->
+    <div id="app-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div class="bg-white p-10 rounded-3xl shadow-xl max-w-sm w-full">
+            <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-slate-800">¡Acceso Correcto!</h2>
+            <p class="text-slate-500 mt-2">Bienvenido, <span id="user-display" class="font-bold text-blue-600"></span></p>
+            <button onclick="location.reload()" class="mt-8 text-slate-400 text-sm hover:text-slate-600">Cerrar Sesión</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuración directa
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-v1';
 
-        let userSession = null;
-        let ordersData = [];
-
-        // UI HELPERS
-        const showLoader = (show, text) => {
-            document.getElementById('loading-overlay').classList.toggle('hidden', !show);
-            if(text) document.getElementById('loader-text').innerText = text;
-        };
-
-        const notify = (msg, type = 'info') => {
-            alert(msg); // En iframe es lo más seguro, aunque feo.
-        };
-
-        // AUTH LOGIC
-        window.switchAuth = (mode) => {
+        // Manejo de UI
+        window.setTab = (mode) => {
             const isLogin = mode === 'login';
-            document.getElementById('form-login').classList.toggle('hidden', !isLogin);
-            document.getElementById('form-register').classList.toggle('hidden', isLogin);
-            document.getElementById('btn-tab-login').className = isLogin ? "flex-1 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-blue-600" : "flex-1 py-2 text-xs font-bold rounded-md text-slate-500";
-            document.getElementById('btn-tab-reg').className = !isLogin ? "flex-1 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-emerald-600" : "flex-1 py-2 text-xs font-bold rounded-md text-slate-500";
+            document.getElementById('login-form').classList.toggle('hidden', !isLogin);
+            document.getElementById('reg-form').classList.toggle('hidden', isLogin);
+            document.getElementById('tab-login').className = isLogin ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600" : "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500";
+            document.getElementById('tab-reg').className = !isLogin ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-emerald-600" : "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500";
+            document.getElementById('error-msg').classList.add('hidden');
         };
 
-        // REGISTRO
-        document.getElementById('form-register').onsubmit = async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('reg-user').value.trim().toLowerCase();
-            const p = document.getElementById('reg-pass').value;
-            
-            if(u.length < 3) return notify("Usuario muy corto");
-            
-            showLoader(true, "CREANDO CUENTA...");
+        const showError = (msg) => {
+            const el = document.getElementById('error-msg');
+            el.innerText = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        };
+
+        // Lógica de Registro
+        window.handleRegister = async () => {
+            const u = document.getElementById('r-user').value.trim().toLowerCase();
+            const p = document.getElementById('r-pass').value.trim();
+            const loader = document.getElementById('r-loader');
+
+            if (!u || p.length < 4) return showError("Completa los datos (Clave mín. 4 letras)");
+
+            loader.style.display = 'block';
             try {
-                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
-                const snap = await getDoc(userRef);
-                if(snap.exists()) {
-                    showLoader(false);
-                    return notify("Ese usuario ya existe");
-                }
-                await setDoc(userRef, { p, date: new Date().toISOString() });
-                notify("¡Cuenta creada! Ahora puedes ingresar.");
-                switchAuth('login');
-            } catch(e) {
-                notify("Error: " + e.message);
-            } finally {
-                showLoader(false);
-            }
-        };
-
-        // LOGIN (MODO AGRESIVO)
-        document.getElementById('form-login').onsubmit = async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('login-user').value.trim().toLowerCase();
-            const p = document.getElementById('login-pass').value;
-
-            showLoader(true, "VALIDANDO ACCESO...");
-            try {
-                // Buscamos DIRECTAMENTE el documento del usuario
-                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
-                const snap = await getDoc(userRef);
-
-                if(snap.exists() && snap.data().p === p) {
-                    enterApp(u);
-                } else {
-                    notify("Usuario o clave incorrectos");
-                }
-            } catch(e) {
-                notify("Fallo de conexión. Reintenta.");
-            } finally {
-                showLoader(false);
-            }
-        };
-
-        function enterApp(username) {
-            userSession = username;
-            localStorage.setItem('optica_user', username);
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = username;
-            generateOrderNum();
-            startOrdersListener();
-        }
-
-        window.handleLogout = () => {
-            localStorage.removeItem('optica_user');
-            location.reload();
-        };
-
-        // DATA LOGIC
-        function generateOrderNum() {
-            document.getElementById('order-num').innerText = Math.floor(10000 + Math.random() * 89999);
-        }
-
-        function startOrdersListener() {
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
-            onSnapshot(q, (snapshot) => {
-                ordersData = [];
-                snapshot.forEach(doc => ordersData.push({ id: doc.id, ...doc.data() }));
-                renderOrders();
-            });
-        }
-
-        window.showPage = (name) => {
-            document.getElementById('page-new').classList.toggle('hidden', name !== 'new');
-            document.getElementById('page-list').classList.toggle('hidden', name !== 'list');
-            document.getElementById('nav-new').className = name === 'new' ? 'py-4 px-6 text-xs font-bold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap' : 'py-4 px-6 text-xs font-bold border-b-2 border-transparent text-slate-400 whitespace-nowrap';
-            document.getElementById('nav-list').className = name === 'list' ? 'py-4 px-6 text-xs font-bold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap' : 'py-4 px-6 text-xs font-bold border-b-2 border-transparent text-slate-400 whitespace-nowrap';
-        };
-
-        // ENVIO DE PEDIDO
-        document.getElementById('main-order-form').onsubmit = async function(e) {
-            e.preventDefault();
-            showLoader(true, "GUARDANDO PEDIDO...");
-            
-            const oid = document.getElementById('order-num').innerText;
-            const gets = (id) => document.getElementById(id).value || "---";
-            const checks = Array.from(document.querySelectorAll('.t-check:checked')).map(c => c.value).join(', ') || 'Básico';
-
-            const payload = {
-                oid,
-                user: userSession,
-                client: gets('f_name'),
-                tel: gets('f_tel'),
-                receta: {
-                    od: `${gets('od_esf')} / ${gets('od_cil')} x ${gets('od_eje')} (Add ${gets('od_add')})`,
-                    oi: `${gets('oi_esf')} / ${gets('oi_cil')} x ${gets('oi_eje')} (Add ${gets('oi_add')})`,
-                    dnp: gets('f_dnp'),
-                    alt: gets('f_alt')
-                },
-                lens: gets('f_lens'),
-                treatments: checks,
-                frame: gets('f_frame'),
-                obs: gets('f_obs'),
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                // Guardar en Firestore
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', oid), payload);
+                // Autenticamos primero para tener permiso de escritura
+                await signInAnonymously(auth);
                 
-                // EmailJS opcional
-                try {
-                    emailjs.init("-NKT0dntx3JOPXYAA");
-                    await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
-                        order_id: oid,
-                        patient_name: payload.client,
-                        graduacion: `OD: ${payload.receta.od}\nOI: ${payload.receta.oi}\nDNP: ${payload.receta.dnp}`,
-                        lens_details: payload.lens,
-                        treatments: payload.treatments,
-                        notes: payload.obs,
-                        created_by: userSession
-                    });
-                } catch(mailErr) { console.log("Mail no enviado pero pedido guardado"); }
-
-                notify("✅ Pedido enviado con éxito");
-                this.reset();
-                generateOrderNum();
-                showPage('list');
-            } catch(e) {
-                notify("Error al guardar: " + e.message);
-            } finally {
-                showLoader(false);
-            }
-        };
-
-        function renderOrders() {
-            const container = document.getElementById('orders-list');
-            const myOrders = ordersData
-                .filter(o => o.user === userSession)
-                .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            if(myOrders.length === 0) {
-                container.innerHTML = `<div class="p-12 text-center text-slate-400 text-sm italic">Aún no has enviado pedidos...</div>`;
-                return;
-            }
-
-            container.innerHTML = myOrders.map(o => `
-                <div class="card p-5 border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">Orden #${o.oid}</span>
-                            <h4 class="font-bold text-slate-800 mt-1">${o.client}</h4>
-                        </div>
-                        <button onclick="window.deleteItem('${o.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt text-xs"></i></button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-slate-600">
-                        <div class="bg-slate-50 p-2 rounded">
-                            <p><strong>OD:</strong> ${o.receta.od}</p>
-                            <p><strong>OI:</strong> ${o.receta.oi}</p>
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded">
-                            <p><strong>Cristal:</strong> ${o.lens} (${o.treatments})</p>
-                            <p><strong>Armazón:</strong> ${o.frame}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.deleteItem = async (id) => {
-            if(confirm("¿Eliminar este registro?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', id));
-            }
-        };
-
-        // INIT
-        async function start() {
-            showLoader(true, "INICIANDO...");
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Ruta estricta de Firebase según Regla 1
+                const userPath = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+                const check = await getDoc(userPath);
                 
-                // Verificar si había sesión guardada
-                const savedUser = localStorage.getItem('optica_user');
-                if(savedUser) {
-                    enterApp(savedUser);
+                if (check.exists()) {
+                    showError("Ese usuario ya existe. Prueba otro.");
+                } else {
+                    await setDoc(userPath, { p: p, created: new Date().toISOString() });
+                    alert("¡Cuenta creada con éxito! Ahora ingresa.");
+                    setTab('login');
                 }
-            } catch(e) {
-                console.error(e);
+            } catch (err) {
+                console.error(err);
+                showError("Error de conexión: " + err.code);
             } finally {
-                showLoader(false);
+                loader.style.display = 'none';
             }
-        }
+        };
 
-        start();
+        // Lógica de Login
+        window.handleLogin = async () => {
+            const u = document.getElementById('l-user').value.trim().toLowerCase();
+            const p = document.getElementById('l-pass').value.trim();
+            const loader = document.getElementById('l-loader');
+
+            if (!u || !p) return showError("Ingresa usuario y clave");
+
+            loader.style.display = 'block';
+            try {
+                await signInAnonymously(auth);
+                
+                const userPath = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+                const snap = await getDoc(userPath);
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.p === p) {
+                        // ÉXITO
+                        document.getElementById('auth-screen').classList.add('hidden');
+                        document.getElementById('app-screen').classList.remove('hidden');
+                        document.getElementById('user-display').innerText = u;
+                    } else {
+                        showError("Contraseña incorrecta");
+                    }
+                } else {
+                    showError("El usuario no existe");
+                }
+            } catch (err) {
+                showError("Fallo de red: " + err.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        };
+
+        // Autenticación inicial silenciosa
+        signInAnonymously(auth).catch(e => console.log("Auth error silent", e));
 
     </script>
 </body>
