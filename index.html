@@ -3,116 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Pro - Acceso</title>
+    <title>Óptica Pro - Acceso Directo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .login-card { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="text-slate-900 overflow-x-hidden">
+<body class="antialiased">
 
-    <!-- PANTALLA DE LOGIN -->
-    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-100 px-4">
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md border border-slate-200 login-card">
-            <div class="flex flex-col items-center mb-8 text-center">
-                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg">
+    <!-- PANTALLA DE INGRESO (CAPA SUPERIOR) -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
                     <i class="fas fa-glasses fa-2xl"></i>
                 </div>
-                <h1 class="text-2xl font-black text-slate-800">Óptica<span class="text-blue-600">Pro</span></h1>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Sistema de Gestión</p>
+                <h1 class="text-2xl font-extrabold text-slate-800">Óptica<span class="text-blue-600">Pro</span></h1>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Panel Administrativo</p>
             </div>
             
-            <form id="login-form" class="space-y-4">
+            <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Usuario</label>
-                    <input type="text" id="user-input" required autofocus class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" placeholder="Admin">
+                    <input type="text" id="user-input" class="w-full bg-slate-100 border-2 border-transparent focus:border-blue-500 p-4 rounded-xl outline-none transition-all" placeholder="Usuario (Admin)">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Contraseña</label>
-                    <input type="password" id="pass-input" required class="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" placeholder="1234">
+                    <input type="password" id="pass-input" class="w-full bg-slate-100 border-2 border-transparent focus:border-blue-500 p-4 rounded-xl outline-none transition-all" placeholder="Contraseña (1234)">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95">
-                    Entrar al Sistema
+                <button id="btn-entrar" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-bold transition-all transform active:scale-95 shadow-lg shadow-blue-500/20">
+                    Entrar Ahora
                 </button>
-            </form>
-            <p id="login-error" class="text-red-500 text-xs text-center mt-4 font-bold hidden bg-red-50 p-2 rounded-lg border border-red-100">
-                <i class="fas fa-exclamation-circle mr-1"></i> Credenciales incorrectas
-            </p>
+                <div id="login-error" class="hidden text-red-500 text-sm font-bold text-center bg-red-50 p-3 rounded-lg border border-red-100">
+                    Credenciales incorrectas
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <div id="main-content" class="hidden opacity-0 transition-opacity duration-700">
-        <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-                <div class="flex items-center gap-3">
+    <!-- APP PRINCIPAL (OCULTA HASTA EL LOGIN) -->
+    <div id="app-content" class="hidden min-h-screen">
+        <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+                <div class="flex items-center gap-2">
                     <i class="fas fa-eye text-blue-600 text-xl"></i>
-                    <span class="text-xl font-bold tracking-tight">Óptica<span class="text-blue-600">Pro</span></span>
+                    <span class="font-bold text-lg">ÓpticaPro</span>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
-                        <i class="fas fa-plus"></i> Nueva Orden
-                    </button>
-                    <button onclick="location.reload()" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                        <i class="fas fa-power-off"></i>
-                    </button>
-                </div>
+                <button onclick="document.getElementById('modal-nueva').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700">
+                    + Nuevo Trabajo
+                </button>
             </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex justify-between items-end mb-6">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-800">Trabajos</h2>
-                    <p class="text-slate-400 text-xs font-bold">GESTIÓN DE ÓRDENES ACTIVAS</p>
-                </div>
-                <div class="bg-white px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-500">
-                    <span id="stat-total" class="text-blue-600">0</span> Órdenes totales
-                </div>
+        <main class="max-w-6xl mx-auto px-4 py-8">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800">Trabajos en curso</h2>
+                <p class="text-slate-500 text-sm">Visualización en tiempo real de órdenes</p>
             </div>
 
-            <div id="orders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cargando... -->
-                <div class="col-span-full flex flex-col items-center justify-center py-20 text-slate-300">
-                    <i class="fas fa-circle-notch animate-spin fa-2xl mb-4"></i>
-                    <p class="font-bold">Sincronizando con la nube...</p>
+            <div id="lista-ordenes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Los trabajos aparecerán aquí -->
+                <div class="col-span-full py-12 text-center text-slate-400">
+                    <i class="fas fa-spinner animate-spin fa-2xl mb-4 text-blue-200"></i>
+                    <p>Sincronizando base de datos...</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- MODAL -->
-    <div id="order-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden">
+    <!-- MODAL NUEVA ORDEN -->
+    <div id="modal-nueva" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold">Nueva Orden</h3>
-                <button onclick="closeModal()" class="text-slate-300 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                <h3 class="font-bold text-lg">Detalles de la Orden</h3>
+                <button onclick="document.getElementById('modal-nueva').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
             </div>
-            <form id="order-form" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Paciente</label>
-                    <input type="text" id="paciente" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-400" placeholder="Ej: Juan Pérez">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Armazón</label>
-                        <input type="text" id="armazon" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" placeholder="Ray-Ban 3025">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Graduación</label>
-                        <input type="text" id="graduacion" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" placeholder="+2.00 OI">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Laboratorio (Email)</label>
-                    <input type="email" id="email-lab" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" placeholder="lab@cristales.com">
-                </div>
-                <button type="submit" id="submit-btn" class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg">
-                    Confirmar Envío
+            <form id="form-orden" class="p-6 space-y-4">
+                <input type="text" id="paciente" placeholder="Nombre del Paciente" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
+                <input type="text" id="armazon" placeholder="Modelo de Armazón" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
+                <input type="text" id="graduacion" placeholder="Graduación (Ej: +1.50 OD)" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
+                <input type="email" id="laboratorio" placeholder="Email del Laboratorio" required class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20">
+                <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg">
+                    Cargar Trabajo
                 </button>
             </form>
         </div>
@@ -121,110 +95,111 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-pro-v1';
+        // Configuración manual para asegurar carga
+        const config = JSON.parse(__firebase_config);
+        const appID = typeof __app_id !== 'undefined' ? __app_id : 'optica-pro-local';
 
-        // --- MANEJO DE LOGIN ---
-        document.getElementById('login-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('user-input').value;
-            const p = document.getElementById('pass-input').value;
+        const btnEntrar = document.getElementById('btn-entrar');
+        const loginError = document.getElementById('login-error');
 
-            if (u === "Admin" && p === "1234") {
-                await startApp();
+        // FUNCIÓN DE INICIO DE SESIÓN LOCAL
+        btnEntrar.addEventListener('click', () => {
+            const user = document.getElementById('user-input').value;
+            const pass = document.getElementById('pass-input').value;
+
+            if (user === "Admin" && pass === "1234") {
+                loginError.classList.add('hidden');
+                ejecutarApp();
             } else {
-                const err = document.getElementById('login-error');
-                err.classList.remove('hidden');
-                setTimeout(() => err.classList.add('hidden'), 2500);
+                loginError.classList.remove('hidden');
+                setTimeout(() => loginError.classList.add('hidden'), 3000);
             }
-        };
+        });
 
-        async function startApp() {
-            document.getElementById('login-screen').classList.add('hidden');
-            const main = document.getElementById('main-content');
-            main.classList.remove('hidden');
-            setTimeout(() => main.classList.add('opacity-100'), 50);
+        // Solo se ejecuta esto si el login es exitoso
+        async function ejecutarApp() {
+            // 1. Mostrar interfaz principal
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').classList.remove('hidden');
 
             try {
-                // Autenticar solo después del login local exitoso
+                // 2. Inicializar Firebase solo ahora
+                const firebaseApp = initializeApp(config);
+                const auth = getAuth(firebaseApp);
+                const db = getFirestore(firebaseApp);
+
                 await signInAnonymously(auth);
-                initRealtimeSync();
-            } catch (err) {
-                console.error("Error conectando a la base de datos", err);
-            }
-        }
 
-        function initRealtimeSync() {
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'ordenes');
-            onSnapshot(q, (snapshot) => {
-                const grid = document.getElementById('orders-grid');
-                let total = 0;
-                let cards = [];
+                // 3. Escuchar la base de datos
+                const colRef = collection(db, 'artifacts', appID, 'public', 'data', 'ordenes');
+                
+                onSnapshot(colRef, (snapshot) => {
+                    const lista = document.getElementById('lista-ordenes');
+                    let html = '';
+                    
+                    if (snapshot.empty) {
+                        lista.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold">Sin trabajos pendientes</div>';
+                        return;
+                    }
 
-                snapshot.forEach(d => {
-                    const data = d.data();
-                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Hoy';
-                    total++;
-                    cards.push(`
-                        <div class="bg-white rounded-[1.5rem] border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex justify-between items-center mb-4">
-                                <div class="px-2 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded uppercase tracking-tighter">Procesando</div>
-                                <button onclick="borrarOrden('${d.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                    snapshot.forEach(docSnap => {
+                        const d = docSnap.data();
+                        html += `
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-slate-800">${d.paciente}</h4>
+                                    <button onclick="window.eliminar('${docSnap.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                                <div class="bg-blue-50 p-2 rounded-lg text-blue-600 text-xs font-bold mb-3 inline-block">
+                                    ${d.armazon}
+                                </div>
+                                <div class="text-[11px] text-slate-500 space-y-1">
+                                    <p><i class="fas fa-file-prescription mr-1"></i> Grad: ${d.graduacion || 'Sin dato'}</p>
+                                    <p><i class="fas fa-flask mr-1"></i> Lab: ${d.laboratorio}</p>
+                                </div>
                             </div>
-                            <h4 class="font-bold text-slate-800">${data.paciente}</h4>
-                            <p class="text-blue-500 text-[10px] font-bold uppercase mb-4">${data.armazon}</p>
-                            <div class="space-y-2 text-[11px] text-slate-500 border-t border-slate-50 pt-3">
-                                <div class="flex items-center gap-2"><i class="fas fa-eye"></i> Grad: ${data.graduacion || 'N/A'}</div>
-                                <div class="flex items-center gap-2"><i class="fas fa-truck-loading"></i> Lab: ${data.emailLab}</div>
-                            </div>
-                            <div class="mt-4 text-[9px] text-slate-300 font-bold uppercase">${date}</div>
-                        </div>
-                    `);
+                        `;
+                    });
+                    lista.innerHTML = html;
                 });
 
-                grid.innerHTML = cards.length ? cards.join('') : '<div class="col-span-full py-20 text-center text-slate-400 font-bold">No hay trabajos pendientes</div>';
-                document.getElementById('stat-total').innerText = total;
-            });
+                // Funcionalidad de Envío
+                document.getElementById('form-orden').onsubmit = async (e) => {
+                    e.preventDefault();
+                    const b = e.target.querySelector('button');
+                    b.disabled = true;
+                    b.innerText = 'Procesando...';
+
+                    try {
+                        await addDoc(colRef, {
+                            paciente: document.getElementById('paciente').value,
+                            armazon: document.getElementById('armazon').value,
+                            graduacion: document.getElementById('graduacion').value,
+                            laboratorio: document.getElementById('laboratorio').value,
+                            createdAt: serverTimestamp()
+                        });
+                        document.getElementById('modal-nueva').classList.add('hidden');
+                        e.target.reset();
+                    } finally {
+                        b.disabled = false;
+                        b.innerText = 'Cargar Trabajo';
+                    }
+                };
+
+                // Función global para eliminar
+                window.eliminar = async (id) => {
+                    if(confirm("¿Seguro que quieres eliminar esta orden?")) {
+                        await deleteDoc(doc(db, 'artifacts', appID, 'public', 'data', 'ordenes', id));
+                    }
+                };
+
+            } catch (error) {
+                console.error("Error de inicialización:", error);
+                alert("Error conectando con la base de datos. Por favor reintenta.");
+            }
         }
-
-        // --- ACCIONES ---
-        window.openModal = () => document.getElementById('order-modal').classList.remove('hidden');
-        window.closeModal = () => document.getElementById('order-modal').classList.add('hidden');
-
-        document.getElementById('order-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-sync animate-spin"></i> Enviando...';
-
-            const payload = {
-                paciente: document.getElementById('paciente').value,
-                armazon: document.getElementById('armazon').value,
-                graduacion: document.getElementById('graduacion').value,
-                emailLab: document.getElementById('email-lab').value,
-                createdAt: serverTimestamp()
-            };
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'ordenes'), payload);
-                closeModal();
-                e.target.reset();
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Confirmar Envío';
-            }
-        };
-
-        window.borrarOrden = async (id) => {
-            if (confirm("¿Marcar trabajo como entregado/eliminado?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'ordenes', id));
-            }
-        };
     </script>
 </body>
 </html>
