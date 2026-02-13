@@ -21,7 +21,7 @@
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         <div class="bg-blue-600 p-6 text-center">
-            <h1 class="text-2xl font-bold text-white tracking-tight">ÓPTICA CONNECT</h1>
+            <h1 class="text-2xl font-bold text-white tracking-tight italic uppercase">ÓPTICA <span class="text-blue-200">CONNECT</span></h1>
             <p class="text-blue-100 text-sm mt-1">Panel de Pedidos de Laboratorio</p>
         </div>
         
@@ -68,7 +68,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN CRÍTICA - Verificá estos 3 datos en tu EmailJS
+        // CONFIGURACIÓN CRÍTICA
         const PUBLIC_KEY = "-NKT0dntx3JOPXYAA"; 
         const SERVICE_ID = "service_bo6kzuc";
         const TEMPLATE_ID = "template_4e00pyr";
@@ -83,7 +83,6 @@
         form.onsubmit = function(event) {
             event.preventDefault();
             
-            // UI State: Cargando
             btn.disabled = true;
             btn.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 mr-3"></div> ENVIANDO...';
             
@@ -91,27 +90,24 @@
             statusMessage.className = "p-4 rounded-xl text-center text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-100";
             statusMessage.innerText = "Conectando con el servidor...";
 
-            // Recolección de datos
             const templateParams = {
                 patient_name: document.getElementById('p_name').value,
                 graduacion: `OD: ${document.getElementById('od_esf').value} | OI: ${document.getElementById('oi_esf').value}`,
                 lente: document.getElementById('lente_tipo').value,
-                observaciones: document.getElementById('notas').value
+                observaciones: document.getElementById('notas').value,
+                order_id: Math.floor(10000 + Math.random() * 90000)
             };
 
-            // Envío
             emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
                 .then(function(response) {
-                    console.log('SUCCESS!', response.status, response.text);
                     statusMessage.className = "p-4 rounded-xl text-center text-sm font-semibold bg-green-50 text-green-700 border border-green-100";
                     statusMessage.innerText = "✅ ¡Pedido enviado correctamente!";
                     btn.innerHTML = "¡ENVIADO!";
                     btn.classList.replace('bg-blue-600', 'bg-green-600');
                     form.reset();
                 }, function(error) {
-                    console.error('FAILED...', error);
                     statusMessage.className = "p-4 rounded-xl text-center text-sm font-semibold bg-red-50 text-red-700 border border-red-100";
-                    statusMessage.innerHTML = `❌ Error al enviar.<br><span class="text-xs font-normal">${error.text || 'Revisá la consola del navegador'}</span>`;
+                    statusMessage.innerHTML = `❌ Error al enviar.<br><span class="text-xs font-normal">${error.text || 'Revisá la configuración'}</span>`;
                     btn.disabled = false;
                     btn.innerHTML = "REINTENTAR ENVÍO";
                 });
