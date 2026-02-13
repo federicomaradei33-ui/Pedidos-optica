@@ -21,6 +21,9 @@
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .tab-active { @apply bg-white shadow text-blue-600; }
+        .tab-inactive { @apply text-slate-500; }
     </style>
 </head>
 <body>
@@ -38,8 +41,8 @@
 
             <!-- Tabs -->
             <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-                <button id="tab-login" onclick="setTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600">INGRESAR</button>
-                <button id="tab-reg" onclick="setTab('reg')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500">CREAR CUENTA</button>
+                <button id="tab-login" onclick="setTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg tab-active">INGRESAR</button>
+                <button id="tab-reg" onclick="setTab('reg')" class="flex-1 py-2 text-xs font-bold rounded-lg tab-inactive">CREAR CUENTA</button>
             </div>
 
             <!-- Formularios -->
@@ -102,10 +105,27 @@
         // Manejo de UI
         window.setTab = (mode) => {
             const isLogin = mode === 'login';
-            document.getElementById('login-form').classList.toggle('hidden', !isLogin);
-            document.getElementById('reg-form').classList.toggle('hidden', isLogin);
-            document.getElementById('tab-login').className = isLogin ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600" : "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500";
-            document.getElementById('tab-reg').className = !isLogin ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-emerald-600" : "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500";
+            
+            // Alternar formularios
+            document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('reg-form').style.display = isLogin ? 'none' : 'block';
+            
+            // Alternar estilos de botones
+            const btnLogin = document.getElementById('tab-login');
+            const btnReg = document.getElementById('tab-reg');
+            
+            if (isLogin) {
+                btnLogin.classList.add('bg-white', 'shadow', 'text-blue-600');
+                btnLogin.classList.remove('text-slate-500');
+                btnReg.classList.remove('bg-white', 'shadow', 'text-emerald-600');
+                btnReg.classList.add('text-slate-500');
+            } else {
+                btnReg.classList.add('bg-white', 'shadow', 'text-emerald-600');
+                btnReg.classList.remove('text-slate-500');
+                btnLogin.classList.remove('bg-white', 'shadow', 'text-blue-600');
+                btnLogin.classList.add('text-slate-500');
+            }
+            
             document.getElementById('error-msg').classList.add('hidden');
         };
 
@@ -113,7 +133,6 @@
             const el = document.getElementById('error-msg');
             el.innerText = msg;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
         };
 
         // Lógica de Registro
@@ -126,10 +145,7 @@
 
             loader.style.display = 'block';
             try {
-                // Autenticamos primero para tener permiso de escritura
                 await signInAnonymously(auth);
-                
-                // Ruta estricta de Firebase según Regla 1
                 const userPath = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
                 const check = await getDoc(userPath);
                 
@@ -141,8 +157,7 @@
                     setTab('login');
                 }
             } catch (err) {
-                console.error(err);
-                showError("Error de conexión: " + err.code);
+                showError("Error: " + err.code);
             } finally {
                 loader.style.display = 'none';
             }
@@ -159,14 +174,11 @@
             loader.style.display = 'block';
             try {
                 await signInAnonymously(auth);
-                
                 const userPath = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
                 const snap = await getDoc(userPath);
 
                 if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.p === p) {
-                        // ÉXITO
+                    if (snap.data().p === p) {
                         document.getElementById('auth-screen').classList.add('hidden');
                         document.getElementById('app-screen').classList.remove('hidden');
                         document.getElementById('user-display').innerText = u;
@@ -183,7 +195,7 @@
             }
         };
 
-        // Autenticación inicial silenciosa
+        // Autenticación inicial
         signInAnonymously(auth).catch(e => console.log("Auth error silent", e));
 
     </script>
