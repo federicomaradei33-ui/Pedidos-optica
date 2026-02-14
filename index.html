@@ -6,7 +6,6 @@
     <title>ÓpticaConnect - Gestión de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- SDK de EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -76,14 +75,6 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
-        .grid-header {
-            font-size: 0.65rem;
-            font-weight: 900;
-            color: #94a3b8;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
         .loading-overlay {
             display: none;
             position: fixed;
@@ -116,7 +107,7 @@
     <div id="loader" class="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-            <p class="mt-4 font-black text-blue-900 tracking-widest uppercase text-sm">Enviando Correo y Guardando...</p>
+            <p class="mt-4 font-black text-blue-900 tracking-widest uppercase text-sm">Procesando envío...</p>
         </div>
     </div>
 
@@ -124,20 +115,19 @@
         <div class="max-w-xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fas fa-glasses text-blue-600 text-xl"></i>
-                <span class="font-black text-base tracking-tighter text-slate-800">ÓPTICA<span class="text-blue-600">CONNECT</span></span>
+                <span class="font-black text-base tracking-tighter text-slate-800 uppercase">Óptica<span class="text-blue-600">Connect</span></span>
             </div>
             <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
-                <button onclick="switchTab('nueva')" id="btn-nueva" class="tab-btn active">Nueva</button>
-                <button onclick="switchTab('historial')" id="btn-historial" class="tab-btn text-slate-500">Historial</button>
+                <button id="btn-nueva" class="tab-btn active">Nueva</button>
+                <button id="btn-historial" class="tab-btn text-slate-500">Historial</button>
             </div>
         </div>
     </header>
 
     <main class="max-w-xl mx-auto p-4">
         
+        <!-- VISTA FORMULARIO -->
         <div id="view-nueva" class="space-y-4">
-            
-            <!-- DATOS PACIENTE -->
             <section class="glass-card">
                 <h2 class="section-title"><i class="fas fa-user"></i> Datos del Paciente</h2>
                 <div class="space-y-3">
@@ -146,52 +136,41 @@
                 </div>
             </section>
 
-            <!-- RECETA -->
             <section class="glass-card">
-                <h2 class="section-title"><i class="fas fa-file-medical"></i> Receta Técnica</h2>
-                
-                <!-- Encabezados Requeridos -->
-                <div class="grid grid-cols-4 gap-2 mb-2 px-1">
-                    <div class="grid-header">ESF</div>
-                    <div class="grid-header">CIL</div>
-                    <div class="grid-header">EJE</div>
-                    <div class="grid-header">ADD</div>
+                <h2 class="section-title"><i class="fas fa-file-medical"></i> Receta</h2>
+                <div class="grid grid-cols-4 gap-2 mb-2 px-1 text-center">
+                    <div class="text-[10px] font-bold text-slate-400">ESF</div>
+                    <div class="text-[10px] font-bold text-slate-400">CIL</div>
+                    <div class="text-[10px] font-bold text-slate-400">EJE</div>
+                    <div class="text-[10px] font-bold text-slate-400">ADD</div>
                 </div>
 
-                <div class="space-y-4">
-                    <!-- Ojo Derecho -->
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <p class="text-[9px] font-black text-blue-600 mb-2 uppercase flex items-center gap-1">
-                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Ojo Derecho (OD)
-                        </p>
+                <div class="space-y-3">
+                    <div class="bg-slate-50 p-3 rounded-xl">
+                        <p class="text-[10px] font-black text-blue-600 mb-2 uppercase">OD (Derecho)</p>
                         <div class="grid grid-cols-4 gap-2">
-                            <input type="text" id="od_esf" value="0.00" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="od_cil" value="0.00" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="od_eje" value="0" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="od_adi" value="+0.00" class="input-field text-center p-2 text-sm font-bold text-blue-600">
+                            <input type="text" id="od_esf" value="0.00" class="input-field text-center p-2">
+                            <input type="text" id="od_cil" value="0.00" class="input-field text-center p-2">
+                            <input type="text" id="od_eje" value="0" class="input-field text-center p-2">
+                            <input type="text" id="od_adi" value="+0.00" class="input-field text-center p-2 font-bold text-blue-600">
                         </div>
                     </div>
-
-                    <!-- Ojo Izquierdo -->
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <p class="text-[9px] font-black text-blue-600 mb-2 uppercase flex items-center gap-1">
-                            <span class="w-2 h-2 bg-blue-400 rounded-full"></span> Ojo Izquierdo (OI)
-                        </p>
+                    <div class="bg-slate-50 p-3 rounded-xl">
+                        <p class="text-[10px] font-black text-blue-600 mb-2 uppercase">OI (Izquierdo)</p>
                         <div class="grid grid-cols-4 gap-2">
-                            <input type="text" id="oi_esf" value="0.00" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="oi_cil" value="0.00" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="oi_eje" value="0" class="input-field text-center p-2 text-sm">
-                            <input type="text" id="oi_adi" value="+0.00" class="input-field text-center p-2 text-sm font-bold text-blue-600">
+                            <input type="text" id="oi_esf" value="0.00" class="input-field text-center p-2">
+                            <input type="text" id="oi_cil" value="0.00" class="input-field text-center p-2">
+                            <input type="text" id="oi_eje" value="0" class="input-field text-center p-2">
+                            <input type="text" id="oi_adi" value="+0.00" class="input-field text-center p-2 font-bold text-blue-600">
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- CRISTAL Y TRATAMIENTO -->
             <section class="glass-card">
                 <h2 class="section-title"><i class="fas fa-layer-group"></i> Cristal y Tratamiento</h2>
                 <label class="text-[10px] font-black text-slate-400 block mb-2 uppercase">Tipo de Cristal</label>
-                <select id="tipo_cristal" class="input-field mb-6">
+                <select id="tipo_cristal" class="input-field mb-4">
                     <option>Monofocal Stock</option>
                     <option>Monofocal Lab</option>
                     <option>Bifocal</option>
@@ -199,38 +178,37 @@
                 </select>
 
                 <label class="text-[10px] font-black text-slate-400 block mb-2 uppercase">Tratamiento</label>
-                <div class="flex flex-col space-y-1">
-                    <button type="button" data-val="Sin Tratamiento" class="select-btn treat-opt active">Sin Tratamiento</button>
-                    <button type="button" data-val="Antirreflex" class="select-btn treat-opt">Antirreflex</button>
-                    <button type="button" data-val="Filtro Azul" class="select-btn treat-opt">Filtro Azul</button>
-                    <button type="button" data-val="Fotocromático" class="select-btn treat-opt">Fotocromático</button>
+                <div class="flex flex-col space-y-1" id="group-tratamiento">
+                    <button type="button" data-val="Sin Tratamiento" class="select-btn active">Sin Tratamiento</button>
+                    <button type="button" data-val="Antirreflex" class="select-btn">Antirreflex</button>
+                    <button type="button" data-val="Filtro Azul" class="select-btn">Filtro Azul</button>
+                    <button type="button" data-val="Fotocromático" class="select-btn">Fotocromático</button>
                 </div>
             </section>
 
-            <!-- ARMAZON -->
             <section class="glass-card">
                 <h2 class="section-title"><i class="fas fa-eye"></i> Armazón</h2>
-                <div class="flex flex-col space-y-1 mb-4">
-                    <button type="button" data-val="Zilo" class="select-btn armazon-opt active">ZILO</button>
-                    <button type="button" data-val="Metal" class="select-btn armazon-opt">METAL</button>
-                    <button type="button" data-val="Ranura" class="select-btn armazon-opt">RANURA</button>
+                <div class="flex flex-col space-y-1 mb-4" id="group-armazon">
+                    <button type="button" data-val="Zilo" class="select-btn active">ZILO</button>
+                    <button type="button" data-val="Metal" class="select-btn">METAL</button>
+                    <button type="button" data-val="Ranura" class="select-btn">RANURA</button>
                 </div>
                 <input type="text" id="armazon_detalle" class="input-field" placeholder="Marca / Modelo / Color">
             </section>
 
-            <!-- OBSERVACIONES -->
             <section class="glass-card">
                 <h2 class="section-title"><i class="fas fa-comment-alt"></i> Observaciones</h2>
-                <textarea id="observaciones" class="input-field min-h-[100px]" placeholder="Ej: Urgente, biselado especial, etc..."></textarea>
+                <textarea id="observaciones" class="input-field min-h-[80px]" placeholder="Notas adicionales..."></textarea>
             </section>
 
-            <button onclick="procesarPedido()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl transition-all shadow-lg shadow-blue-200 text-lg uppercase tracking-widest">
+            <button id="btn-enviar" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase tracking-widest">
                 Enviar a Laboratorio
             </button>
         </div>
 
+        <!-- VISTA HISTORIAL -->
         <div id="view-historial" class="hidden space-y-4">
-            <h2 class="text-xl font-black text-slate-800 mb-4 uppercase tracking-tighter">Historial</h2>
+            <h2 class="text-xl font-black text-slate-800 mb-4 uppercase">Historial de Pedidos</h2>
             <div id="lista-pedidos" class="space-y-4"></div>
         </div>
 
@@ -238,131 +216,160 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-pro';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-v1';
 
-        // Inicializar EmailJS con tu Public Key
         emailjs.init("-NKT0dntx3JOPXYAA");
 
-        let state = {
-            armazon: 'Zilo',
-            tratamiento: 'Sin Tratamiento'
-        };
+        let selectedTratamiento = "Sin Tratamiento";
+        let selectedArmazon = "Zilo";
+        let currentUser = null;
 
-        // Selección de Tratamientos
-        document.querySelectorAll('.treat-opt').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.treat-opt').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                state.tratamiento = this.getAttribute('data-val');
+        // --- Lógica de Selección ---
+        function setupSelection(groupId, callback) {
+            const container = document.getElementById(groupId);
+            const buttons = container.querySelectorAll('.select-btn');
+            buttons.forEach(btn => {
+                btn.onclick = () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    callback(btn.getAttribute('data-val'));
+                };
             });
-        });
+        }
 
-        // Selección de Armazones
-        document.querySelectorAll('.armazon-opt').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.armazon-opt').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                state.armazon = this.getAttribute('data-val');
-            });
-        });
+        setupSelection('group-tratamiento', (val) => selectedTratamiento = val);
+        setupSelection('group-armazon', (val) => selectedArmazon = val);
 
-        window.switchTab = (tab) => {
+        // --- Navegación ---
+        const switchTab = (tab) => {
             document.getElementById('view-nueva').classList.toggle('hidden', tab !== 'nueva');
             document.getElementById('view-historial').classList.toggle('hidden', tab !== 'historial');
             document.getElementById('btn-nueva').className = `tab-btn ${tab === 'nueva' ? 'active' : 'text-slate-500'}`;
             document.getElementById('btn-historial').className = `tab-btn ${tab === 'historial' ? 'active' : 'text-slate-500'}`;
         };
 
-        signInAnonymously(auth).then(() => {
-            onAuthStateChanged(auth, (user) => {
-                if (user) loadHistory();
-            });
-        });
+        document.getElementById('btn-nueva').onclick = () => switchTab('nueva');
+        document.getElementById('btn-historial').onclick = () => switchTab('historial');
 
-        window.procesarPedido = async () => {
+        // --- Firebase & Envío ---
+        const procesarPedido = async () => {
+            if (!currentUser) {
+                alert("Esperando conexión segura... Intenta de nuevo en un segundo.");
+                return;
+            }
+
             const nombre = document.getElementById('p_nombre').value.trim();
             if (!nombre) {
-                alert("Por favor, ingresa el nombre del paciente.");
+                alert("Ingresa el nombre del paciente");
                 return;
             }
 
             document.getElementById('loader').style.display = 'flex';
 
-            const payload = {
+            const data = {
                 paciente: nombre,
                 whatsapp: document.getElementById('p_tel').value,
                 cristal: document.getElementById('tipo_cristal').value,
-                armazon: state.armazon,
+                armazon: selectedArmazon,
                 detalle: document.getElementById('armazon_detalle').value,
-                tratamiento: state.tratamiento,
+                tratamiento: selectedTratamiento,
                 observaciones: document.getElementById('observaciones').value,
-                // Receta formateada para Email y DB
-                receta_od: `ESF: ${document.getElementById('od_esf').value} CIL: ${document.getElementById('od_cil').value} EJE: ${document.getElementById('od_eje').value} ADD: ${document.getElementById('od_adi').value}`,
-                receta_oi: `ESF: ${document.getElementById('oi_esf').value} CIL: ${document.getElementById('oi_cil').value} EJE: ${document.getElementById('oi_eje').value} ADD: ${document.getElementById('oi_adi').value}`,
-                timestamp: serverTimestamp()
+                receta_od: `ESF: ${document.getElementById('od_esf').value} | CIL: ${document.getElementById('od_cil').value} | EJE: ${document.getElementById('od_eje').value} | ADD: ${document.getElementById('od_adi').value}`,
+                receta_oi: `ESF: ${document.getElementById('oi_esf').value} | CIL: ${document.getElementById('oi_cil').value} | EJE: ${document.getElementById('oi_eje').value} | ADD: ${document.getElementById('oi_adi').value}`,
+                timestamp: serverTimestamp(),
+                userId: currentUser.uid
             };
 
             try {
-                // 1. Guardar en Base de Datos
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), payload);
+                // Ruta obligatoria para datos públicos: /artifacts/{appId}/public/data/{collection}
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), data);
                 
-                // 2. Enviar Correo Electrónico
                 await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
-                    paciente: payload.paciente,
-                    whatsapp: payload.whatsapp || "No provisto",
-                    cristal: payload.cristal,
-                    tratamientos: payload.tratamiento,
-                    armazon: payload.armazon + " (" + (payload.detalle || "Sin detalle") + ")",
-                    receta_od: payload.receta_od,
-                    receta_oi: payload.receta_oi,
-                    notas: payload.observaciones || "Sin observaciones adicionales"
+                    paciente: data.paciente,
+                    whatsapp: data.whatsapp || "No informado",
+                    cristal: data.cristal,
+                    tratamientos: data.tratamiento,
+                    armazon: `${data.armazon} (${data.detalle})`,
+                    receta_od: data.receta_od,
+                    receta_oi: data.receta_oi,
+                    notas: data.observaciones
                 });
 
-                alert("¡Orden enviada con éxito al laboratorio!");
+                alert("¡Pedido enviado correctamente!");
                 location.reload();
-            } catch (e) {
-                console.error("Error en el proceso:", e);
-                alert("Hubo un problema. El pedido se guardó pero el mail pudo fallar. Revisa el historial.");
+            } catch (err) {
+                console.error("Error al enviar:", err);
+                alert("Error al procesar el pedido. Verifica tu conexión.");
                 document.getElementById('loader').style.display = 'none';
             }
         };
 
-        function loadHistory() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), (snap) => {
-                const list = document.getElementById('lista-pedidos');
-                list.innerHTML = "";
-                let entries = [];
-                snap.forEach(d => entries.push(d.data()));
-                entries.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                
-                entries.forEach(p => {
-                    const card = document.createElement('div');
-                    card.className = "glass-card";
-                    card.innerHTML = `
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center">
-                                <span class="font-black text-blue-700 uppercase text-xs">${p.paciente}</span>
-                                <span class="text-[8px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-bold uppercase">${p.armazon}</span>
+        document.getElementById('btn-enviar').onclick = procesarPedido;
+
+        // --- Inicialización y Autenticación (REGLA 3) ---
+        const initApp = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error de autenticación:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                // Solo cargar datos después de estar autenticado
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+                onSnapshot(q, (snap) => {
+                    const list = document.getElementById('lista-pedidos');
+                    list.innerHTML = "";
+                    let docs = [];
+                    snap.forEach(d => {
+                        const item = d.data();
+                        docs.push(item);
+                    });
+                    
+                    // Ordenar en memoria (REGLA 2)
+                    docs.sort((a,b) => {
+                        const timeA = a.timestamp?.seconds || 0;
+                        const timeB = b.timestamp?.seconds || 0;
+                        return timeB - timeA;
+                    });
+
+                    docs.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = "glass-card text-sm";
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start mb-2">
+                                <strong class="uppercase text-blue-700 font-black">${p.paciente}</strong>
+                                <span class="bg-slate-100 px-2 py-1 rounded text-[9px] font-bold uppercase">${p.armazon}</span>
                             </div>
-                            <p class="text-[11px] font-bold text-slate-600">${p.cristal} <span class="text-blue-500">+ ${p.tratamiento}</span></p>
-                            <div class="space-y-1">
-                                <div class="bg-slate-50 p-2 rounded text-[9px] font-mono border border-slate-100 text-slate-500">OD: ${p.receta_od}</div>
-                                <div class="bg-slate-50 p-2 rounded text-[9px] font-mono border border-slate-100 text-slate-500">OI: ${p.receta_oi}</div>
+                            <div class="text-slate-600 mb-2">${p.cristal} + <span class="text-blue-500 font-bold">${p.tratamiento}</span></div>
+                            <div class="space-y-1 text-[10px] font-mono text-slate-400">
+                                <div class="bg-slate-50 p-1 rounded">OD: ${p.receta_od}</div>
+                                <div class="bg-slate-50 p-1 rounded">OI: ${p.receta_oi}</div>
                             </div>
-                            ${p.observaciones ? `<div class="text-[9px] text-slate-400 border-t pt-1 mt-1">Obs: ${p.observaciones}</div>` : ''}
-                        </div>
-                    `;
-                    list.appendChild(card);
+                        `;
+                        list.appendChild(div);
+                    });
+                }, (error) => {
+                    console.error("Error en el listener de Firestore:", error);
                 });
-            });
-        }
+            }
+        });
+
+        initApp();
     </script>
 </body>
 </html>
