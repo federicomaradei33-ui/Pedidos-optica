@@ -3,156 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Connect - Sistema de Órdenes</title>
+    <title>ÓpticaConnect - Gestión de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        .glass-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
 
-        /* Estilo de botones de opción única (Armazón) */
-        .option-group button {
+        .input-field {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            width: 100%;
             transition: all 0.2s;
+        }
+
+        .select-btn {
+            background: white;
             border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
         }
-        
-        .option-group button.selected {
-            background-color: #2563eb !important;
-            color: white !important;
+
+        .select-btn.active {
+            background: #2563eb !important;
             border-color: #1e40af !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Estilo de botones de opción múltiple (Tratamientos) */
-        .treatment-btn.selected {
-            background-color: #059669 !important;
             color: white !important;
-            border-color: #065f46 !important;
         }
 
-        .input-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem; width: 100%; }
-        input:focus { outline: 2px solid #2563eb; border-color: transparent; }
-
-        .loading-spinner {
+        .loading-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 100;
+            background: rgba(255,255,255,0.8);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            color: white;
-            flex-direction: column;
+            backdrop-filter: blur(4px);
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #eff6ff;
+            color: #2563eb;
         }
     </style>
 </head>
-<body class="pb-10">
+<body>
 
-    <div id="loader" class="loading-spinner">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mb-4"></div>
-        <p class="font-bold">PROCESANDO ORDEN...</p>
+    <div id="loader" class="loading-overlay">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            <p class="mt-4 font-bold text-blue-800 uppercase tracking-widest">Enviando pedido...</p>
+        </div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-blue-700 text-white p-4 shadow-lg mb-6">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-extrabold flex items-center gap-2">
-                <i class="fas fa-eye"></i> ÓPTICA CONNECT
-            </h1>
-            <div class="flex gap-2">
-                <button onclick="switchTab('form')" class="bg-blue-800 px-3 py-1 rounded text-sm font-bold">NUEVA</button>
-                <button onclick="switchTab('history')" class="bg-blue-600 px-3 py-1 rounded text-sm font-bold">HISTORIAL</button>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-glasses text-blue-600 text-2xl"></i>
+                <span class="font-extrabold text-xl tracking-tight text-slate-800 uppercase">Óptica<span class="text-blue-600">Connect</span></span>
             </div>
+            <nav class="flex items-center gap-2">
+                <button onclick="switchTab('nueva')" id="btn-nueva" class="tab-btn active text-sm">NUEVA</button>
+                <button onclick="switchTab('historial')" id="btn-historial" class="tab-btn text-slate-500 text-sm">HISTORIAL</button>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4">
+    <main class="max-w-6xl mx-auto p-4 md:p-6">
         
-        <!-- Formulario -->
-        <div id="tab-form" class="space-y-6">
+        <div id="view-nueva" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Datos Paciente -->
-            <section class="input-card">
-                <h2 class="text-blue-700 font-bold mb-4 uppercase text-sm tracking-wider">Datos del Paciente</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-bold text-slate-500">NOMBRE COMPLETO</label>
-                        <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
+            <div class="lg:col-span-2 space-y-6">
+                <section class="glass-card">
+                    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">Datos del Paciente</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="p_nombre" class="input-field" placeholder="Nombre Completo">
+                        <input type="text" id="p_tel" class="input-field" placeholder="WhatsApp / Teléfono">
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-500">TELÉFONO</label>
-                        <input type="text" id="telefono" placeholder="WhatsApp">
+                </section>
+
+                <section class="glass-card">
+                    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">Receta</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-slate-400 text-[10px] uppercase">
+                                    <th class="text-left pb-2">Ojo</th>
+                                    <th class="pb-2">Esf</th>
+                                    <th class="pb-2">Cil</th>
+                                    <th class="pb-2">Eje</th>
+                                    <th class="pb-2">Adi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-slate-50">
+                                    <td class="py-3 font-bold text-blue-700">OD</td>
+                                    <td><input type="text" id="od_esf" value="0.00" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="od_cil" value="0.00" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="od_eje" value="0" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="od_adi" value="+0.00" class="w-full text-center outline-none font-bold text-blue-600"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold text-blue-700">OI</td>
+                                    <td><input type="text" id="oi_esf" value="0.00" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="oi_cil" value="0.00" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="oi_eje" value="0" class="w-full text-center outline-none"></td>
+                                    <td><input type="text" id="oi_adi" value="+0.00" class="w-full text-center outline-none font-bold text-blue-600"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Receta -->
-            <section class="input-card">
-                <h2 class="text-blue-700 font-bold mb-4 uppercase text-sm tracking-wider">Graduación</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-slate-400">
-                                <th class="text-left">OJO</th>
-                                <th>ESF</th>
-                                <th>CIL</th>
-                                <th>EJE</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="h-12">
-                                <td class="font-bold">OD</td>
-                                <td><input type="text" id="od_esf" value="0.00" class="text-center"></td>
-                                <td><input type="text" id="od_cil" value="0.00" class="text-center"></td>
-                                <td><input type="text" id="od_eje" value="0" class="text-center"></td>
-                            </tr>
-                            <tr class="h-12">
-                                <td class="font-bold">OI</td>
-                                <td><input type="text" id="oi_esf" value="0.00" class="text-center"></td>
-                                <td><input type="text" id="oi_cil" value="0.00" class="text-center"></td>
-                                <td><input type="text" id="oi_eje" value="0" class="text-center"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                <section class="glass-card">
+                    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">Armazón</h2>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <button type="button" onclick="setArmazon('Zilo', this)" class="select-btn armazon-opt active">ZILO</button>
+                        <button type="button" onclick="setArmazon('Metal', this)" class="select-btn armazon-opt">METAL</button>
+                        <button type="button" onclick="setArmazon('Ranura', this)" class="select-btn armazon-opt">RANURA</button>
+                    </div>
+                    <input type="text" id="armazon_detalle" class="input-field" placeholder="Detalles (Marca, Color, etc.)">
+                </section>
+            </div>
 
-            <!-- ARMAZÓN (SELECCIÓN ÚNICA) -->
-            <section class="input-card">
-                <h2 class="text-blue-700 font-bold mb-4 uppercase text-sm tracking-wider">Tipo de Armazón</h2>
-                <div id="armazon-group" class="grid grid-cols-3 gap-3 option-group">
-                    <button type="button" onclick="selectSingle('armazon', 'Zilo', this)" class="p-4 rounded-lg bg-slate-50 font-bold selected">ZILO</button>
-                    <button type="button" onclick="selectSingle('armazon', 'Metal', this)" class="p-4 rounded-lg bg-slate-50 font-bold">METAL</button>
-                    <button type="button" onclick="selectSingle('armazon', 'Ranura', this)" class="p-4 rounded-lg bg-slate-50 font-bold">RANURA</button>
-                </div>
-            </section>
+            <div class="space-y-6">
+                <section class="glass-card">
+                    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">Cristal y Tratamiento</h2>
+                    <select id="tipo_cristal" class="input-field mb-4">
+                        <option>Monofocal Stock</option>
+                        <option>Monofocal Lab</option>
+                        <option>Bifocal</option>
+                        <option>Multifocal</option>
+                    </select>
 
-            <!-- TRATAMIENTOS (SELECCIÓN MÚLTIPLE) -->
-            <section class="input-card">
-                <h2 class="text-blue-700 font-bold mb-4 uppercase text-sm tracking-wider">Tratamientos del Cristal</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <button type="button" onclick="toggleMultiple('Antirreflex', this)" class="treatment-btn p-3 rounded-lg bg-slate-50 font-semibold text-sm border-2 border-slate-200">Antirreflex</button>
-                    <button type="button" onclick="toggleMultiple('Filtro Azul', this)" class="treatment-btn p-3 rounded-lg bg-slate-50 font-semibold text-sm border-2 border-slate-200">Filtro Azul</button>
-                    <button type="button" onclick="toggleMultiple('Fotocromático', this)" class="treatment-btn p-3 rounded-lg bg-slate-50 font-semibold text-sm border-2 border-slate-200">Fotocromático</button>
-                    <button type="button" onclick="toggleMultiple('Color', this)" class="treatment-btn p-3 rounded-lg bg-slate-50 font-semibold text-sm border-2 border-slate-200">Color</button>
-                </div>
-            </section>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Seleccione una opción:</label>
+                        <button type="button" onclick="setTratamiento('Sin Tratamiento', this)" class="select-btn treat-opt active w-full">SIN TRATAMIENTO</button>
+                        <button type="button" onclick="setTratamiento('Antirreflex', this)" class="select-btn treat-opt w-full">ANTIRREFLEX</button>
+                        <button type="button" onclick="setTratamiento('Filtro Azul', this)" class="select-btn treat-opt w-full">FILTRO AZUL</button>
+                        <button type="button" onclick="setTratamiento('Fotocromático', this)" class="select-btn treat-opt w-full">FOTOCROMÁTICO</button>
+                    </div>
+                </section>
 
-            <button onclick="enviarOrden()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-xl shadow-xl transition-all text-xl flex items-center justify-center gap-4">
-                <i class="fas fa-paper-plane"></i> REGISTRAR PEDIDO
-            </button>
-
+                <button onclick="procesarPedido()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-blue-100">
+                    ENVIAR PEDIDO
+                </button>
+            </div>
         </div>
 
-        <!-- Historial -->
-        <div id="tab-history" class="hidden space-y-4">
-            <h2 class="text-xl font-bold text-slate-700 mb-4">Pedidos Recientes</h2>
-            <div id="lista-pedidos" class="grid grid-cols-1 gap-4">
-                <!-- Se carga aquí -->
-            </div>
+        <div id="view-historial" class="hidden space-y-4">
+            <h2 class="text-xl font-black text-slate-800 mb-4">HISTORIAL</h2>
+            <div id="lista-pedidos" class="grid gap-4"></div>
         </div>
 
     </main>
@@ -160,126 +185,110 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIG
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-stable';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-v4';
 
-        // ESTADO GLOBAL (Para que no falle el acceso desde HTML)
-        window.orderState = {
+        emailjs.init("-NKT0dntx3JOPXYAA");
+
+        let state = {
             armazon: 'Zilo',
-            tratamientos: []
+            tratamiento: 'Sin Tratamiento',
+            user: null
         };
 
-        // FUNCIONES DE SELECCIÓN (Expuestas a window)
-        window.selectSingle = (type, value, element) => {
-            // Deseleccionar hermanos
-            const buttons = element.parentElement.querySelectorAll('button');
-            buttons.forEach(b => b.classList.remove('selected'));
-            // Seleccionar este
-            element.classList.add('selected');
-            window.orderState[type] = value;
-            console.log("Seleccionado:", value);
+        window.setArmazon = (val, el) => {
+            document.querySelectorAll('.armazon-opt').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            state.armazon = val;
         };
 
-        window.toggleMultiple = (value, element) => {
-            if (window.orderState.tratamientos.includes(value)) {
-                window.orderState.tratamientos = window.orderState.tratamientos.filter(t => t !== value);
-                element.classList.remove('selected');
-            } else {
-                window.orderState.tratamientos.push(value);
-                element.classList.add('selected');
-            }
-            console.log("Tratamientos actuales:", window.orderState.tratamientos);
+        window.setTratamiento = (val, el) => {
+            document.querySelectorAll('.treat-opt').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            state.tratamiento = val;
         };
 
         window.switchTab = (tab) => {
-            document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
-            document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+            document.getElementById('view-nueva').classList.toggle('hidden', tab !== 'nueva');
+            document.getElementById('view-historial').classList.toggle('hidden', tab !== 'historial');
+            document.getElementById('btn-nueva').className = `tab-btn ${tab === 'nueva' ? 'active' : 'text-slate-500'}`;
+            document.getElementById('btn-historial').className = `tab-btn ${tab === 'historial' ? 'active' : 'text-slate-500'}`;
         };
 
-        // AUTENTICACIÓN
-        let currentUser = null;
         signInAnonymously(auth).then(() => {
             onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                if (user) loadHistory();
+                if (user) { 
+                    state.user = user.uid;
+                    conectar();
+                }
             });
         });
 
-        // ENVIAR ORDEN
-        window.enviarOrden = async () => {
-            const nombre = document.getElementById('nombre').value;
-            if (!nombre) {
-                alert("Por favor, ingresa el nombre del paciente.");
-                return;
-            }
-
-            if (!currentUser) {
-                alert("Esperando conexión con el servidor...");
-                return;
-            }
+        window.procesarPedido = async () => {
+            const nombre = document.getElementById('p_nombre').value.trim();
+            if (!nombre) return alert("Falta nombre del paciente");
 
             document.getElementById('loader').style.display = 'flex';
 
             const data = {
                 paciente: nombre,
-                telefono: document.getElementById('telefono').value,
-                armazon: window.orderState.armazon,
-                tratamientos: window.orderState.tratamientos,
-                receta: {
-                    od: `${document.getElementById('od_esf').value} / ${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value}`,
-                    oi: `${document.getElementById('oi_esf').value} / ${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value}`
-                },
-                creado: serverTimestamp(),
-                userId: currentUser.uid
+                whatsapp: document.getElementById('p_tel').value,
+                cristal: document.getElementById('tipo_cristal').value,
+                armazon: state.armazon,
+                detalle: document.getElementById('armazon_detalle').value,
+                tratamiento: state.tratamiento,
+                receta: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value} | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value}`,
+                timestamp: serverTimestamp()
             };
 
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), data);
-                alert("ORDEN GUARDADA CORRECTAMENTE");
-                location.reload(); // Limpiar todo para la siguiente venta
+                await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
+                    paciente: data.paciente,
+                    cristal: data.cristal,
+                    tratamientos: data.tratamiento,
+                    armazon: data.armazon + " " + data.detalle,
+                    receta_od: data.receta
+                });
+                location.reload();
             } catch (e) {
-                console.error(e);
-                alert("Error al guardar. Revisa tu conexión.");
+                alert("Error");
                 document.getElementById('loader').style.display = 'none';
             }
         };
 
-        // CARGAR HISTORIAL
-        function loadHistory() {
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-            onSnapshot(q, (snapshot) => {
-                const container = document.getElementById('lista-pedidos');
-                container.innerHTML = "";
+        function conectar() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), (snap) => {
+                const list = document.getElementById('lista-pedidos');
+                list.innerHTML = "";
+                let docs = [];
+                snap.forEach(d => docs.push(d.data()));
+                docs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                 
-                const docs = [];
-                snapshot.forEach(doc => docs.push(doc.data()));
-                
-                // Ordenar por fecha (más reciente primero)
-                docs.sort((a, b) => (b.creado?.seconds || 0) - (a.creado?.seconds || 0));
-
                 docs.forEach(p => {
-                    const card = document.createElement('div');
-                    card.className = "input-card border-l-8 border-blue-600";
-                    card.innerHTML = `
+                    const div = document.createElement('div');
+                    div.className = "glass-card";
+                    div.innerHTML = `
                         <div class="flex justify-between items-start">
-                            <h3 class="font-black text-lg uppercase">${p.paciente}</h3>
-                            <span class="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold">${p.armazon}</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
-                            <div class="bg-slate-50 p-2 rounded">
-                                <p class="text-slate-400 font-bold">OJO DERECHO</p>
-                                <p class="font-bold text-blue-800">${p.receta.od}</p>
+                            <div>
+                                <h3 class="font-bold text-blue-700">${p.paciente}</h3>
+                                <p class="text-xs text-slate-500">${p.cristal} - <span class="text-blue-600 font-bold">${p.tratamiento}</span></p>
+                                <p class="text-[10px] mt-2 font-mono">${p.receta}</p>
                             </div>
-                            <div class="bg-slate-50 p-2 rounded">
-                                <p class="text-slate-400 font-bold">OJO IZQUIERDO</p>
-                                <p class="font-bold text-blue-800">${p.receta.oi}</p>
+                            <div class="text-right">
+                                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold">${p.armazon}</span>
                             </div>
                         </div>
-                        <div class="mt-3 flex flex-wrap gap-1">
-                            ${p.tratamientos.map(t => `<span class="bg-green-100 text
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
