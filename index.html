@@ -17,7 +17,10 @@
 
         /* Estilo para Radio Buttons Ocultos pero Funcionales */
         .selector-option input[type="radio"] {
-            display: none;
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
         .selector-option label {
@@ -28,12 +31,13 @@
             border-radius: 12px;
             transition: all 0.2s ease;
             position: relative;
+            background: white;
         }
 
         .selector-option input[type="radio"]:checked + label {
             border-color: #2563eb;
             background-color: #eff6ff;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.15);
         }
 
         .selector-option input[type="radio"]:checked + label::after {
@@ -41,12 +45,13 @@
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
-            top: -10px;
-            right: -10px;
+            top: -8px;
+            right: -8px;
             background: white;
             color: #2563eb;
             font-size: 1.2rem;
             border-radius: 50%;
+            line-height: 1;
         }
 
         .loader {
@@ -108,19 +113,19 @@
                 </div>
             </section>
 
-            <!-- Selección de Cristales (Select Clásico por seguridad) -->
+            <!-- Cristal -->
             <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tipo de Cristal</h3>
                 <select id="lenses" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none">
-                    <option>Monofocal Stock</option>
-                    <option>Monofocal Laboratorio</option>
-                    <option>Bifocal</option>
-                    <option>Multifocal Progresivo</option>
-                    <option>Ocupacional</option>
+                    <option value="Monofocal Stock">Monofocal Stock</option>
+                    <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
+                    <option value="Bifocal">Bifocal</option>
+                    <option value="Multifocal Progresivo">Multifocal Progresivo</option>
+                    <option value="Ocupacional">Ocupacional</option>
                 </select>
             </section>
 
-            <!-- Selección de Tratamientos (Radio nativo con estilo) -->
+            <!-- Tratamiento -->
             <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tratamiento</h3>
                 <div class="grid grid-cols-2 gap-3">
@@ -143,7 +148,7 @@
                 </div>
             </section>
 
-            <!-- Selección de Armazón -->
+            <!-- Armazón -->
             <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Armazón</h3>
                 <div class="grid grid-cols-3 gap-3 mb-4">
@@ -169,25 +174,23 @@
                 <textarea id="notes" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl min-h-[100px] outline-none" placeholder="Instrucciones adicionales..."></textarea>
             </section>
 
-            <button onclick="sendOrder()" id="btn-submit" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 active:scale-95 transition-transform uppercase tracking-tighter">
+            <button onclick="handleOrderSubmission()" id="btn-submit" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 active:scale-95 transition-transform uppercase tracking-tighter">
                 Enviar Pedido
             </button>
         </div>
 
-        <!-- VISTA LISTADO -->
+        <!-- HISTORIAL -->
         <div id="view-list" class="hidden space-y-4">
             <h2 class="font-black text-slate-800 text-sm uppercase px-2 italic underline decoration-blue-500">Historial Reciente</h2>
-            <div id="orders-list" class="space-y-3">
-                <!-- Se llena dinámicamente -->
-            </div>
+            <div id="orders-list" class="space-y-3"></div>
         </div>
 
     </main>
 
-    <!-- Loader -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/80 z-[100] hidden items-center justify-center flex-col">
-        <div class="loader rounded-full border-4 border-slate-200 h-12 w-12 mb-4"></div>
-        <p class="text-xs font-black text-slate-500 uppercase">Enviando Datos...</p>
+    <!-- Overlay de Carga -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[100] hidden flex-col items-center justify-center">
+        <div class="loader rounded-full border-4 border-slate-200 h-16 w-16 mb-6"></div>
+        <p class="text-sm font-black text-slate-600 uppercase tracking-widest animate-pulse">Procesando Pedido...</p>
     </div>
 
     <script type="module">
@@ -195,24 +198,26 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuración Firebase (inyectada por el entorno)
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
 
-        let currentUser = null;
-
+        // Inicializar EmailJS
         emailjs.init("-NKT0dntx3JOPXYAA");
 
-        // Auth
+        // Autenticación Anónima
         onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) loadHistory();
+            if (user) {
+                console.log("Autenticado como:", user.uid);
+                loadHistory();
+            }
         });
-        signInAnonymously(auth);
+        signInAnonymously(auth).catch(err => console.error("Error Auth:", err));
 
-        // Vistas
+        // Gestión de Vistas
         window.switchView = (v) => {
             document.getElementById('view-form').classList.toggle('hidden', v !== 'form');
             document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
@@ -220,60 +225,97 @@
             document.getElementById('nav-list').className = v === 'list' ? 'bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md' : 'bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold';
         };
 
-        // Enviar
-        window.sendOrder = async () => {
-            const name = document.getElementById('p_name').value;
-            if(!name) return alert("Nombre del paciente requerido");
+        // Lógica de Envío Principal
+        window.handleOrderSubmission = async () => {
+            const name = document.getElementById('p_name').value.trim();
             
-            document.getElementById('loading-overlay').style.display = 'flex';
+            if (!name) {
+                alert("Por favor, ingresa el nombre del paciente.");
+                return;
+            }
 
-            const orderData = {
-                order_id: Math.floor(1000 + Math.random() * 8999),
-                date: new Date().toLocaleDateString(),
-                patient_name: name,
-                patient_id: document.getElementById('p_id').value || 'S/D',
-                graduacion: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value} (Add ${document.getElementById('od_add').value})\nOI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value} (Add ${document.getElementById('oi_add').value})`,
-                lens_details: document.getElementById('lenses').value,
-                treatments: document.querySelector('input[name="treatment"]:checked').value,
-                frame_details: `${document.querySelector('input[name="frame"]:checked').value}: ${document.getElementById('f_details').value || 'Sin descripción'}`,
-                notes: document.getElementById('notes').value || '-',
-                timestamp: serverTimestamp()
-            };
+            // Mostrar Cargando
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
 
             try {
+                // Recolectar datos de Radio Buttons de forma segura
+                const treatmentElement = document.querySelector('input[name="treatment"]:checked');
+                const frameElement = document.querySelector('input[name="frame"]:checked');
+                
+                const treatmentVal = treatmentElement ? treatmentElement.value : "No seleccionado";
+                const frameVal = frameElement ? frameElement.value : "No seleccionado";
+
+                const orderData = {
+                    order_id: Math.floor(10000 + Math.random() * 89999),
+                    date: new Date().toLocaleString('es-ES'),
+                    patient_name: name,
+                    patient_id: document.getElementById('p_id').value || 'Sin ID',
+                    graduacion: `OD: ${document.getElementById('od_esf').value || '0'}/${document.getElementById('od_cil').value || '0'}x${document.getElementById('od_eje').value || '0'} (Add ${document.getElementById('od_add').value || '0'}) | OI: ${document.getElementById('oi_esf').value || '0'}/${document.getElementById('oi_cil').value || '0'}x${document.getElementById('oi_eje').value || '0'} (Add ${document.getElementById('oi_add').value || '0'})`,
+                    lens_details: document.getElementById('lenses').value,
+                    treatments: treatmentVal,
+                    frame_details: `${frameVal}: ${document.getElementById('f_details').value || 'S/D'}`,
+                    notes: document.getElementById('notes').value || '-',
+                    timestamp: serverTimestamp()
+                };
+
+                // 1. Guardar en Base de Datos
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), orderData);
-                await emailjs.send("service_bo6kzuc", "template_4e00pyr", orderData);
-                alert("Pedido enviado correctamente!");
+
+                // 2. Enviar por EmailJS
+                await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
+                    to_name: "Taller Óptica",
+                    from_name: "App Óptica Connect",
+                    patient_name: orderData.patient_name,
+                    order_id: orderData.order_id,
+                    details: `Cristal: ${orderData.lens_details}\nTratamiento: ${orderData.treatments}\nArmazón: ${orderData.frame_details}\nGraduación: ${orderData.graduacion}\nNotas: ${orderData.notes}`
+                });
+
+                alert("¡Pedido enviado con éxito!");
+                
+                // Limpiar formulario y recargar
+                document.getElementById('p_name').value = '';
                 location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("Error al enviar. Intente de nuevo.");
+
+            } catch (error) {
+                console.error("Error al procesar:", error);
+                alert("Hubo un error al enviar el pedido. Por favor, verifica tu conexión.");
             } finally {
-                document.getElementById('loading-overlay').style.display = 'none';
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             }
         };
 
+        // Cargar Historial
         function loadHistory() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (snap) => {
                 const list = document.getElementById('orders-list');
-                const data = [];
-                snap.forEach(d => data.push(d.data()));
+                const orders = [];
+                snap.forEach(doc => orders.push(doc.data()));
                 
-                data.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                // Ordenar por fecha (más reciente primero)
+                orders.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
-                list.innerHTML = data.map(o => `
+                list.innerHTML = orders.map(o => `
                     <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">#${o.order_id}</span>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">#${o.order_id || '---'}</span>
                             <span class="text-[10px] font-medium text-slate-400">${o.date}</span>
                         </div>
                         <p class="font-bold text-slate-800 text-sm uppercase">${o.patient_name}</p>
-                        <p class="text-[10px] text-slate-500 mb-2 italic">${o.lens_details} + ${o.treatments}</p>
+                        <p class="text-[10px] text-slate-500 mb-2">${o.lens_details} + ${o.treatments}</p>
                         <div class="text-[9px] font-mono text-slate-400 bg-slate-50 p-2 rounded leading-tight">
-                            ${o.graduacion.replace(/\n/g, '<br>')}
+                            ${o.graduacion}
                         </div>
                     </div>
                 `).join('');
+                
+                if (orders.length === 0) {
+                    list.innerHTML = `<div class="text-center p-10 text-slate-400 text-xs">No hay pedidos registrados.</div>`;
+                }
+            }, (error) => {
+                console.error("Error en Snapshot:", error);
             });
         }
     </script>
