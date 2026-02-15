@@ -2,321 +2,319 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Connect | Gestión de Pedidos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Óptica Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc;
-        }
-
-        /* Estilo para Radio Buttons Ocultos pero Funcionales */
-        .selector-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        
+        /* Selectores de Radio Estilizados */
+        .selector-option input[type="radio"] { display: none; }
         .selector-option label {
-            display: block;
-            cursor: pointer;
-            padding: 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            position: relative;
-            background: white;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.75rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.75rem;
+            background: white; color: #64748b;
         }
-
         .selector-option input[type="radio"]:checked + label {
-            border-color: #2563eb;
-            background-color: #eff6ff;
-            box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.15);
+            border-color: #2563eb; background-color: #eff6ff; color: #1e40af;
+            box-shadow: 0 0 0 1px #2563eb;
         }
 
-        .selector-option input[type="radio"]:checked + label::after {
-            content: "\f058";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: white;
-            color: #2563eb;
-            font-size: 1.2rem;
-            border-radius: 50%;
-            line-height: 1;
-        }
-
-        .loader {
-            border-top-color: #2563eb;
-            animation: spinner 0.6s linear infinite;
-        }
-
-        @keyframes spinner {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Feedback visual */
+        .loading-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;
+            flex-direction: column;
         }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="pb-10">
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 p-4">
-        <div class="max-w-xl mx-auto flex justify-between items-center">
-            <h1 class="font-extrabold text-lg text-slate-800 tracking-tight">ÓPTICA<span class="text-blue-600">CONNECT</span></h1>
-            <div class="flex gap-2">
-                <button onclick="switchView('form')" id="nav-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md">NUEVO</button>
-                <button onclick="switchView('list')" id="nav-list" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold">HISTORIAL</button>
+    <div id="loader" class="loading-overlay">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-bold text-blue-800">Enviando pedido...</p>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 custom-shadow">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <h1 class="font-extrabold text-xl text-slate-800 tracking-tight">ÓPTICA<span class="text-blue-600">CONNECT</span></h1>
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchView('form')" id="btn-form" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm">NUEVO</button>
+                <button onclick="switchView('list')" id="btn-list" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500">LISTADO</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-xl mx-auto p-4 mb-20">
+    <main class="max-w-md mx-auto p-4 space-y-4">
         
         <!-- VISTA FORMULARIO -->
-        <div id="view-form" class="space-y-6">
-            
+        <div id="view-form" class="space-y-4">
             <!-- Paciente -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Información del Paciente</h3>
-                <div class="space-y-4">
-                    <input type="text" id="p_name" placeholder="Nombre completo del paciente" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
-                    <input type="text" id="p_id" placeholder="ID o Celular de contacto" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-            </section>
-
-            <!-- Receta -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Graduación Técnica</h3>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-4 gap-2 text-[10px] font-bold text-center text-slate-400 uppercase">
-                        <span>Esf</span><span>Cil</span><span>Eje</span><span>Add</span>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="paciente_nombre" placeholder="Nombre completo" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
                     </div>
-                    <div class="grid grid-cols-4 gap-2">
-                        <input type="text" id="od_esf" placeholder="OD" class="p-2 bg-blue-50 border border-blue-100 rounded-lg text-center font-bold">
-                        <input type="text" id="od_cil" placeholder="Cil" class="p-2 bg-blue-50 border border-blue-100 rounded-lg text-center font-bold">
-                        <input type="text" id="od_eje" placeholder="Eje" class="p-2 bg-blue-50 border border-blue-100 rounded-lg text-center font-bold">
-                        <input type="text" id="od_add" placeholder="Add" class="p-2 bg-blue-50 border border-blue-100 rounded-lg text-center font-bold text-blue-600">
-                    </div>
-                    <div class="grid grid-cols-4 gap-2">
-                        <input type="text" id="oi_esf" placeholder="OI" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold">
-                        <input type="text" id="oi_cil" placeholder="Cil" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold">
-                        <input type="text" id="oi_eje" placeholder="Eje" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold">
-                        <input type="text" id="oi_add" placeholder="Add" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-blue-600">
+                    <div class="relative">
+                        <i class="fa-solid fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="paciente_id" placeholder="DNI o Teléfono" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                     </div>
                 </div>
             </section>
 
-            <!-- Cristal -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <!-- Graduación -->
+            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Graduación</h3>
+                <div class="grid grid-cols-5 gap-2 mb-2 text-[9px] font-bold text-center text-slate-400">
+                    <div></div><div>ESF</div><div>CIL</div><div>EJE</div><div>ADD</div>
+                </div>
+                <!-- OD -->
+                <div class="grid grid-cols-5 gap-2 items-center mb-3">
+                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 py-2 rounded-lg text-center">OD</span>
+                    <input type="text" id="od_esf" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="od_cil" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="od_eje" placeholder="0°" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="od_add" placeholder="0.00" class="p-2 bg-blue-50 border border-blue-200 rounded-lg text-center font-bold text-sm text-blue-700 outline-none">
+                </div>
+                <!-- OI -->
+                <div class="grid grid-cols-5 gap-2 items-center">
+                    <span class="text-[10px] font-bold text-slate-600 bg-slate-100 py-2 rounded-lg text-center">OI</span>
+                    <input type="text" id="oi_esf" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="oi_cil" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="oi_eje" placeholder="0°" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
+                    <input type="text" id="oi_add" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none">
+                </div>
+            </section>
+
+            <!-- Tipo de Lente -->
+            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tipo de Cristal</h3>
-                <select id="lenses" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none">
-                    <option value="Monofocal Stock">Monofocal Stock</option>
-                    <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
-                    <option value="Bifocal">Bifocal</option>
-                    <option value="Multifocal Progresivo">Multifocal Progresivo</option>
-                    <option value="Ocupacional">Ocupacional</option>
-                </select>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="selector-option">
+                        <input type="radio" name="tipo_lente" id="lente_mono" value="Monofocal" checked>
+                        <label for="lente_mono">Monofocal</label>
+                    </div>
+                    <div class="selector-option">
+                        <input type="radio" name="tipo_lente" id="lente_bifo" value="Bifocal">
+                        <label for="lente_bifo">Bifocal</label>
+                    </div>
+                    <div class="selector-option">
+                        <input type="radio" name="tipo_lente" id="lente_prog" value="Progresivo">
+                        <label for="lente_prog">Progresivo</label>
+                    </div>
+                </div>
             </section>
 
             <!-- Tratamiento -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tratamiento</h3>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2">
                     <div class="selector-option">
-                        <input type="radio" name="treatment" id="t1" value="Sin Tratamiento" checked>
-                        <label for="t1" class="text-center font-bold text-xs uppercase">Sin Tratamiento</label>
+                        <input type="radio" name="tratamiento" id="tr_blanco" value="Blanco" checked>
+                        <label for="tr_blanco">Blanco</label>
                     </div>
                     <div class="selector-option">
-                        <input type="radio" name="treatment" id="t2" value="Antirreflex">
-                        <label for="t2" class="text-center font-bold text-xs uppercase">Antirreflex</label>
+                        <input type="radio" name="tratamiento" id="tr_ar" value="Antirreflejo">
+                        <label for="tr_ar">Antirreflejo</label>
                     </div>
                     <div class="selector-option">
-                        <input type="radio" name="treatment" id="t3" value="Filtro Azul">
-                        <label for="t3" class="text-center font-bold text-xs uppercase">Filtro Azul</label>
+                        <input type="radio" name="tratamiento" id="tr_blue" value="Filtro Azul">
+                        <label for="tr_blue">Filtro Azul</label>
                     </div>
                     <div class="selector-option">
-                        <input type="radio" name="treatment" id="t4" value="Fotocromático">
-                        <label for="t4" class="text-center font-bold text-xs uppercase">Fotocromático</label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Armazón -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Armazón</h3>
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <div class="selector-option">
-                        <input type="radio" name="frame" id="f1" value="Zilo" checked>
-                        <label for="f1" class="text-center font-bold text-[10px] uppercase">Zilo</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="frame" id="f2" value="Metal">
-                        <label for="f2" class="text-center font-bold text-[10px] uppercase">Metal</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="frame" id="f3" value="Ranura">
-                        <label for="f3" class="text-center font-bold text-[10px] uppercase">Ranura</label>
+                        <input type="radio" name="tratamiento" id="tr_photo" value="Fotocromático">
+                        <label for="tr_photo">Fotocromático</label>
                     </div>
                 </div>
-                <input type="text" id="f_details" placeholder="Marca/Modelo del armazón" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
             </section>
 
-            <!-- Notas -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Notas Taller</h3>
-                <textarea id="notes" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl min-h-[100px] outline-none" placeholder="Instrucciones adicionales..."></textarea>
+            <!-- Observaciones -->
+            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Observaciones</h3>
+                <textarea id="observaciones" rows="3" placeholder="Detalles adicionales..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </section>
 
-            <button onclick="handleOrderSubmission()" id="btn-submit" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 active:scale-95 transition-transform uppercase tracking-tighter">
-                Enviar Pedido
+            <button onclick="enviarPedido()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                ENVIAR PEDIDO
             </button>
         </div>
 
-        <!-- HISTORIAL -->
-        <div id="view-list" class="hidden space-y-4">
-            <h2 class="font-black text-slate-800 text-sm uppercase px-2 italic underline decoration-blue-500">Historial Reciente</h2>
-            <div id="orders-list" class="space-y-3"></div>
+        <!-- VISTA LISTADO -->
+        <div id="view-list" class="hidden space-y-3">
+            <h2 class="text-sm font-bold text-slate-500 px-1">Historial de Pedidos</h2>
+            <div id="pedidos-container" class="space-y-3">
+                <!-- Los pedidos se cargan aquí -->
+                <div class="text-center py-10 text-slate-400">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2"></i>
+                    <p class="text-xs">Cargando pedidos...</p>
+                </div>
+            </div>
         </div>
 
     </main>
 
-    <!-- Overlay de Carga -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[100] hidden flex-col items-center justify-center">
-        <div class="loader rounded-full border-4 border-slate-200 h-16 w-16 mb-6"></div>
-        <p class="text-sm font-black text-slate-600 uppercase tracking-widest animate-pulse">Procesando Pedido...</p>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Configuración Firebase (inyectada por el entorno)
+    <script>
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
 
-        // Inicializar EmailJS
-        emailjs.init("-NKT0dntx3JOPXYAA");
+        // Autenticación anónima inmediata
+        auth.signInAnonymously().catch(e => console.error("Error Auth:", e));
 
-        // Autenticación Anónima
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log("Autenticado como:", user.uid);
-                loadHistory();
-            }
-        });
-        signInAnonymously(auth).catch(err => console.error("Error Auth:", err));
-
-        // Gestión de Vistas
-        window.switchView = (v) => {
-            document.getElementById('view-form').classList.toggle('hidden', v !== 'form');
-            document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
-            document.getElementById('nav-form').className = v === 'form' ? 'bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md' : 'bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold';
-            document.getElementById('nav-list').className = v === 'list' ? 'bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md' : 'bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold';
-        };
-
-        // Lógica de Envío Principal
-        window.handleOrderSubmission = async () => {
-            const name = document.getElementById('p_name').value.trim();
+        // CAMBIO DE VISTA
+        function switchView(view) {
+            const isForm = view === 'form';
+            document.getElementById('view-form').classList.toggle('hidden', !isForm);
+            document.getElementById('view-list').classList.toggle('hidden', isForm);
             
-            if (!name) {
+            // Estilo botones nav
+            const btnForm = document.getElementById('btn-form');
+            const btnList = document.getElementById('btn-list');
+            
+            if(isForm) {
+                btnForm.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm";
+                btnList.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500";
+            } else {
+                btnList.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm";
+                btnForm.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500";
+                cargarPedidos();
+            }
+        }
+
+        // FUNCIÓN PRINCIPAL: ENVIAR PEDIDO
+        async function enviarPedido() {
+            const nombre = document.getElementById('paciente_nombre').value.trim();
+            if (!nombre) {
                 alert("Por favor, ingresa el nombre del paciente.");
                 return;
             }
 
-            // Mostrar Cargando
-            const overlay = document.getElementById('loading-overlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
 
             try {
-                // Recolectar datos de Radio Buttons de forma segura
-                const treatmentElement = document.querySelector('input[name="treatment"]:checked');
-                const frameElement = document.querySelector('input[name="frame"]:checked');
-                
-                const treatmentVal = treatmentElement ? treatmentElement.value : "No seleccionado";
-                const frameVal = frameElement ? frameElement.value : "No seleccionado";
+                const user = auth.currentUser;
+                if (!user) {
+                    await auth.signInAnonymously();
+                }
 
-                const orderData = {
-                    order_id: Math.floor(10000 + Math.random() * 89999),
-                    date: new Date().toLocaleString('es-ES'),
-                    patient_name: name,
-                    patient_id: document.getElementById('p_id').value || 'Sin ID',
-                    graduacion: `OD: ${document.getElementById('od_esf').value || '0'}/${document.getElementById('od_cil').value || '0'}x${document.getElementById('od_eje').value || '0'} (Add ${document.getElementById('od_add').value || '0'}) | OI: ${document.getElementById('oi_esf').value || '0'}/${document.getElementById('oi_cil').value || '0'}x${document.getElementById('oi_eje').value || '0'} (Add ${document.getElementById('oi_add').value || '0'})`,
-                    lens_details: document.getElementById('lenses').value,
-                    treatments: treatmentVal,
-                    frame_details: `${frameVal}: ${document.getElementById('f_details').value || 'S/D'}`,
-                    notes: document.getElementById('notes').value || '-',
-                    timestamp: serverTimestamp()
+                const data = {
+                    paciente: nombre,
+                    paciente_id: document.getElementById('paciente_id').value,
+                    graduacion: {
+                        od: { 
+                            esf: document.getElementById('od_esf').value, 
+                            cil: document.getElementById('od_cil').value, 
+                            eje: document.getElementById('od_eje').value,
+                            add: document.getElementById('od_add').value
+                        },
+                        oi: { 
+                            esf: document.getElementById('oi_esf').value, 
+                            cil: document.getElementById('oi_cil').value, 
+                            eje: document.getElementById('oi_eje').value,
+                            add: document.getElementById('oi_add').value
+                        }
+                    },
+                    tipo_lente: document.querySelector('input[name="tipo_lente"]:checked').value,
+                    tratamiento: document.querySelector('input[name="tratamiento"]:checked').value,
+                    observaciones: document.getElementById('observaciones').value,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'Pendiente',
+                    userId: auth.currentUser.uid
                 };
 
-                // 1. Guardar en Base de Datos
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), orderData);
-
-                // 2. Enviar por EmailJS
-                await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
-                    to_name: "Taller Óptica",
-                    from_name: "App Óptica Connect",
-                    patient_name: orderData.patient_name,
-                    order_id: orderData.order_id,
-                    details: `Cristal: ${orderData.lens_details}\nTratamiento: ${orderData.treatments}\nArmazón: ${orderData.frame_details}\nGraduación: ${orderData.graduacion}\nNotas: ${orderData.notes}`
-                });
+                // Guardar en Firestore usando la ruta obligatoria
+                await db.collection('artifacts')
+                        .doc(appId)
+                        .collection('public')
+                        .doc('data')
+                        .collection('pedidos')
+                        .add(data);
 
                 alert("¡Pedido enviado con éxito!");
-                
-                // Limpiar formulario y recargar
-                document.getElementById('p_name').value = '';
-                location.reload();
+                limpiarFormulario();
+                switchView('list');
 
             } catch (error) {
-                console.error("Error al procesar:", error);
-                alert("Hubo un error al enviar el pedido. Por favor, verifica tu conexión.");
+                console.error("Error al enviar:", error);
+                alert("Error al enviar el pedido. Por favor, revisa tu conexión.");
             } finally {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('flex');
+                loader.style.display = 'none';
             }
-        };
+        }
 
-        // Cargar Historial
-        function loadHistory() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (snap) => {
-                const list = document.getElementById('orders-list');
-                const orders = [];
-                snap.forEach(doc => orders.push(doc.data()));
-                
-                // Ordenar por fecha (más reciente primero)
-                orders.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        function limpiarFormulario() {
+            document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = "");
+            document.getElementById('lente_mono').checked = true;
+            document.getElementById('tr_blanco').checked = true;
+        }
 
-                list.innerHTML = orders.map(o => `
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">#${o.order_id || '---'}</span>
-                            <span class="text-[10px] font-medium text-slate-400">${o.date}</span>
-                        </div>
-                        <p class="font-bold text-slate-800 text-sm uppercase">${o.patient_name}</p>
-                        <p class="text-[10px] text-slate-500 mb-2">${o.lens_details} + ${o.treatments}</p>
-                        <div class="text-[9px] font-mono text-slate-400 bg-slate-50 p-2 rounded leading-tight">
-                            ${o.graduacion}
-                        </div>
-                    </div>
-                `).join('');
-                
-                if (orders.length === 0) {
-                    list.innerHTML = `<div class="text-center p-10 text-slate-400 text-xs">No hay pedidos registrados.</div>`;
-                }
-            }, (error) => {
-                console.error("Error en Snapshot:", error);
-            });
+        // CARGAR HISTORIAL
+        function cargarPedidos() {
+            const container = document.getElementById('pedidos-container');
+            
+            db.collection('artifacts')
+              .doc(appId)
+              .collection('public')
+              .doc('data')
+              .collection('pedidos')
+              .orderBy('fecha', 'desc')
+              .onSnapshot(snapshot => {
+                  if (snapshot.empty) {
+                      container.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">No hay pedidos registrados</div>';
+                      return;
+                  }
+
+                  container.innerHTML = "";
+                  snapshot.forEach(doc => {
+                      const p = doc.data();
+                      const fecha = p.fecha ? new Date(p.fecha.seconds * 1000).toLocaleDateString() : 'Reciente';
+                      
+                      const card = document.createElement('div');
+                      card.className = "bg-white p-4 rounded-xl border border-slate-200 custom-shadow";
+                      card.innerHTML = `
+                          <div class="flex justify-between items-start mb-2">
+                              <div>
+                                  <h4 class="font-bold text-slate-800 text-sm">${p.paciente}</h4>
+                                  <p class="text-[10px] text-slate-400 font-semibold uppercase">${p.tipo_lente} • ${p.tratamiento}</p>
+                              </div>
+                              <span class="text-[9px] px-2 py-1 rounded-full font-bold ${p.status === 'Completado' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}">
+                                  ${p.status.toUpperCase()}
+                              </span>
+                          </div>
+                          <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg">
+                              <div><span class="font-bold">OD:</span> ${p.graduacion.od.esf} | ${p.graduacion.od.cil}</div>
+                              <div><span class="font-bold">OI:</span> ${p.graduacion.oi.esf} | ${p.graduacion.oi.cil}</div>
+                          </div>
+                          <div class="mt-2 flex justify-between items-center text-[9px]">
+                              <span class="text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>${fecha}</span>
+                              <span class="text-slate-300 font-mono">ID: ${doc.id.substring(0,6)}</span>
+                          </div>
+                      `;
+                      container.appendChild(card);
+                  });
+              }, err => {
+                  console.error("Error historial:", err);
+                  container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">Error al cargar historial</div>';
+              });
         }
     </script>
 </body>
