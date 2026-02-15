@@ -2,10 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Óptica Connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Óptica Connect - Gestión de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
@@ -13,308 +16,338 @@
     <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
-        
-        /* Selectores de Radio Estilizados */
-        .selector-option input[type="radio"] { display: none; }
-        .selector-option label {
-            display: flex; align-items: center; justify-content: center;
-            padding: 0.75rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 12px;
-            cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.75rem;
-            background: white; color: #64748b;
-        }
-        .selector-option input[type="radio"]:checked + label {
-            border-color: #2563eb; background-color: #eff6ff; color: #1e40af;
-            box-shadow: 0 0 0 1px #2563eb;
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #334155;
         }
 
-        /* Feedback visual */
-        .loading-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;
-            flex-direction: column;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-custom {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-custom:focus {
+            border-color: #2563eb;
+            background-color: white;
+        }
+
+        .toggle-btn {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            transition: all 0.2s;
+            background: white;
+            color: #64748b;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .toggle-btn.active {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
-<body class="pb-10">
+<body class="p-4 md:p-8">
 
-    <div id="loader" class="loading-overlay">
-        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 font-bold text-blue-800">Enviando pedido...</p>
+    <div id="loader" class="loader-overlay">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="mt-4 font-bold text-slate-700" id="loader-text">Enviando pedido al laboratorio...</p>
+        </div>
     </div>
 
-    <!-- Navegación -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 custom-shadow">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <h1 class="font-extrabold text-xl text-slate-800 tracking-tight">ÓPTICA<span class="text-blue-600">CONNECT</span></h1>
-            <div class="flex bg-slate-100 p-1 rounded-xl">
-                <button onclick="switchView('form')" id="btn-form" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm">NUEVO</button>
-                <button onclick="switchView('list')" id="btn-list" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500">LISTADO</button>
-            </div>
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex justify-between items-center mb-8">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-glasses text-blue-600 text-3xl"></i>
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-800">OPTICA<span class="text-blue-600">CONNECT</span></h1>
         </div>
-    </nav>
-
-    <main class="max-w-md mx-auto p-4 space-y-4">
-        
-        <!-- VISTA FORMULARIO -->
-        <div id="view-form" class="space-y-4">
-            <!-- Paciente -->
-            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Información del Paciente</h3>
-                <div class="space-y-3">
-                    <div class="relative">
-                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" id="paciente_nombre" placeholder="Nombre completo" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
-                    </div>
-                    <div class="relative">
-                        <i class="fa-solid fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" id="paciente_id" placeholder="DNI o Teléfono" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    </div>
-                </div>
-            </section>
-
-            <!-- Graduación -->
-            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Graduación</h3>
-                <div class="grid grid-cols-5 gap-2 mb-2 text-[9px] font-bold text-center text-slate-400">
-                    <div></div><div>ESF</div><div>CIL</div><div>EJE</div><div>ADD</div>
-                </div>
-                <!-- OD -->
-                <div class="grid grid-cols-5 gap-2 items-center mb-3">
-                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 py-2 rounded-lg text-center">OD</span>
-                    <input type="text" id="od_esf" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="od_cil" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="od_eje" placeholder="0°" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="od_add" placeholder="0.00" class="p-2 bg-blue-50 border border-blue-200 rounded-lg text-center font-bold text-sm text-blue-700 outline-none">
-                </div>
-                <!-- OI -->
-                <div class="grid grid-cols-5 gap-2 items-center">
-                    <span class="text-[10px] font-bold text-slate-600 bg-slate-100 py-2 rounded-lg text-center">OI</span>
-                    <input type="text" id="oi_esf" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="oi_cil" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="oi_eje" placeholder="0°" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none focus:border-blue-400">
-                    <input type="text" id="oi_add" placeholder="0.00" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-sm outline-none">
-                </div>
-            </section>
-
-            <!-- Tipo de Lente -->
-            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tipo de Cristal</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="selector-option">
-                        <input type="radio" name="tipo_lente" id="lente_mono" value="Monofocal" checked>
-                        <label for="lente_mono">Monofocal</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="tipo_lente" id="lente_bifo" value="Bifocal">
-                        <label for="lente_bifo">Bifocal</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="tipo_lente" id="lente_prog" value="Progresivo">
-                        <label for="lente_prog">Progresivo</label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tratamiento -->
-            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tratamiento</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="selector-option">
-                        <input type="radio" name="tratamiento" id="tr_blanco" value="Blanco" checked>
-                        <label for="tr_blanco">Blanco</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="tratamiento" id="tr_ar" value="Antirreflejo">
-                        <label for="tr_ar">Antirreflejo</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="tratamiento" id="tr_blue" value="Filtro Azul">
-                        <label for="tr_blue">Filtro Azul</label>
-                    </div>
-                    <div class="selector-option">
-                        <input type="radio" name="tratamiento" id="tr_photo" value="Fotocromático">
-                        <label for="tr_photo">Fotocromático</label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Observaciones -->
-            <section class="bg-white p-5 rounded-2xl border border-slate-200 custom-shadow">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Observaciones</h3>
-                <textarea id="observaciones" rows="3" placeholder="Detalles adicionales..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-            </section>
-
-            <button onclick="enviarPedido()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-paper-plane"></i>
-                ENVIAR PEDIDO
+        <div class="flex gap-4">
+            <button onclick="showView('form')" class="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-100 transition-all">
+                <i class="fa-solid fa-plus"></i> NUEVA
+            </button>
+            <button onclick="showView('list')" class="flex items-center gap-2 text-slate-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-clock-rotate-left"></i> HISTORIAL
             </button>
         </div>
+    </header>
 
-        <!-- VISTA LISTADO -->
-        <div id="view-list" class="hidden space-y-3">
-            <h2 class="text-sm font-bold text-slate-500 px-1">Historial de Pedidos</h2>
-            <div id="pedidos-container" class="space-y-3">
-                <!-- Los pedidos se cargan aquí -->
-                <div class="text-center py-10 text-slate-400">
-                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2"></i>
-                    <p class="text-xs">Cargando pedidos...</p>
-                </div>
+    <main class="max-w-6xl mx-auto">
+        <!-- Form View -->
+        <div id="view-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Datos del Paciente -->
+                <section class="glass-card p-6">
+                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-circle"></i> Datos del Paciente
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="nombre" placeholder="Nombre Completo" class="input-custom font-bold">
+                        <input type="text" id="paciente_id" placeholder="WhatsApp / Teléfono" class="input-custom">
+                    </div>
+                </section>
+
+                <!-- Receta Técnica -->
+                <section class="glass-card p-6">
+                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-file-medical"></i> Receta Técnica (Con Adición)
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse">
+                            <thead>
+                                <tr class="text-[11px] text-slate-400 font-bold uppercase">
+                                    <th class="py-2 px-1">Ojo</th>
+                                    <th class="py-2 px-1">Esféricos</th>
+                                    <th class="py-2 px-1">Cilíndricos</th>
+                                    <th class="py-2 px-1">Eje (°)</th>
+                                    <th class="py-2 px-1 text-blue-600">Adición</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm font-bold">
+                                <tr class="border-b border-slate-50">
+                                    <td class="py-4 text-blue-600">OD</td>
+                                    <td><input type="text" id="od_esf" value="0.00" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="od_cil" value="0.00" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="od_eje" value="0" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="od_add" value="+0.00" class="w-16 text-center bg-transparent text-blue-600 outline-none"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 text-blue-600">OI</td>
+                                    <td><input type="text" id="oi_esf" value="0.00" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="oi_cil" value="0.00" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="oi_eje" value="0" class="w-16 text-center bg-transparent outline-none"></td>
+                                    <td><input type="text" id="oi_add" value="+0.00" class="w-16 text-center bg-transparent text-blue-600 outline-none"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Armazón -->
+                <section class="glass-card p-6">
+                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-frame"></i> Armazón
+                    </h2>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="toggle-btn" onclick="setFrameType(this, 'Zilo')">ZILO</div>
+                        <div class="toggle-btn" onclick="setFrameType(this, 'Metal')">METAL</div>
+                        <div class="toggle-btn" onclick="setFrameType(this, 'Ranura')">RANURA</div>
+                    </div>
+                    <input type="text" id="armazon_detalles" placeholder="Detalles (Marca, Color, etc.)" class="input-custom">
+                </section>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Cristal y Tratamiento -->
+                <section class="glass-card p-6 h-full flex flex-col">
+                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Cristal y Tratamiento</h2>
+                    
+                    <select id="tipo_cristal" class="input-custom mb-6 font-bold text-slate-700">
+                        <option value="Monofocal Stock">Monofocal Stock</option>
+                        <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
+                        <option value="Bifocal">Bifocal</option>
+                        <option value="Multifocal Progresivo">Multifocal Progresivo</option>
+                        <option value="Ocupacional">Ocupacional</option>
+                    </select>
+
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-3">Tratamientos</label>
+                    <div class="grid grid-cols-1 gap-2 mb-6">
+                        <div class="toggle-btn" onclick="toggleTreatment(this, 'Sin Tratamiento')">SIN TRATAMIENTO</div>
+                        <div class="toggle-btn" onclick="toggleTreatment(this, 'Antirreflex')">ANTIRREFLEX</div>
+                        <div class="toggle-btn" onclick="toggleTreatment(this, 'Filtro Azul')">FILTRO AZUL</div>
+                        <div class="toggle-btn" onclick="toggleTreatment(this, 'Fotocromático')">FOTOCROMÁTICO</div>
+                    </div>
+
+                    <textarea id="notas" rows="4" placeholder="Notas para el taller..." class="input-custom text-sm mb-6 flex-grow"></textarea>
+
+                    <button onclick="enviarPedido()" class="w-full bg-blue-600 text-white font-extrabold py-5 rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        ENVIAR PEDIDO
+                    </button>
+                </section>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="view-list" class="hidden">
+            <div id="history-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Pedidos renderizados aquí -->
             </div>
         </div>
 
     </main>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
+        // CONFIGURACIÓN EMAILJS (Extraída de tus capturas)
+        const EJS_PUBLIC_KEY = "-NKT0dntx3JOPXYAA";
+        const EJS_SERVICE_ID = "service_bo6kzuc";
+        const EJS_TEMPLATE_ID = "template_4e00pyr";
+
+        emailjs.init(EJS_PUBLIC_KEY);
+
+        // Variables de estado
+        let selectedTreatments = [];
+        let selectedFrameType = "";
+
+        // FIREBASE SETUP
         const firebaseConfig = JSON.parse(__firebase_config);
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-pro';
 
-        // Autenticación anónima inmediata
-        auth.signInAnonymously().catch(e => console.error("Error Auth:", e));
+        auth.onAuthStateChanged(user => {
+            if (!user) auth.signInAnonymously();
+            else cargarHistorial();
+        });
 
-        // CAMBIO DE VISTA
-        function switchView(view) {
-            const isForm = view === 'form';
-            document.getElementById('view-form').classList.toggle('hidden', !isForm);
-            document.getElementById('view-list').classList.toggle('hidden', isForm);
-            
-            // Estilo botones nav
-            const btnForm = document.getElementById('btn-form');
-            const btnList = document.getElementById('btn-list');
-            
-            if(isForm) {
-                btnForm.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm";
-                btnList.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500";
+        function showView(view) {
+            document.getElementById('view-form').classList.toggle('hidden', view !== 'form');
+            document.getElementById('view-list').classList.toggle('hidden', view !== 'list');
+        }
+
+        function setFrameType(el, type) {
+            document.querySelectorAll('#view-form .toggle-btn').forEach(btn => {
+                if(btn.innerText === 'ZILO' || btn.innerText === 'METAL' || btn.innerText === 'RANURA') btn.classList.remove('active');
+            });
+            el.classList.add('active');
+            selectedFrameType = type;
+        }
+
+        function toggleTreatment(el, treatment) {
+            if(treatment === 'Sin Tratamiento') {
+                selectedTreatments = ['Sin Tratamiento'];
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    if(['ANTIRREFLEX', 'FILTRO AZUL', 'FOTOCROMÁTICO'].includes(btn.innerText)) btn.classList.remove('active');
+                });
+                el.classList.add('active');
             } else {
-                btnList.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm";
-                btnForm.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500";
-                cargarPedidos();
+                // Quitar "Sin Tratamiento" si se elige uno específico
+                selectedTreatments = selectedTreatments.filter(t => t !== 'Sin Tratamiento');
+                const stBtn = Array.from(document.querySelectorAll('.toggle-btn')).find(b => b.innerText === 'SIN TRATAMIENTO');
+                if(stBtn) stBtn.classList.remove('active');
+
+                if(el.classList.contains('active')) {
+                    el.classList.remove('active');
+                    selectedTreatments = selectedTreatments.filter(t => t !== treatment);
+                } else {
+                    el.classList.add('active');
+                    selectedTreatments.push(treatment);
+                }
             }
         }
 
-        // FUNCIÓN PRINCIPAL: ENVIAR PEDIDO
         async function enviarPedido() {
-            const nombre = document.getElementById('paciente_nombre').value.trim();
-            if (!nombre) {
-                alert("Por favor, ingresa el nombre del paciente.");
-                return;
-            }
+            const nombre = document.getElementById('nombre').value.trim();
+            if(!nombre) { alert("Por favor, ingrese el nombre del paciente."); return; }
 
             const loader = document.getElementById('loader');
             loader.style.display = 'flex';
 
+            const orderId = Math.floor(1000 + Math.random() * 9000);
+            const fechaActual = new Date().toLocaleString();
+
+            const graduacionStr = `OD: ${document.getElementById('od_esf').value} / ${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value}° (Add: ${document.getElementById('od_add').value})\nOI: ${document.getElementById('oi_esf').value} / ${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value}° (Add: ${document.getElementById('oi_add').value})`;
+
+            const datosPedido = {
+                order_id: orderId,
+                date: fechaActual,
+                patient_name: nombre,
+                patient_id: document.getElementById('paciente_id').value || "No proporcionado",
+                graduacion: graduacionStr,
+                lens_details: document.getElementById('tipo_cristal').value,
+                treatments: selectedTreatments.length > 0 ? selectedTreatments.join(", ") : "Sin especificar",
+                frame_details: `${selectedFrameType} - ${document.getElementById('armazon_detalles').value}`,
+                notes: document.getElementById('notas').value || "Sin observaciones adicionales",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
             try {
-                const user = auth.currentUser;
-                if (!user) {
-                    await auth.signInAnonymously();
-                }
+                // 1. Guardar en Firestore
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos').add(datosPedido);
 
-                const data = {
-                    paciente: nombre,
-                    paciente_id: document.getElementById('paciente_id').value,
-                    graduacion: {
-                        od: { 
-                            esf: document.getElementById('od_esf').value, 
-                            cil: document.getElementById('od_cil').value, 
-                            eje: document.getElementById('od_eje').value,
-                            add: document.getElementById('od_add').value
-                        },
-                        oi: { 
-                            esf: document.getElementById('oi_esf').value, 
-                            cil: document.getElementById('oi_cil').value, 
-                            eje: document.getElementById('oi_eje').value,
-                            add: document.getElementById('oi_add').value
-                        }
-                    },
-                    tipo_lente: document.querySelector('input[name="tipo_lente"]:checked').value,
-                    tratamiento: document.querySelector('input[name="tratamiento"]:checked').value,
-                    observaciones: document.getElementById('observaciones').value,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'Pendiente',
-                    userId: auth.currentUser.uid
-                };
+                // 2. Enviar mediante EmailJS con tus parámetros exactos
+                await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, datosPedido);
 
-                // Guardar en Firestore usando la ruta obligatoria
-                await db.collection('artifacts')
-                        .doc(appId)
-                        .collection('public')
-                        .doc('data')
-                        .collection('pedidos')
-                        .add(data);
-
-                alert("¡Pedido enviado con éxito!");
+                alert("¡Pedido enviado con éxito al laboratorio!");
                 limpiarFormulario();
-                switchView('list');
-
+                showView('list');
             } catch (error) {
-                console.error("Error al enviar:", error);
-                alert("Error al enviar el pedido. Por favor, revisa tu conexión.");
+                console.error("Error:", error);
+                alert("Hubo un problema al procesar el pedido.");
             } finally {
                 loader.style.display = 'none';
             }
         }
 
         function limpiarFormulario() {
-            document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = "");
-            document.getElementById('lente_mono').checked = true;
-            document.getElementById('tr_blanco').checked = true;
+            document.querySelectorAll('input, textarea').forEach(i => {
+                if(i.type === 'text' && (i.id.includes('esf') || i.id.includes('cil'))) i.value = "0.00";
+                else if(i.id.includes('eje')) i.value = "0";
+                else if(i.id.includes('add')) i.value = "+0.00";
+                else i.value = "";
+            });
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            selectedTreatments = [];
+            selectedFrameType = "";
         }
 
-        // CARGAR HISTORIAL
-        function cargarPedidos() {
-            const container = document.getElementById('pedidos-container');
-            
-            db.collection('artifacts')
-              .doc(appId)
-              .collection('public')
-              .doc('data')
-              .collection('pedidos')
-              .orderBy('fecha', 'desc')
+        function cargarHistorial() {
+            const container = document.getElementById('history-container');
+            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos')
+              .orderBy('timestamp', 'desc')
               .onSnapshot(snapshot => {
-                  if (snapshot.empty) {
-                      container.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">No hay pedidos registrados</div>';
-                      return;
-                  }
-
-                  container.innerHTML = "";
+                  container.innerHTML = snapshot.empty ? `<div class="col-span-full p-12 text-center text-slate-400">No hay pedidos registrados.</div>` : "";
                   snapshot.forEach(doc => {
                       const p = doc.data();
-                      const fecha = p.fecha ? new Date(p.fecha.seconds * 1000).toLocaleDateString() : 'Reciente';
-                      
                       const card = document.createElement('div');
-                      card.className = "bg-white p-4 rounded-xl border border-slate-200 custom-shadow";
+                      card.className = "glass-card p-5";
                       card.innerHTML = `
-                          <div class="flex justify-between items-start mb-2">
-                              <div>
-                                  <h4 class="font-bold text-slate-800 text-sm">${p.paciente}</h4>
-                                  <p class="text-[10px] text-slate-400 font-semibold uppercase">${p.tipo_lente} • ${p.tratamiento}</p>
-                              </div>
-                              <span class="text-[9px] px-2 py-1 rounded-full font-bold ${p.status === 'Completado' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}">
-                                  ${p.status.toUpperCase()}
-                              </span>
-                          </div>
-                          <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg">
-                              <div><span class="font-bold">OD:</span> ${p.graduacion.od.esf} | ${p.graduacion.od.cil}</div>
-                              <div><span class="font-bold">OI:</span> ${p.graduacion.oi.esf} | ${p.graduacion.oi.cil}</div>
-                          </div>
-                          <div class="mt-2 flex justify-between items-center text-[9px]">
-                              <span class="text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>${fecha}</span>
-                              <span class="text-slate-300 font-mono">ID: ${doc.id.substring(0,6)}</span>
-                          </div>
+                        <div class="flex justify-between mb-3">
+                            <span class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded">#${p.order_id}</span>
+                            <span class="text-[10px] text-slate-400">${p.date}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${p.patient_name}</h3>
+                        <p class="text-xs text-slate-500 mb-3">${p.lens_details}</p>
+                        <div class="text-[11px] bg-slate-50 p-2 rounded-lg text-slate-600 italic">
+                            ${p.frame_details}
+                        </div>
                       `;
                       container.appendChild(card);
                   });
-              }, err => {
-                  console.error("Error historial:", err);
-                  container.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">Error al cargar historial</div>';
-              });
+              }, err => console.error(err));
         }
     </script>
 </body>
