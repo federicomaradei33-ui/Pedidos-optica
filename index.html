@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Óptica Connect - Sistema Robusto</title>
+    <title>Óptica Connect - Envío Garantizado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -15,7 +15,6 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #f8fafc; 
             color: #1e293b;
-            overscroll-behavior-y: contain;
         }
 
         .glass-card {
@@ -26,7 +25,6 @@
             padding: 20px;
         }
 
-        /* Botón de opción - Estado Base */
         .option-button {
             cursor: pointer;
             border: 2px solid #e2e8f0;
@@ -42,16 +40,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            text-transform: uppercase;
-        }
-
-        /* Clase activa forzada */
-        .option-button.is-selected {
-            background-color: #2563eb !important;
-            color: #ffffff !important;
-            border-color: #1e40af !important;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            transform: scale(0.96);
         }
 
         .input-field {
@@ -77,26 +65,48 @@
             border: 1px solid #e2e8f0;
             padding: 8px 4px;
             border-radius: 6px;
-            outline: none;
         }
 
-        .loader {
+        #loading-overlay {
             display: none;
             position: fixed;
             inset: 0;
             background: rgba(255, 255, 255, 0.9);
-            z-index: 100;
+            z-index: 9999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            z-index: 10000;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
         }
     </style>
 </head>
 <body class="p-4 pb-20">
 
-    <div id="loading-overlay" class="loader">
+    <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 font-bold">Enviando pedido...</p>
+        <p class="mt-4 font-bold text-blue-600 uppercase tracking-widest text-xs">Procesando Pedido...</p>
+    </div>
+
+    <div id="success-modal" class="success-modal">
+        <div class="text-green-500 text-5xl mb-4"><i class="fa-solid fa-circle-check"></i></div>
+        <h3 class="text-xl font-black mb-2">¡PEDIDO ENVIADO!</h3>
+        <p class="text-slate-500 text-sm mb-6">Los datos se han guardado en el historial y enviado al laboratorio.</p>
+        <button onclick="closeModal()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">ACEPTAR</button>
     </div>
 
     <header class="max-w-xl mx-auto flex justify-between items-center mb-6">
@@ -106,247 +116,208 @@
             </div>
             <h1 class="text-xl font-black italic tracking-tighter">OPTICA<span class="text-blue-600">CONNECT</span></h1>
         </div>
-        <div id="nav-tabs" class="flex bg-slate-200 p-1 rounded-xl">
+        <div class="flex bg-slate-200 p-1 rounded-xl">
             <button onclick="switchTab('form')" id="tab-form" class="px-4 py-2 rounded-lg font-bold text-[10px] bg-white text-blue-600 shadow-sm">NUEVO</button>
             <button onclick="switchTab('list')" id="tab-list" class="px-4 py-2 rounded-lg font-bold text-[10px] text-slate-500">HISTORIAL</button>
         </div>
     </header>
 
     <main id="app-container" class="max-w-xl mx-auto">
-        
-        <!-- FORMULARIO -->
         <div id="section-form" class="space-y-4">
             <div class="glass-card">
-                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Información del Paciente</p>
+                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Paciente</p>
                 <div class="space-y-3">
-                    <input type="text" id="p_name" placeholder="Nombre del Paciente" class="input-field">
-                    <input type="text" id="p_id" placeholder="DNI o Teléfono" class="input-field">
+                    <input type="text" id="p_name" placeholder="Nombre completo" class="input-field">
+                    <input type="text" id="p_id" placeholder="DNI / Teléfono" class="input-field">
                 </div>
             </div>
 
             <div class="glass-card">
-                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Receta Óptica</p>
-                <div class="overflow-hidden">
-                    <table class="w-full border-separate border-spacing-1">
-                        <thead>
-                            <tr class="text-[10px] text-slate-400 font-bold">
-                                <th></th>
-                                <th>ESF</th>
-                                <th>CIL</th>
-                                <th>EJE</th>
-                                <th>ADD</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-xs font-black text-blue-600 pr-2">OD</td>
-                                <td><input type="text" id="od_esf" value="0.00" class="receta-grid-input"></td>
-                                <td><input type="text" id="od_cil" value="0.00" class="receta-grid-input"></td>
-                                <td><input type="text" id="od_eje" value="0" class="receta-grid-input"></td>
-                                <td><input type="text" id="od_add" value="+0.00" class="receta-grid-input"></td>
-                            </tr>
-                            <tr>
-                                <td class="text-xs font-black text-blue-600 pr-2">OI</td>
-                                <td><input type="text" id="oi_esf" value="0.00" class="receta-grid-input"></td>
-                                <td><input type="text" id="oi_cil" value="0.00" class="receta-grid-input"></td>
-                                <td><input type="text" id="oi_eje" value="0" class="receta-grid-input"></td>
-                                <td><input type="text" id="oi_add" value="+0.00" class="receta-grid-input"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Receta</p>
+                <table class="w-full border-separate border-spacing-1">
+                    <tr class="text-[10px] text-slate-400 font-bold">
+                        <th></th><th>ESF</th><th>CIL</th><th>EJE</th><th>ADD</th>
+                    </tr>
+                    <tr>
+                        <td class="text-xs font-black text-blue-600">OD</td>
+                        <td><input type="text" id="od_esf" value="0.00" class="receta-grid-input"></td>
+                        <td><input type="text" id="od_cil" value="0.00" class="receta-grid-input"></td>
+                        <td><input type="text" id="od_eje" value="0" class="receta-grid-input"></td>
+                        <td><input type="text" id="od_add" value="+0.00" class="receta-grid-input"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-xs font-black text-blue-600">OI</td>
+                        <td><input type="text" id="oi_esf" value="0.00" class="receta-grid-input"></td>
+                        <td><input type="text" id="oi_cil" value="0.00" class="receta-grid-input"></td>
+                        <td><input type="text" id="oi_eje" value="0" class="receta-grid-input"></td>
+                        <td><input type="text" id="oi_add" value="+0.00" class="receta-grid-input"></td>
+                    </tr>
+                </table>
             </div>
 
             <div class="glass-card">
                 <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Armazón</p>
                 <div class="grid grid-cols-3 gap-2 mb-3">
-                    <div class="option-button btn-armazon" onclick="selectArmazon(this, 'Zilo')">ZILO</div>
-                    <div class="option-button btn-armazon" onclick="selectArmazon(this, 'Metal')">METAL</div>
-                    <div class="option-button btn-armazon" onclick="selectArmazon(this, 'Ranura')">RANURA</div>
+                    <div class="option-button armazon-btn" onclick="setArmazon(this, 'Zilo')">ZILO</div>
+                    <div class="option-button armazon-btn" onclick="setArmazon(this, 'Metal')">METAL</div>
+                    <div class="option-button armazon-btn" onclick="setArmazon(this, 'Ranura')">RANURA</div>
                 </div>
-                <input type="text" id="armazon_modelo" placeholder="Marca / Modelo / Color" class="input-field">
+                <input type="text" id="armazon_modelo" placeholder="Detalle modelo/color" class="input-field">
             </div>
 
             <div class="glass-card">
-                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Cristales</p>
-                <select id="tipo_cristal" class="input-field mb-3 font-bold text-slate-700">
-                    <option value="Monofocal Stock">Monofocal Stock</option>
-                    <option value="Monofocal Lab">Monofocal Lab</option>
-                    <option value="Bifocal">Bifocal</option>
-                    <option value="Multifocal Progresivo">Multifocal Progresivo</option>
+                <p class="text-[10px] font-black text-blue-600 uppercase mb-3">Lente y Tratamientos</p>
+                <select id="tipo_cristal" class="input-field mb-3 font-bold">
+                    <option>Monofocal Stock</option>
+                    <option>Monofocal Lab</option>
+                    <option>Bifocal</option>
+                    <option>Multifocal</option>
                 </select>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div class="option-button btn-tratamiento" onclick="toggleTratamiento(this, 'AR')">AR</div>
-                    <div class="option-button btn-tratamiento" onclick="toggleTratamiento(this, 'Blue')">BLUE</div>
-                    <div class="option-button btn-tratamiento" onclick="toggleTratamiento(this, 'Foto')">FOTO</div>
-                    <div class="option-button btn-tratamiento" onclick="toggleTratamiento(this, 'HC')">H.C.</div>
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="option-button treat-btn" onclick="toggleTreat(this, 'AR')">AR</div>
+                    <div class="option-button treat-btn" onclick="toggleTreat(this, 'Blue')">BLUE</div>
+                    <div class="option-button treat-btn" onclick="toggleTreat(this, 'Foto')">FOTO</div>
+                    <div class="option-button treat-btn" onclick="toggleTreat(this, 'HC')">HC</div>
                 </div>
             </div>
 
             <div class="glass-card">
-                <textarea id="obs" placeholder="Observaciones adicionales..." class="input-field mb-4 h-20"></textarea>
-                <button id="send-btn" onclick="submitOrder()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
-                    ENVIAR PEDIDO AHORA
+                <textarea id="obs" placeholder="Observaciones..." class="input-field mb-4 h-20"></textarea>
+                <button onclick="handleEnvio()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
+                    ENVIAR PEDIDO
                 </button>
             </div>
         </div>
 
-        <!-- HISTORIAL -->
         <div id="section-list" class="hidden space-y-3">
-            <div id="history-container">
-                <p class="text-center text-slate-400 py-10 font-bold">Cargando pedidos...</p>
-            </div>
+            <div id="history-container" class="py-4"></div>
         </div>
-
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
-        // Global State
-        window.selectedArmazon = "";
-        window.selectedTratamientos = [];
-
-        // UI Helpers
-        window.switchTab = (tab) => {
-            const form = document.getElementById('section-form');
-            const list = document.getElementById('section-list');
-            const tForm = document.getElementById('tab-form');
-            const tList = document.getElementById('tab-list');
-
-            if(tab === 'form') {
-                form.classList.remove('hidden');
-                list.classList.add('hidden');
-                tForm.className = "px-4 py-2 rounded-lg font-bold text-[10px] bg-white text-blue-600 shadow-sm";
-                tList.className = "px-4 py-2 rounded-lg font-bold text-[10px] text-slate-500";
-            } else {
-                form.classList.add('hidden');
-                list.classList.remove('hidden');
-                tList.className = "px-4 py-2 rounded-lg font-bold text-[10px] bg-white text-blue-600 shadow-sm";
-                tForm.className = "px-4 py-2 rounded-lg font-bold text-[10px] text-slate-500";
-            }
-        };
-
-        // SELECCIÓN FORZADA (Solución al error de marcado)
-        window.selectArmazon = (element, value) => {
-            // Remover de todos
-            document.querySelectorAll('.btn-armazon').forEach(btn => {
-                btn.classList.remove('is-selected');
-                btn.style.backgroundColor = "white";
-                btn.style.color = "#64748b";
-            });
-            // Aplicar al seleccionado
-            element.classList.add('is-selected');
-            element.style.backgroundColor = "#2563eb";
-            element.style.color = "white";
-            window.selectedArmazon = value;
-        };
-
-        window.toggleTratamiento = (element, value) => {
-            if (element.classList.contains('is-selected')) {
-                element.classList.remove('is-selected');
-                element.style.backgroundColor = "white";
-                element.style.color = "#64748b";
-                window.selectedTratamientos = window.selectedTratamientos.filter(t => t !== value);
-            } else {
-                element.classList.add('is-selected');
-                element.style.backgroundColor = "#2563eb";
-                element.style.color = "white";
-                window.selectedTratamientos.push(value);
-            }
-        };
-
-        // Firebase Setup
+        // Firebase Config
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-pro-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
 
-        emailjs.init("-NKT0dntx3JOPXYAA");
+        // State
+        window.currentArmazon = "";
+        window.currentTreats = [];
 
-        // Auth
-        const init = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
+        // Global Selection Logic
+        window.setArmazon = (el, val) => {
+            document.querySelectorAll('.armazon-btn').forEach(b => {
+                b.style.backgroundColor = "white";
+                b.style.color = "#64748b";
+                b.style.borderColor = "#e2e8f0";
+            });
+            el.style.backgroundColor = "#2563eb";
+            el.style.color = "white";
+            el.style.borderColor = "#1e40af";
+            window.currentArmazon = val;
+        };
+
+        window.toggleTreat = (el, val) => {
+            if (window.currentTreats.includes(val)) {
+                window.currentTreats = window.currentTreats.filter(t => t !== val);
+                el.style.backgroundColor = "white";
+                el.style.color = "#64748b";
             } else {
-                await signInAnonymously(auth);
+                window.currentTreats.push(val);
+                el.style.backgroundColor = "#2563eb";
+                el.style.color = "white";
             }
         };
-        init();
 
-        // Submit
-        window.submitOrder = async () => {
-            const user = auth.currentUser;
-            if (!user) return;
+        window.switchTab = (tab) => {
+            document.getElementById('section-form').style.display = tab === 'form' ? 'block' : 'none';
+            document.getElementById('section-list').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('tab-form').className = tab === 'form' ? "px-4 py-2 rounded-lg font-bold text-[10px] bg-white text-blue-600 shadow-sm" : "px-4 py-2 rounded-lg font-bold text-[10px] text-slate-500";
+            document.getElementById('tab-list').className = tab === 'list' ? "px-4 py-2 rounded-lg font-bold text-[10px] bg-white text-blue-600 shadow-sm" : "px-4 py-2 rounded-lg font-bold text-[10px] text-slate-500";
+        };
 
+        window.closeModal = () => {
+            document.getElementById('success-modal').style.display = 'none';
+            location.reload();
+        };
+
+        // SUBMIT LOGIC (CRITICAL)
+        window.handleEnvio = async () => {
             const name = document.getElementById('p_name').value;
-            if (!name || !window.selectedArmazon) {
-                alert("Completa el nombre y elige un armazón.");
-                return;
-            }
+            if (!name) { alert("Por favor, ingrese el nombre del paciente."); return; }
+            if (!window.currentArmazon) { alert("Seleccione un tipo de armazón."); return; }
 
             document.getElementById('loading-overlay').style.display = 'flex';
 
-            const orderData = {
-                order_id: Math.floor(1000 + Math.random() * 9000),
-                patient: name,
-                patient_id: document.getElementById('p_id').value || "S/D",
-                receta: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value}x${document.getElementById('od_eje').value} Ad:${document.getElementById('od_add').value} | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value}x${document.getElementById('oi_eje').value} Ad:${document.getElementById('oi_add').value}`,
-                frame: `${window.selectedArmazon} - ${document.getElementById('armazon_modelo').value}`,
-                lenses: document.getElementById('tipo_cristal').value,
-                treatments: window.selectedTratamientos.join(", ") || "Ninguno",
-                notes: document.getElementById('obs').value,
-                timestamp: serverTimestamp(),
-                date_str: new Date().toLocaleString()
+            const data = {
+                paciente: name,
+                documento: document.getElementById('p_id').value || "N/A",
+                receta_od: `${document.getElementById('od_esf').value} / ${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value} (ADD ${document.getElementById('od_add').value})`,
+                receta_oi: `${document.getElementById('oi_esf').value} / ${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value} (ADD ${document.getElementById('oi_add').value})`,
+                armazon: `${window.currentArmazon} - ${document.getElementById('armazon_modelo').value}`,
+                cristales: document.getElementById('tipo_cristal').value,
+                tratamientos: window.currentTreats.join(", ") || "Ninguno",
+                observaciones: document.getElementById('obs').value,
+                fecha: new Date().toLocaleString(),
+                timestamp: serverTimestamp()
             };
 
             try {
-                const path = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-                await addDoc(path, orderData);
-                await emailjs.send("service_bo6kzuc", "template_4e00pyr", orderData);
-                alert("¡Pedido enviado correctamente!");
-                location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("Error al enviar. Reintente.");
-            } finally {
+                // 1. Guardar en Firestore
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+                await addDoc(colRef, data);
+
+                // 2. Intentar EmailJS (opcional, no bloquea el éxito visual)
+                try {
+                    await emailjs.send("service_bo6kzuc", "template_4e00pyr", {
+                        to_name: "Laboratorio",
+                        from_name: "Optica Connect",
+                        message: JSON.stringify(data, null, 2),
+                        patient_name: data.paciente
+                    });
+                } catch (err) { console.warn("EmailJS falló, pero el pedido se guardó."); }
+
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('success-modal').style.display = 'block';
+
+            } catch (error) {
+                console.error("Error completo:", error);
+                alert("Error al conectar con la base de datos. Intente de nuevo.");
                 document.getElementById('loading-overlay').style.display = 'none';
             }
         };
 
-        // Listen for History
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-                onSnapshot(q, (snap) => {
-                    const cont = document.getElementById('history-container');
-                    let items = [];
-                    snap.forEach(doc => items.push(doc.data()));
-                    items.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        // Auth & History
+        signInAnonymously(auth).then(() => {
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+            onSnapshot(q, (snap) => {
+                const cont = document.getElementById('history-container');
+                let items = [];
+                snap.forEach(doc => items.push(doc.data()));
+                items.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
-                    if (items.length === 0) {
-                        cont.innerHTML = `<p class="text-center text-slate-400 py-10 font-bold">No hay registros aún.</p>`;
-                        return;
-                    }
+                if (items.length === 0) {
+                    cont.innerHTML = `<div class="text-center text-slate-400 py-20 font-bold uppercase text-[10px]">Sin historial</div>`;
+                    return;
+                }
 
-                    cont.innerHTML = items.map(it => `
-                        <div class="glass-card !p-4 mb-3 border-l-4 border-blue-600">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-black uppercase text-slate-800">${it.patient}</span>
-                                <span class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded">ID: ${it.order_id}</span>
-                            </div>
-                            <div class="text-[9px] text-slate-500 font-medium space-y-1">
-                                <p><strong>Lentes:</strong> ${it.lenses} (${it.treatments})</p>
-                                <p><strong>Armazón:</strong> ${it.frame}</p>
-                                <p class="text-blue-500 pt-1">${it.date_str}</p>
-                            </div>
+                cont.innerHTML = items.map(it => `
+                    <div class="glass-card !p-4 mb-3 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-black text-xs uppercase">${it.paciente}</h4>
+                            <span class="text-[9px] font-bold text-blue-500">${it.fecha.split(',')[0]}</span>
                         </div>
-                    `).join('');
-                });
-            }
+                        <p class="text-[10px] text-slate-500 mt-1"><strong>Lente:</strong> ${it.cristales} [${it.tratamientos}]</p>
+                        <p class="text-[10px] text-slate-500"><strong>Armazón:</strong> ${it.armazon}</p>
+                    </div>
+                `).join('');
+            });
         });
 
     </script>
