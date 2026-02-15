@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Óptica Connect - Gestión de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -15,14 +15,42 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #f8fafc; 
             color: #1e293b;
-            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .glass-card {
             background: white;
-            border-radius: 20px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Estilos de Selección Mejorados */
+        .selectable-opt {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border: 2px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 8px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .selectable-opt.active {
+            background-color: #2563eb !important;
+            border-color: #1d4ed8 !important;
+            color: #ffffff !important;
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         .input-custom {
@@ -33,7 +61,6 @@
             border-radius: 12px;
             outline: none;
             transition: all 0.2s ease;
-            font-size: 14px;
         }
 
         .input-custom:focus {
@@ -41,39 +68,13 @@
             background-color: white;
         }
 
-        .option-btn {
-            padding: 12px 8px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 11px;
-            transition: all 0.2s ease;
-            background: white;
-            color: #64748b;
-            text-align: center;
-            cursor: pointer;
-            text-transform: uppercase;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        .option-btn.active {
-            background-color: #2563eb !important;
-            border-color: #1d4ed8 !important;
-            color: white !important;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-        }
-
         .loader-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.95);
             z-index: 9999;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -82,263 +83,288 @@
             width: 100%;
             background: transparent;
             text-align: center;
-            font-weight: 700;
-            border-bottom: 2px solid #e2e8f0;
-            padding: 4px 0;
+            font-weight: 800;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 6px 0;
             outline: none;
+        }
+
+        .receta-input:focus {
+            border-color: #2563eb;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4">
 
+    <!-- Loader -->
     <div id="loader" class="loader-overlay">
-        <div class="text-center">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p class="mt-4 font-bold text-slate-800">Procesando...</p>
-        </div>
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-bold text-slate-800">Procesando envío...</p>
     </div>
 
-    <header class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <header class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <div class="flex items-center gap-2">
-            <div class="bg-blue-600 p-2 rounded-lg">
-                <i class="fa-solid fa-glasses text-white"></i>
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fa-solid fa-glasses"></i>
             </div>
-            <h1 class="text-xl font-black tracking-tighter">OPTICA<span class="text-blue-600">CONNECT</span></h1>
+            <h1 class="text-xl font-black">OPTICA<span class="text-blue-600">CONNECT</span></h1>
         </div>
         
-        <div class="flex bg-white p-1 rounded-xl border border-slate-200">
-            <button id="nav-form" class="px-6 py-2 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white">NUEVO PEDIDO</button>
-            <button id="nav-list" class="px-6 py-2 rounded-lg font-bold text-xs transition-all text-slate-500">HISTORIAL</button>
+        <div class="flex bg-slate-200 p-1 rounded-xl w-full sm:w-auto">
+            <button id="nav-form" class="flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs bg-white text-blue-600 shadow-sm">ORDEN</button>
+            <button id="nav-list" class="flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs text-slate-500">HISTORIAL</button>
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto">
-        <div id="view-form" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-8 space-y-6">
-                <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Datos del Paciente</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="nombre" placeholder="Nombre del paciente" class="input-custom">
-                        <input type="text" id="paciente_id" placeholder="DNI / Celular" class="input-custom">
-                    </div>
-                </section>
-
-                <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Graduación</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full min-w-[350px]">
-                            <thead>
-                                <tr class="text-[10px] text-slate-400 uppercase">
-                                    <th class="pb-2 text-left">Ojo</th>
-                                    <th class="pb-2 text-center">Esf.</th>
-                                    <th class="pb-2 text-center">Cil.</th>
-                                    <th class="pb-2 text-center">Eje</th>
-                                    <th class="pb-2 text-center">Add.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="font-bold text-blue-600">O.D.</td>
-                                    <td><input type="text" id="od_esf" value="0.00" class="receta-input"></td>
-                                    <td><input type="text" id="od_cil" value="0.00" class="receta-input"></td>
-                                    <td><input type="text" id="od_eje" value="0" class="receta-input"></td>
-                                    <td><input type="text" id="od_add" value="+0.00" class="receta-input"></td>
-                                </tr>
-                                <tr>
-                                    <td class="font-bold text-blue-600">O.I.</td>
-                                    <td><input type="text" id="oi_esf" value="0.00" class="receta-input"></td>
-                                    <td><input type="text" id="oi_cil" value="0.00" class="receta-input"></td>
-                                    <td><input type="text" id="oi_eje" value="0" class="receta-input"></td>
-                                    <td><input type="text" id="oi_add" value="+0.00" class="receta-input"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Armazón</h2>
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <div class="option-btn frame-select" data-value="Zilo">ZILO</div>
-                        <div class="option-btn frame-select" data-value="Metal">METAL</div>
-                        <div class="option-btn frame-select" data-value="Ranura">RANURA</div>
-                    </div>
-                    <input type="text" id="armazon_detalle" placeholder="Marca, color, calibre..." class="input-custom">
-                </section>
+    <main class="max-w-4xl mx-auto">
+        <!-- Formulario -->
+        <div id="view-form" class="space-y-4">
+            
+            <div class="glass-card p-5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Paciente</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" id="nombre" placeholder="Nombre completo" class="input-custom">
+                    <input type="text" id="paciente_id" placeholder="DNI o Teléfono" class="input-custom">
+                </div>
             </div>
 
-            <div class="lg:col-span-4 space-y-6">
-                <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Cristales</h2>
-                    <select id="tipo_cristal" class="input-custom mb-4 font-bold">
-                        <option value="Monofocal Stock">Monofocal Stock</option>
-                        <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
-                        <option value="Bifocal">Bifocal</option>
-                        <option value="Multifocal Progresivo">Multifocal Progresivo</option>
-                    </select>
+            <div class="glass-card p-5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Receta</label>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400">
+                                <th class="pb-2">OJO</th>
+                                <th class="pb-2">ESF</th>
+                                <th class="pb-2">CIL</th>
+                                <th class="pb-2">EJE</th>
+                                <th class="pb-2">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold text-blue-600">OD</td>
+                                <td><input type="text" id="od_esf" value="0.00" class="receta-input"></td>
+                                <td><input type="text" id="od_cil" value="0.00" class="receta-input"></td>
+                                <td><input type="text" id="od_eje" value="0" class="receta-input"></td>
+                                <td><input type="text" id="od_add" value="+0.00" class="receta-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold text-blue-600">OI</td>
+                                <td><input type="text" id="oi_esf" value="0.00" class="receta-input"></td>
+                                <td><input type="text" id="oi_cil" value="0.00" class="receta-input"></td>
+                                <td><input type="text" id="oi_eje" value="0" class="receta-input"></td>
+                                <td><input type="text" id="oi_add" value="+0.00" class="receta-input"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                    <label class="text-[10px] font-bold text-slate-500 block mb-2">TRATAMIENTOS</label>
-                    <div class="grid grid-cols-2 gap-2 mb-6">
-                        <div class="option-btn treat-select" data-value="AR">AR</div>
-                        <div class="option-btn treat-select" data-value="Blue">BLUE</div>
-                        <div class="option-btn treat-select" data-value="Foto">FOTO</div>
-                        <div class="option-btn treat-select" data-value="HC">H.C.</div>
-                    </div>
+            <div class="glass-card p-5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Armazón</label>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div class="selectable-opt frame-opt" data-value="Zilo">ZILO</div>
+                    <div class="selectable-opt frame-opt" data-value="Metal">METAL</div>
+                    <div class="selectable-opt frame-opt" data-value="Ranura">RANURA</div>
+                </div>
+                <input type="text" id="armazon_detalle" placeholder="Modelo, Marca, Color..." class="input-custom">
+            </div>
 
-                    <textarea id="notas" rows="3" placeholder="Notas adicionales..." class="input-custom mb-6"></textarea>
-                    <button id="btn-enviar-final" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-all">
-                        ENVIAR PEDIDO
-                    </button>
-                </section>
+            <div class="glass-card p-5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Cristales y Tratamiento</label>
+                <select id="tipo_cristal" class="input-custom mb-4 font-bold">
+                    <option value="Monofocal Stock">Monofocal Stock</option>
+                    <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
+                    <option value="Bifocal">Bifocal</option>
+                    <option value="Multifocal Progresivo">Multifocal Progresivo</option>
+                </select>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="selectable-opt treat-opt" data-value="AR">AR</div>
+                    <div class="selectable-opt treat-opt" data-value="Blue">BLUE</div>
+                    <div class="selectable-opt treat-opt" data-value="Foto">FOTO</div>
+                    <div class="selectable-opt treat-opt" data-value="HC">H.C.</div>
+                </div>
+            </div>
+
+            <div class="glass-card p-5">
+                <textarea id="notas" rows="2" placeholder="Notas adicionales para el laboratorio..." class="input-custom mb-4"></textarea>
+                <button id="btn-submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all">
+                    ENVIAR PEDIDO
+                </button>
             </div>
         </div>
 
+        <!-- Historial -->
         <div id="view-list" class="hidden">
-            <div id="history-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="history-list" class="space-y-3">
+                <div class="text-center p-10 text-slate-400">Cargando historial...</div>
+            </div>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
+        // CONFIGURACIÓN
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-default';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'optica-connect-pro';
 
         emailjs.init("-NKT0dntx3JOPXYAA");
 
-        let selectedFrame = "";
-        let selectedTreatments = [];
+        // ESTADO LOCAL
+        let state = {
+            armazon: "",
+            tratamientos: []
+        };
 
-        // UI Listeners
-        document.querySelectorAll('.frame-select').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.frame-select').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedFrame = btn.dataset.value;
+        // LÓGICA DE SELECCIÓN (SOLUCIÓN AL MARCADO)
+        function setupSelection() {
+            // Manejo de Armazón (Selección Única)
+            document.querySelectorAll('.frame-opt').forEach(el => {
+                el.onclick = () => {
+                    document.querySelectorAll('.frame-opt').forEach(opt => opt.classList.remove('active'));
+                    el.classList.add('active');
+                    state.armazon = el.getAttribute('data-value');
+                    console.log("Armazón seleccionado:", state.armazon);
+                };
             });
-        });
 
-        document.querySelectorAll('.treat-select').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const val = btn.dataset.value;
-                if (btn.classList.contains('active')) {
-                    btn.classList.remove('active');
-                    selectedTreatments = selectedTreatments.filter(t => t !== val);
-                } else {
-                    btn.classList.add('active');
-                    selectedTreatments.push(val);
-                }
+            // Manejo de Tratamientos (Selección Múltiple)
+            document.querySelectorAll('.treat-opt').forEach(el => {
+                el.onclick = () => {
+                    const val = el.getAttribute('data-value');
+                    if (el.classList.contains('active')) {
+                        el.classList.remove('active');
+                        state.tratamientos = state.tratamientos.filter(t => t !== val);
+                    } else {
+                        el.classList.add('active');
+                        state.tratamientos.push(val);
+                    }
+                    console.log("Tratamientos actuales:", state.tratamientos);
+                };
             });
-        });
+        }
 
-        const navForm = document.getElementById('nav-form');
-        const navList = document.getElementById('nav-list');
+        // NAVEGACIÓN
+        const btnForm = document.getElementById('nav-form');
+        const btnList = document.getElementById('nav-list');
         const viewForm = document.getElementById('view-form');
         const viewList = document.getElementById('view-list');
 
-        navForm.onclick = () => {
+        btnForm.onclick = () => {
             viewForm.classList.remove('hidden');
             viewList.classList.add('hidden');
-            navForm.className = "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white";
-            navList.className = "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
+            btnForm.className = "flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs bg-white text-blue-600 shadow-sm";
+            btnList.className = "flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
         };
 
-        navList.onclick = () => {
+        btnList.onclick = () => {
             viewForm.classList.add('hidden');
             viewList.classList.remove('hidden');
-            navList.className = "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white";
-            navForm.className = "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
+            btnList.className = "flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs bg-white text-blue-600 shadow-sm";
+            btnForm.className = "flex-1 sm:px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
         };
 
-        // Firebase Operations Guarded by Auth
-        window.enviarPedido = async () => {
-            if (!auth.currentUser) {
-                alert("Esperando conexión segura...");
-                return;
-            }
-
-            const nombre = document.getElementById('nombre').value;
-            if(!nombre) { alert("Nombre requerido"); return; }
+        // ENVÍO DE DATOS
+        async function handleSubmission() {
+            if (!auth.currentUser) return;
             
+            const nombre = document.getElementById('nombre').value;
+            if (!nombre) { alert("Por favor, ingresa el nombre del paciente"); return; }
+            if (!state.armazon) { alert("Por favor, selecciona un tipo de armazón"); return; }
+
             document.getElementById('loader').style.display = 'flex';
 
-            const data = {
-                order_id: Math.floor(1000 + Math.random() * 8999),
-                date: new Date().toLocaleString(),
+            const payload = {
+                order_id: Math.floor(1000 + Math.random() * 9000),
                 patient_name: nombre,
-                patient_id: document.getElementById('paciente_id').value || "S/D",
-                graduacion: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value} | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value}`,
-                lens_details: document.getElementById('tipo_cristal').value,
-                treatments: selectedTreatments.join(", ") || "Ninguno",
-                frame_details: `${selectedFrame} - ${document.getElementById('armazon_detalle').value}`,
+                patient_id: document.getElementById('paciente_id').value || "N/A",
+                graduacion: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value} (Add ${document.getElementById('od_add').value}) | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value} (Add ${document.getElementById('oi_add').value})`,
+                lens_type: document.getElementById('tipo_cristal').value,
+                treatments: state.tratamientos.join(", ") || "Sin tratamientos",
+                frame: `${state.armazon} - ${document.getElementById('armazon_detalle').value}`,
                 notes: document.getElementById('notas').value,
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
+                created_at: new Date().toLocaleString()
             };
 
             try {
-                // Correct path following RULE 1
+                // RUTA OBLIGATORIA (REGLA 1)
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-                await addDoc(colRef, data);
-                await emailjs.send("service_bo6kzuc", "template_4e00pyr", data);
-                alert("✅ Pedido enviado correctamente");
+                await addDoc(colRef, payload);
+                
+                // Envío EmailJS
+                await emailjs.send("service_bo6kzuc", "template_4e00pyr", payload);
+                
+                alert("✅ Pedido enviado con éxito");
                 location.reload();
-            } catch (e) {
-                console.error("Error al enviar:", e);
-                alert("Error al enviar. Verifica tu conexión.");
+            } catch (err) {
+                console.error("Error crítico:", err);
+                alert("Error al guardar en base de datos. Inténtalo de nuevo.");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
-        };
+        }
 
-        document.getElementById('btn-enviar-final').onclick = window.enviarPedido;
+        document.getElementById('btn-submit').onclick = handleSubmission;
 
-        // AUTH INITIALIZATION (MANDATORY PATTERN)
-        const initAuth = async () => {
+        // INICIALIZACIÓN DE AUTH Y FIRESTORE
+        const startApp = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (error) {
-                console.error("Auth Error:", error);
-            }
+            } catch (e) { console.error("Error Auth:", e); }
         };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("Authenticated as:", user.uid);
-                // Start listening to history only AFTER auth is confirmed
+                setupSelection();
+                // Escuchar Historial
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
                 onSnapshot(colRef, (snap) => {
-                    const container = document.getElementById('history-container');
-                    let list = [];
-                    snap.forEach(d => list.push(d.data()));
-                    // Sort in memory (RULE 2)
-                    list.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                    const listDiv = document.getElementById('history-list');
+                    let items = [];
+                    snap.forEach(doc => items.push(doc.data()));
                     
-                    container.innerHTML = list.map(item => `
+                    // Ordenar por fecha (REGLA 2: En memoria)
+                    items.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                    if (items.length === 0) {
+                        listDiv.innerHTML = `<div class="text-center p-10 text-slate-400">No hay pedidos registrados</div>`;
+                        return;
+                    }
+
+                    listDiv.innerHTML = items.map(item => `
                         <div class="glass-card p-4 border-l-4 border-blue-600">
-                            <div class="flex justify-between font-bold text-[11px]">
-                                <span class="uppercase">${item.patient_name}</span>
-                                <span class="text-blue-600">#${item.order_id}</span>
+                            <div class="flex justify-between items-start mb-1">
+                                <h3 class="font-black text-sm uppercase">${item.patient_name}</h3>
+                                <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded font-bold">#${item.order_id}</span>
                             </div>
-                            <p class="text-[10px] text-slate-400 mb-2">${item.date}</p>
-                            <p class="text-[10px]"><strong>Cristal:</strong> ${item.lens_details}</p>
+                            <p class="text-[10px] text-slate-500 mb-2">${item.created_at}</p>
+                            <div class="text-[10px] grid grid-cols-1 gap-1">
+                                <div><strong>Cristales:</strong> ${item.lens_type} (${item.treatments})</div>
+                                <div><strong>Armazón:</strong> ${item.frame}</div>
+                            </div>
                         </div>
                     `).join('');
-                }, (error) => {
-                    console.error("Snapshot error:", error);
+                }, (err) => {
+                    console.error("Error de permisos en tiempo real:", err);
                 });
             } else {
-                initAuth();
+                startApp();
             }
         });
+
     </script>
 </body>
 </html>
