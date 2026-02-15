@@ -6,8 +6,6 @@
     <title>Óptica Connect - Gestión de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <style>
@@ -43,28 +41,30 @@
             background-color: white;
         }
 
-        .toggle-btn {
+        .option-btn {
             padding: 12px 8px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
             font-weight: 700;
             font-size: 11px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             background: white;
             color: #64748b;
             text-align: center;
             cursor: pointer;
             text-transform: uppercase;
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
-        /* Clase activa para el efecto de marcado/check */
-        .toggle-btn.active {
+        .option-btn.active {
             background-color: #2563eb !important;
             border-color: #1d4ed8 !important;
             color: white !important;
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-            transform: translateY(-1px);
         }
 
         .loader-overlay {
@@ -87,10 +87,6 @@
             padding: 4px 0;
             outline: none;
         }
-        
-        .receta-input:focus {
-            border-bottom-color: #3b82f6;
-        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -98,7 +94,7 @@
     <div id="loader" class="loader-overlay">
         <div class="text-center">
             <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p class="mt-4 font-bold text-slate-800">Procesando envío...</p>
+            <p class="mt-4 font-bold text-slate-800">Procesando...</p>
         </div>
     </div>
 
@@ -111,74 +107,69 @@
         </div>
         
         <div class="flex bg-white p-1 rounded-xl border border-slate-200">
-            <button onclick="window.switchTab('form')" id="tab-form" class="px-6 py-2 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white">NUEVO PEDIDO</button>
-            <button onclick="window.switchTab('list')" id="tab-list" class="px-6 py-2 rounded-lg font-bold text-xs transition-all text-slate-500">HISTORIAL</button>
+            <button id="nav-form" class="px-6 py-2 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white">NUEVO PEDIDO</button>
+            <button id="nav-list" class="px-6 py-2 rounded-lg font-bold text-xs transition-all text-slate-500">HISTORIAL</button>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto">
         <div id="view-form" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-8 space-y-6">
-                <!-- Paciente -->
                 <section class="glass-card p-6">
                     <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Datos del Paciente</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="nombre" placeholder="Nombre completo del paciente" class="input-custom">
-                        <input type="text" id="paciente_id" placeholder="DNI / Contacto" class="input-custom">
+                        <input type="text" id="nombre" placeholder="Nombre del paciente" class="input-custom">
+                        <input type="text" id="paciente_id" placeholder="DNI / Celular" class="input-custom">
                     </div>
                 </section>
 
-                <!-- Receta -->
                 <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Graduación Técnica</h2>
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Graduación</h2>
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[400px]">
+                        <table class="w-full min-w-[350px]">
                             <thead>
                                 <tr class="text-[10px] text-slate-400 uppercase">
-                                    <th class="pb-3 text-left">Ojo</th>
-                                    <th class="pb-3 text-center">Esf.</th>
-                                    <th class="pb-3 text-center">Cil.</th>
-                                    <th class="pb-3 text-center">Eje</th>
-                                    <th class="pb-3 text-center">Add.</th>
+                                    <th class="pb-2 text-left">Ojo</th>
+                                    <th class="pb-2 text-center">Esf.</th>
+                                    <th class="pb-2 text-center">Cil.</th>
+                                    <th class="pb-2 text-center">Eje</th>
+                                    <th class="pb-2 text-center">Add.</th>
                                 </tr>
                             </thead>
-                            <tbody class="space-y-4">
+                            <tbody>
                                 <tr>
-                                    <td class="font-black text-blue-600 py-2">O.D.</td>
+                                    <td class="font-bold text-blue-600">O.D.</td>
                                     <td><input type="text" id="od_esf" value="0.00" class="receta-input"></td>
                                     <td><input type="text" id="od_cil" value="0.00" class="receta-input"></td>
                                     <td><input type="text" id="od_eje" value="0" class="receta-input"></td>
-                                    <td><input type="text" id="od_add" value="+0.00" class="receta-input text-blue-600"></td>
+                                    <td><input type="text" id="od_add" value="+0.00" class="receta-input"></td>
                                 </tr>
                                 <tr>
-                                    <td class="font-black text-blue-600 py-2">O.I.</td>
+                                    <td class="font-bold text-blue-600">O.I.</td>
                                     <td><input type="text" id="oi_esf" value="0.00" class="receta-input"></td>
                                     <td><input type="text" id="oi_cil" value="0.00" class="receta-input"></td>
                                     <td><input type="text" id="oi_eje" value="0" class="receta-input"></td>
-                                    <td><input type="text" id="oi_add" value="+0.00" class="receta-input text-blue-600"></td>
+                                    <td><input type="text" id="oi_add" value="+0.00" class="receta-input"></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </section>
 
-                <!-- Armazón -->
                 <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Armazón y Montaje</h2>
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div id="f-zilo" class="toggle-btn frame-opt" onclick="window.setFrame('Zilo')">Zilo</div>
-                        <div id="f-metal" class="toggle-btn frame-opt" onclick="window.setFrame('Metal')">Metal</div>
-                        <div id="f-ranura" class="toggle-btn frame-opt" onclick="window.setFrame('Ranura')">Ranura</div>
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Armazón</h2>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="option-btn frame-select" data-value="Zilo">ZILO</div>
+                        <div class="option-btn frame-select" data-value="Metal">METAL</div>
+                        <div class="option-btn frame-select" data-value="Ranura">RANURA</div>
                     </div>
-                    <input type="text" id="armazon_detalle" placeholder="Detalles del armazón (Marca, Color, Calibre...)" class="input-custom">
+                    <input type="text" id="armazon_detalle" placeholder="Marca, color, calibre..." class="input-custom">
                 </section>
             </div>
 
             <div class="lg:col-span-4 space-y-6">
                 <section class="glass-card p-6">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Especificaciones Lentes</h2>
-                    
-                    <label class="text-[10px] font-bold text-slate-500 block mb-2">TIPO DE CRISTAL</label>
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Cristales</h2>
                     <select id="tipo_cristal" class="input-custom mb-4 font-bold">
                         <option value="Monofocal Stock">Monofocal Stock</option>
                         <option value="Monofocal Laboratorio">Monofocal Laboratorio</option>
@@ -188,17 +179,15 @@
 
                     <label class="text-[10px] font-bold text-slate-500 block mb-2">TRATAMIENTOS</label>
                     <div class="grid grid-cols-2 gap-2 mb-6">
-                        <div id="t-ar" class="toggle-btn treat-opt" onclick="window.toggleTreat('Antirreflex')">AR</div>
-                        <div id="t-blue" class="toggle-btn treat-opt" onclick="window.toggleTreat('Blue Light')">Blue</div>
-                        <div id="t-foto" class="toggle-btn treat-opt" onclick="window.toggleTreat('Fotocromático')">Foto</div>
-                        <div id="t-hc" class="toggle-btn treat-opt" onclick="window.toggleTreat('Hard Coat')">H.C.</div>
+                        <div class="option-btn treat-select" data-value="AR">AR</div>
+                        <div class="option-btn treat-select" data-value="Blue">BLUE</div>
+                        <div class="option-btn treat-select" data-value="Foto">FOTO</div>
+                        <div class="option-btn treat-select" data-value="HC">H.C.</div>
                     </div>
 
-                    <label class="text-[10px] font-bold text-slate-500 block mb-2">NOTAS ADICIONALES</label>
-                    <textarea id="notas" rows="4" placeholder="Alguna indicación extra..." class="input-custom text-sm mb-6"></textarea>
-
-                    <button id="btn-enviar" onclick="window.enviarPedido()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO
+                    <textarea id="notas" rows="3" placeholder="Notas adicionales..." class="input-custom mb-6"></textarea>
+                    <button id="btn-enviar-final" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-all">
+                        ENVIAR PEDIDO
                     </button>
                 </section>
             </div>
@@ -210,9 +199,9 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
@@ -222,112 +211,132 @@
 
         emailjs.init("-NKT0dntx3JOPXYAA");
 
-        // Estado interno
-        let state = {
-            selectedFrame: "",
-            selectedTreatments: []
-        };
+        let selectedFrame = "";
+        let selectedTreatments = [];
 
-        // REGISTRO DE FUNCIONES EN WINDOW (PARA QUE EL HTML LAS VEA)
-        
-        window.switchTab = (view) => {
-            document.getElementById('view-form').classList.toggle('hidden', view !== 'form');
-            document.getElementById('view-list').classList.toggle('hidden', view !== 'list');
-            document.getElementById('tab-form').className = view === 'form' ? "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white" : "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
-            document.getElementById('tab-list').className = view === 'list' ? "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white" : "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
-        };
+        // UI Listeners
+        document.querySelectorAll('.frame-select').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.frame-select').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedFrame = btn.dataset.value;
+            });
+        });
 
-        window.setFrame = (val) => {
-            // Limpiar otros
-            document.querySelectorAll('.frame-opt').forEach(b => b.classList.remove('active'));
-            
-            // Activar el seleccionado
-            const idMap = { 'Zilo': 'f-zilo', 'Metal': 'f-metal', 'Ranura': 'f-ranura' };
-            const el = document.getElementById(idMap[val]);
-            if (el) el.classList.add('active');
-            
-            state.selectedFrame = val;
-        };
-
-        window.toggleTreat = (val) => {
-            const idMap = { 'Antirreflex': 't-ar', 'Blue Light': 't-blue', 'Fotocromático': 't-foto', 'Hard Coat': 't-hc' };
-            const el = document.getElementById(idMap[val]);
-            
-            if (el) {
-                const isActive = el.classList.toggle('active');
-                if (isActive) {
-                    if (!state.selectedTreatments.includes(val)) state.selectedTreatments.push(val);
+        document.querySelectorAll('.treat-select').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.value;
+                if (btn.classList.contains('active')) {
+                    btn.classList.remove('active');
+                    selectedTreatments = selectedTreatments.filter(t => t !== val);
                 } else {
-                    state.selectedTreatments = state.selectedTreatments.filter(t => t !== val);
+                    btn.classList.add('active');
+                    selectedTreatments.push(val);
                 }
-            }
+            });
+        });
+
+        const navForm = document.getElementById('nav-form');
+        const navList = document.getElementById('nav-list');
+        const viewForm = document.getElementById('view-form');
+        const viewList = document.getElementById('view-list');
+
+        navForm.onclick = () => {
+            viewForm.classList.remove('hidden');
+            viewList.classList.add('hidden');
+            navForm.className = "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white";
+            navList.className = "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
         };
 
+        navList.onclick = () => {
+            viewForm.classList.add('hidden');
+            viewList.classList.remove('hidden');
+            navList.className = "px-6 py-2 rounded-lg font-bold text-xs bg-blue-600 text-white";
+            navForm.className = "px-6 py-2 rounded-lg font-bold text-xs text-slate-500";
+        };
+
+        // Firebase Operations Guarded by Auth
         window.enviarPedido = async () => {
-            const nombre = document.getElementById('nombre').value;
-            if (!nombre) {
-                alert("Por favor, ingrese el nombre del paciente.");
+            if (!auth.currentUser) {
+                alert("Esperando conexión segura...");
                 return;
             }
 
+            const nombre = document.getElementById('nombre').value;
+            if(!nombre) { alert("Nombre requerido"); return; }
+            
             document.getElementById('loader').style.display = 'flex';
 
-            const payload = {
-                order_id: Math.floor(1000 + Math.random() * 9000),
-                date: new Date().toLocaleString('es-AR'),
+            const data = {
+                order_id: Math.floor(1000 + Math.random() * 8999),
+                date: new Date().toLocaleString(),
                 patient_name: nombre,
                 patient_id: document.getElementById('paciente_id').value || "S/D",
-                graduacion: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value}x${document.getElementById('od_eje').value} Add:${document.getElementById('od_add').value} | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value}x${document.getElementById('oi_eje').value} Add:${document.getElementById('oi_add').value}`,
+                graduacion: `OD: ${document.getElementById('od_esf').value}/${document.getElementById('od_cil').value} | OI: ${document.getElementById('oi_esf').value}/${document.getElementById('oi_cil').value}`,
                 lens_details: document.getElementById('tipo_cristal').value,
-                treatments: state.selectedTreatments.length > 0 ? state.selectedTreatments.join(", ") : "Ninguno",
-                frame_details: `${state.selectedFrame} - ${document.getElementById('armazon_detalle').value}`,
+                treatments: selectedTreatments.join(", ") || "Ninguno",
+                frame_details: `${selectedFrame} - ${document.getElementById('armazon_detalle').value}`,
                 notes: document.getElementById('notas').value,
                 timestamp: serverTimestamp()
             };
 
             try {
+                // Correct path following RULE 1
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
-                await addDoc(colRef, payload);
-                await emailjs.send("service_bo6kzuc", "template_4e00pyr", payload);
-                alert("Pedido enviado con éxito.");
+                await addDoc(colRef, data);
+                await emailjs.send("service_bo6kzuc", "template_4e00pyr", data);
+                alert("✅ Pedido enviado correctamente");
                 location.reload();
             } catch (e) {
-                alert("Error al enviar. Intente nuevamente.");
+                console.error("Error al enviar:", e);
+                alert("Error al enviar. Verifica tu conexión.");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
         };
 
-        // Auth y Carga de datos
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                await signInAnonymously(auth);
-            } else {
+        document.getElementById('btn-enviar-final').onclick = window.enviarPedido;
+
+        // AUTH INITIALIZATION (MANDATORY PATTERN)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Authenticated as:", user.uid);
+                // Start listening to history only AFTER auth is confirmed
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
                 onSnapshot(colRef, (snap) => {
                     const container = document.getElementById('history-container');
                     let list = [];
-                    snap.forEach(doc => list.push(doc.data()));
-                    list.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-                    container.innerHTML = list.length ? "" : '<p class="col-span-full text-center py-20 text-slate-400">No hay pedidos registrados.</p>';
-                    list.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = "glass-card p-4 border-l-4 border-blue-600";
-                        card.innerHTML = `
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[11px] font-black uppercase">${item.patient_name}</span>
-                                <span class="text-[10px] text-blue-600 font-bold">#${item.order_id}</span>
+                    snap.forEach(d => list.push(d.data()));
+                    // Sort in memory (RULE 2)
+                    list.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                    
+                    container.innerHTML = list.map(item => `
+                        <div class="glass-card p-4 border-l-4 border-blue-600">
+                            <div class="flex justify-between font-bold text-[11px]">
+                                <span class="uppercase">${item.patient_name}</span>
+                                <span class="text-blue-600">#${item.order_id}</span>
                             </div>
-                            <p class="text-[9px] text-slate-400 mb-2">${item.date}</p>
-                            <div class="text-[10px] text-slate-600">
-                                <p><strong>Lente:</strong> ${item.lens_details}</p>
-                                <p><strong>AR:</strong> ${item.treatments}</p>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
-                }, (err) => console.error(err));
+                            <p class="text-[10px] text-slate-400 mb-2">${item.date}</p>
+                            <p class="text-[10px]"><strong>Cristal:</strong> ${item.lens_details}</p>
+                        </div>
+                    `).join('');
+                }, (error) => {
+                    console.error("Snapshot error:", error);
+                });
+            } else {
+                initAuth();
             }
         });
     </script>
