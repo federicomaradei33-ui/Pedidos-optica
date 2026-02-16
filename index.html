@@ -17,9 +17,11 @@
         .btn-toggle.active { border-color: #3b82f6; color: #3b82f6; background-color: #eff6ff; }
         .btn-submit { background-color: #2563eb; color: white; font-weight: 700; padding: 16px; border-radius: 10px; width: 100%; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; }
         .btn-submit:hover { background-color: #1d4ed8; }
+        .history-item { border-bottom: 1px solid #e5e7eb; padding: 10px 0; }
+        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="p-4 md:p-8 max-w-4xl mx-auto">
+<body class="p-4 md:p-8 max-w-4xl mx-auto" onload="initApp()">
 
     <header class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-black text-blue-600 tracking-tight">ÓPTICA CONNECT</h1>
@@ -104,13 +106,21 @@
             <textarea id="notes" class="input-box h-24" placeholder="Notas adicionales para el laboratorio..."></textarea>
         </div>
 
-        <button type="submit" id="submitBtn" class="btn-submit shadow-xl mb-12">
+        <button type="submit" id="submitBtn" class="btn-submit shadow-xl mb-8">
             Enviar Pedido
         </button>
     </form>
 
+    <!-- HISTORIAL -->
+    <div class="card">
+        <span class="label-blue">Historial de Pedidos</span>
+        <div id="history-container" class="mt-4 max-h-80 overflow-y-auto">
+            <!-- Los pedidos se cargarán aquí -->
+        </div>
+        <button onclick="clearHistory()" class="text-xs text-red-500 mt-4 font-bold uppercase hover:underline">Borrar Historial</button>
+    </div>
+
     <script>
-        // Credenciales extraídas de tus capturas
         const EMAILJS_CONFIG = {
             PUBLIC_KEY: "-NKT0dntx3JOPXYAA",
             SERVICE_ID: "service_bo6kzuc",
@@ -121,8 +131,19 @@
 
         let selectedFrame = "";
         let selectedTreatment = "";
-        const orderId = Math.floor(100000 + Math.random() * 900000);
-        document.getElementById('order-number').innerText = `ORDEN: #${orderId}`;
+        let currentOrderId = "";
+        
+        let history = JSON.parse(localStorage.getItem('optica_history')) || [];
+
+        function initApp() {
+            generateOrderId();
+            renderHistory();
+        }
+
+        function generateOrderId() {
+            currentOrderId = Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('order-number').innerText = `ORDEN: #${currentOrderId}`;
+        }
 
         function selectOption(type, value, element) {
             const group = type === 'frame' ? '.frame-opt' : '.treat-opt';
@@ -132,38 +153,93 @@
             else selectedTreatment = value;
         }
 
-        document.getElementById('orderForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if(!selectedFrame) { alert("Selecciona un Armazón"); return; }
-            if(!selectedTreatment) { alert("Selecciona un Tratamiento"); return; }
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 text-sm italic py-4">No hay pedidos guardados.</p>';
+                return;
+            }
+            container.innerHTML = history.map(item => `
+                <div class="history-item text-xs py-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="font-bold text-blue-600">#${item.id}</span>
+                            <span class="ml-2 font-semibold text-gray-800">${item.patient}</span>
+                        </div>
+                        <span class="text-gray-400 text-[10px]">${item.date}</span>
+                    </div>
+                    <div class="text-gray-500 mt-1">
+                        ${item.lens} | ${item.frame} | ${item.treatment || 'Sin Tratamiento'}
+                    </div>
+                </div>
+            `).join('');
+        }
 
+        document.getElementById('orderForm').onsubmit = async function(e) {
+            e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "PROCESANDO...";
+            btn.innerText = "ENVIANDO...";
 
-            const templateParams = {
-                order_id: orderId,
-                date: new Date().toLocaleDateString(),
-                patient_name: document.getElementById('patient_name').value,
+            const orderData = {
+                id: currentOrderId,
+                date: new Date().toLocaleString(),
+                patient: document.getElementById('patient_name').value,
                 patient_id: document.getElementById('patient_id').value,
-                graduacion: `OD: ${document.getElementById('od_esf').value} | ${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value}° (Add ${document.getElementById('od_add').value}) - OI: ${document.getElementById('oi_esf').value} | ${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value}° (Add ${document.getElementById('oi_add').value})`,
-                tipo_cristal: document.getElementById('lens_type').value,
-                tratamiento: selectedTreatment,
-                armazon: `${selectedFrame} - Detalles: ${document.getElementById('frame_details').value}`,
+                lens: document.getElementById('lens_type').value,
+                frame: selectedFrame || "No especificado",
+                frame_details: document.getElementById('frame_details').value,
+                treatment: selectedTreatment,
+                od: `${document.getElementById('od_esf').value} / ${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value}`,
+                oi: `${document.getElementById('oi_esf').value} / ${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value}`,
                 notes: document.getElementById('notes').value
             };
 
-            emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams)
-                .then(() => {
-                    alert("¡Pedido enviado con éxito!");
-                    location.reload();
-                }, (err) => {
-                    alert("Error en el envío: " + JSON.stringify(err));
-                    btn.disabled = false;
-                    btn.innerText = "REINTENTAR ENVÍO";
+            try {
+                // Guardar en Historial (Local Storage)
+                history.unshift(orderData);
+                localStorage.setItem('optica_history', JSON.stringify(history));
+                
+                // Enviar Email via EmailJS
+                await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, {
+                    order_id: orderData.id,
+                    patient_name: orderData.patient,
+                    patient_id: orderData.patient_id,
+                    graduacion: `OD: ${orderData.od} | OI: ${orderData.oi}`,
+                    lens_details: orderData.lens,
+                    treatments: orderData.treatment,
+                    frame_details: `${orderData.frame} - ${orderData.frame_details}`,
+                    notes: orderData.notes,
+                    date: orderData.date
                 });
-        });
+
+                alert("✅ Pedido enviado y guardado correctamente.");
+                
+                // Resetear Formulario
+                this.reset();
+                selectedFrame = "";
+                selectedTreatment = "";
+                document.querySelectorAll('.btn-toggle').forEach(el => el.classList.remove('active'));
+                
+                generateOrderId();
+                renderHistory();
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un error al procesar el pedido.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ENVIAR PEDIDO";
+            }
+        };
+
+        function clearHistory() {
+            if(confirm("¿Estás seguro de que deseas borrar todo el historial?")) {
+                history = [];
+                localStorage.removeItem('optica_history');
+                renderHistory();
+            }
+        }
     </script>
 </body>
 </html>
