@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Óptica Connect - Pedidos</title>
+    <title>Óptica Connect - Pedidos con Detalle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
@@ -17,8 +17,11 @@
         .btn-toggle.active { border-color: #3b82f6; color: #3b82f6; background-color: #eff6ff; border-width: 2px; }
         .btn-submit { background-color: #2563eb; color: white; font-weight: 700; padding: 16px; border-radius: 10px; width: 100%; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; }
         .btn-submit:hover { background-color: #1d4ed8; }
-        .history-item { border-bottom: 1px solid #e5e7eb; padding: 12px 0; }
-        .history-item:last-child { border-bottom: none; }
+        
+        /* Estilos para el Historial Expandible */
+        .details-hidden { display: none; }
+        .details-visible { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="p-4 md:p-8 max-w-4xl mx-auto" onload="initApp()">
@@ -116,10 +119,10 @@
     <!-- HISTORIAL -->
     <div class="card bg-gray-50 border-dashed border-2">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-700">Historial de Pedidos Recientes</h2>
+            <h2 class="font-bold text-gray-700 uppercase text-xs tracking-widest">Historial de Pedidos</h2>
             <button onclick="clearHistory()" class="text-[10px] text-red-500 font-bold uppercase hover:underline">Limpiar Todo</button>
         </div>
-        <div id="history-container" class="space-y-2 max-h-96 overflow-y-auto pr-2">
+        <div id="history-container" class="space-y-4 max-h-screen overflow-y-auto pr-2">
             <!-- Items del historial -->
         </div>
     </div>
@@ -138,7 +141,6 @@
         let selectedTreatment = "";
         let currentOrderId = "";
         
-        // Carga inicial del historial
         let history = JSON.parse(localStorage.getItem('optica_connect_history')) || [];
 
         function initApp() {
@@ -156,31 +158,72 @@
             document.querySelectorAll(group).forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             
-            if(type === 'frame') {
-                selectedFrame = value;
+            if(type === 'frame') selectedFrame = value;
+            else selectedTreatment = value;
+        }
+
+        function toggleDetails(id) {
+            const el = document.getElementById(`details-${id}`);
+            if (el.classList.contains('details-hidden')) {
+                el.classList.replace('details-hidden', 'details-visible');
             } else {
-                selectedTreatment = value;
+                el.classList.replace('details-visible', 'details-hidden');
             }
         }
 
         function renderHistory() {
             const container = document.getElementById('history-container');
             if (history.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">No hay pedidos registrados en este dispositivo.</p>';
+                container.innerHTML = '<p class="text-center text-gray-400 text-sm py-8 italic">No hay pedidos registrados.</p>';
                 return;
             }
 
-            container.innerHTML = history.map(item => `
-                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-sm">
-                    <div class="flex justify-between mb-1">
-                        <span class="font-black text-blue-600">#${item.id}</span>
-                        <span class="text-[10px] text-gray-400 font-mono">${item.date}</span>
+            container.innerHTML = history.map((item, index) => `
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded">#${item.id}</span>
+                            <h3 class="font-bold text-gray-800 mt-1 uppercase">${item.patient}</h3>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-gray-400 font-mono">${item.date}</p>
+                            <button onclick="toggleDetails('${item.id}')" class="text-xs text-blue-600 font-bold hover:underline mt-1">Ver Detalle</button>
+                        </div>
                     </div>
-                    <div class="font-bold text-gray-800 uppercase">${item.patient}</div>
-                    <div class="grid grid-cols-2 gap-2 mt-2 text-[11px] text-gray-500">
-                        <div><strong class="text-gray-700">Lente:</strong> ${item.lens}</div>
-                        <div><strong class="text-gray-700">Trat:</strong> ${item.treatment || 'Ninguno'}</div>
-                        <div class="col-span-2"><strong class="text-gray-700">Armazón:</strong> ${item.frame} (${item.frame_details || 'S/D'})</div>
+
+                    <!-- Detalle Expandible -->
+                    <div id="details-${item.id}" class="details-hidden mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600 space-y-3">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Graduación OD</p>
+                                <p class="bg-gray-50 p-2 rounded font-mono">${item.od}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Graduación OI</p>
+                                <p class="bg-gray-50 p-2 rounded font-mono">${item.oi}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Cristal</p>
+                                <p class="font-semibold text-gray-700">${item.lens}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Tratamiento</p>
+                                <p class="font-semibold text-gray-700">${item.treatment}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Armazón</p>
+                            <p class="font-semibold text-gray-700">${item.frame} (${item.frame_details})</p>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Observaciones</p>
+                            <p class="italic text-gray-500">${item.notes}</p>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -190,46 +233,44 @@
             e.preventDefault();
             
             const btn = document.getElementById('submitBtn');
-            const patientName = document.getElementById('patient_name').value;
             const lensType = document.getElementById('lens_type').value;
 
             if (!lensType) {
-                alert("Por favor seleccione un tipo de cristal.");
+                alert("Seleccione el tipo de cristal antes de enviar.");
                 return;
             }
 
             btn.disabled = true;
             btn.innerText = "PROCESANDO...";
 
+            // Captura de datos completa
             const orderData = {
                 id: currentOrderId,
                 date: new Date().toLocaleString('es-AR'),
-                patient: patientName,
+                patient: document.getElementById('patient_name').value,
                 patient_id: document.getElementById('patient_id').value,
                 lens: lensType,
                 frame: selectedFrame || "No especificado",
-                frame_details: document.getElementById('frame_details').value || "Sin detalles",
-                treatment: selectedTreatment || "Sin tratamiento",
+                frame_details: document.getElementById('frame_details').value || "S/D",
+                treatment: selectedTreatment || "Sin Tratamiento",
                 od: `E:${document.getElementById('od_esf').value} C:${document.getElementById('od_cil').value} x ${document.getElementById('od_eje').value}° (Add ${document.getElementById('od_add').value})`,
                 oi: `E:${document.getElementById('oi_esf').value} C:${document.getElementById('oi_cil').value} x ${document.getElementById('oi_eje').value}° (Add ${document.getElementById('oi_add').value})`,
-                notes: document.getElementById('notes').value || "Sin observaciones"
+                notes: document.getElementById('notes').value || "Sin notas"
             };
 
-            // 1. Guardar en Historial Local (Siempre se guarda, incluso si el mail falla)
+            // Guardar en Historial Local primero
             history.unshift(orderData);
-            if(history.length > 50) history.pop(); // Mantener solo los últimos 50
             localStorage.setItem('optica_connect_history', JSON.stringify(history));
             renderHistory();
 
             try {
-                // 2. Enviar Email con los datos correctos del formulario
                 const templateParams = {
                     order_id: orderData.id,
                     patient_name: orderData.patient,
                     patient_id: orderData.patient_id,
                     graduacion: `OD: ${orderData.od} \nOI: ${orderData.oi}`,
-                    lens_details: orderData.lens, // TIPO DE CRISTAL
-                    treatments: orderData.treatment, // TRATAMIENTO
+                    lens_details: orderData.lens,
+                    treatments: orderData.treatment,
                     frame_details: `${orderData.frame} - ${orderData.frame_details}`,
                     notes: orderData.notes,
                     date: orderData.date
@@ -237,19 +278,18 @@
 
                 await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
 
-                alert("✅ ¡ÉXITO! El pedido #" + currentOrderId + " fue enviado al laboratorio y guardado en tu historial.");
+                alert("¡Pedido enviado y guardado correctamente!");
                 
-                // Resetear Formulario
+                // Reset
                 this.reset();
                 selectedFrame = "";
                 selectedTreatment = "";
                 document.querySelectorAll('.btn-toggle').forEach(el => el.classList.remove('active'));
-                
                 generateOrderId();
 
             } catch (error) {
-                console.error("Error EmailJS:", error);
-                alert("⚠️ EL PEDIDO SE GUARDÓ EN EL HISTORIAL PERO NO SE PUDO ENVIAR POR MAIL. Verifique su conexión.");
+                console.error("Error:", error);
+                alert("El pedido se guardó localmente pero falló el envío del mail. Compruebe su conexión.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR PEDIDO";
@@ -257,7 +297,7 @@
         };
 
         function clearHistory() {
-            if(confirm("¿Deseas eliminar permanentemente todos los pedidos del historial?")) {
+            if(confirm("¿Seguro que desea borrar todo el historial?")) {
                 history = [];
                 localStorage.removeItem('optica_connect_history');
                 renderHistory();
